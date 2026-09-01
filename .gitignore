@@ -1,0 +1,25 @@
+# Maven
+target/
+
+# NetBeans
+nbproject/private/
+build/
+dist/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Java
+*.class
+
+# Local test data
+data/*.tmp
+
+# Internal phase-prompt working docs (not part of the delivered repo)
+fase-*.md
