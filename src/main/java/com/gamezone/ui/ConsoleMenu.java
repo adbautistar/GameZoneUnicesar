@@ -2,11 +2,13 @@ package com.gamezone.ui;
 
 import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
+import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -224,6 +226,98 @@ public class ConsoleMenu {
         }
         for (Seller seller : sellers) {
             System.out.println(seller.getId() + " - " + seller.getFullName() + " - " + seller.getShift());
+        }
+    }
+
+    private void showSaleMenu() {
+        boolean back = false;
+        while (!back) {
+            System.out.println();
+            System.out.println("----- Gestion de ventas -----");
+            System.out.println("1. Registrar venta");
+            System.out.println("2. Ver historial completo de ventas");
+            System.out.println("3. Ver ventas por cliente");
+            System.out.println("4. Ver ventas por vendedor");
+            System.out.println("0. Volver");
+            System.out.print("Seleccione una opcion: ");
+            String option = scanner.nextLine().trim();
+            switch (option) {
+                case "1":
+                    registerSale();
+                    break;
+                case "2":
+                    viewAllSales();
+                    break;
+                case "3":
+                    viewSalesByCustomer();
+                    break;
+                case "4":
+                    viewSalesBySeller();
+                    break;
+                case "0":
+                    back = true;
+                    break;
+                default:
+                    System.out.println("Opcion invalida.");
+            }
+        }
+    }
+
+    private void registerSale() {
+        try {
+            System.out.print("ID del cliente: ");
+            String customerId = scanner.nextLine().trim();
+            System.out.print("ID del vendedor: ");
+            String sellerId = scanner.nextLine().trim();
+            System.out.print("Cantidad de productos a vender: ");
+            int count = Integer.parseInt(scanner.nextLine().trim());
+            List<String> productIds = new ArrayList<>();
+            for (int i = 1; i <= count; i++) {
+                System.out.print("ID del producto " + i + ": ");
+                productIds.add(scanner.nextLine().trim());
+            }
+            Sale sale = saleService.registerSale(customerId, sellerId, productIds);
+            System.out.println("Venta registrada exitosamente.");
+            System.out.println(sale.generateReceipt());
+        } catch (RuntimeException e) {
+            System.out.println("Error al registrar la venta: " + e.getMessage());
+        }
+    }
+
+    private void viewAllSales() {
+        List<Sale> sales = saleService.viewAllSales();
+        if (sales.isEmpty()) {
+            System.out.println("No hay ventas registradas.");
+            return;
+        }
+        for (Sale sale : sales) {
+            System.out.println(sale.generateReceipt());
+        }
+    }
+
+    private void viewSalesByCustomer() {
+        System.out.print("ID del cliente: ");
+        String customerId = scanner.nextLine().trim();
+        List<Sale> sales = saleService.viewSalesByCustomer(customerId);
+        if (sales.isEmpty()) {
+            System.out.println("Este cliente no tiene ventas registradas.");
+            return;
+        }
+        for (Sale sale : sales) {
+            System.out.println(sale.generateReceipt());
+        }
+    }
+
+    private void viewSalesBySeller() {
+        System.out.print("ID del vendedor: ");
+        String sellerId = scanner.nextLine().trim();
+        List<Sale> sales = saleService.viewSalesBySeller(sellerId);
+        if (sales.isEmpty()) {
+            System.out.println("Este vendedor no tiene ventas registradas.");
+            return;
+        }
+        for (Sale sale : sales) {
+            System.out.println(sale.generateReceipt());
         }
     }
 }
