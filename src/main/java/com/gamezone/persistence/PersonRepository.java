@@ -13,11 +13,21 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Handles file-based persistence of {@link Customer} and {@link Seller}
+ * instances, using two separate CSV files: {@code data/customers.csv} and
+ * {@code data/sellers.csv}.
+ */
 public class PersonRepository {
 
     private static final String CUSTOMERS_FILE_PATH = "data/customers.csv";
     private static final String SELLERS_FILE_PATH = "data/sellers.csv";
 
+    /**
+     * Overwrites the customers CSV file with the given list of customers.
+     *
+     * @param customers the complete list of customers to persist
+     */
     public void saveAllCustomers(List<Customer> customers) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(CUSTOMERS_FILE_PATH))) {
             for (Customer customer : customers) {
@@ -34,6 +44,12 @@ public class PersonRepository {
         }
     }
 
+    /**
+     * Reads the customers CSV file and reconstructs the list of customers.
+     *
+     * @return the list of customers found in the file, or an empty list if
+     *         the file does not exist
+     */
     public List<Customer> loadAllCustomers() {
         List<Customer> customers = new ArrayList<>();
         Path path = Path.of(CUSTOMERS_FILE_PATH);
@@ -55,6 +71,11 @@ public class PersonRepository {
         return customers;
     }
 
+    /**
+     * Overwrites the sellers CSV file with the given list of sellers.
+     *
+     * @param sellers the complete list of sellers to persist
+     */
     public void saveAllSellers(List<Seller> sellers) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(SELLERS_FILE_PATH))) {
             for (Seller seller : sellers) {
@@ -72,6 +93,12 @@ public class PersonRepository {
         }
     }
 
+    /**
+     * Reads the sellers CSV file and reconstructs the list of sellers.
+     *
+     * @return the list of sellers found in the file, or an empty list if
+     *         the file does not exist
+     */
     public List<Seller> loadAllSellers() {
         List<Seller> sellers = new ArrayList<>();
         Path path = Path.of(SELLERS_FILE_PATH);
