@@ -36,4 +36,21 @@ public class ProductService {
     public List<Product> listAllProducts() {
         return Collections.unmodifiableList(products);
     }
+
+    public void updateStock(String productId, int quantity) {
+        Product product = findById(productId);
+        if (product != null) {
+            product.updateStock(quantity);
+            repository.saveAll(products);
+        }
+    }
+
+    public Product findById(String id) {
+        for (Product product : products) {
+            if (product.getId().equals(id)) {
+                return product;
+            }
+        }
+        return null;
+    }
 }
