@@ -103,4 +103,27 @@ public class Sale {
         this.totalAmount = total;
         return totalAmount;
     }
+
+    /**
+     * Builds a human-readable receipt for this sale, in Spanish, including
+     * the sale id, date, customer, seller, purchased products, and total.
+     *
+     * @return the formatted receipt text
+     */
+    public String generateReceipt() {
+        StringBuilder receipt = new StringBuilder();
+        receipt.append("===== Recibo de Venta =====\n");
+        receipt.append("ID Venta: ").append(id).append("\n");
+        receipt.append("Fecha: ").append(date).append("\n");
+        receipt.append("Cliente: ").append(customer.getFullName()).append("\n");
+        receipt.append("Vendedor: ").append(seller.getFullName()).append("\n");
+        receipt.append("Productos:\n");
+        for (Product product : products) {
+            receipt.append("  - ").append(product.getTitle())
+                   .append(" ($").append(String.format("%.2f", product.getPrice())).append(")\n");
+        }
+        receipt.append("Total: $").append(String.format("%.2f", totalAmount)).append("\n");
+        receipt.append("============================");
+        return receipt.toString();
+    }
 }
