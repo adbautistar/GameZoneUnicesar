@@ -14,12 +14,22 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Handles file-based persistence of {@link Product} instances as CSV records
+ * in {@code data/products.csv}, using a discriminator column to distinguish
+ * between video games and consoles.
+ */
 public class ProductRepository {
 
     private static final String FILE_PATH = "data/products.csv";
     private static final String VIDEOGAME_TYPE = "VIDEOGAME";
     private static final String CONSOLE_TYPE = "CONSOLE";
 
+    /**
+     * Overwrites the CSV file with the given list of products.
+     *
+     * @param products the complete list of products to persist
+     */
     public void saveAll(List<Product> products) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (Product product : products) {
@@ -31,6 +41,13 @@ public class ProductRepository {
         }
     }
 
+    /**
+     * Reads the CSV file and reconstructs the list of products, choosing the
+     * concrete subclass based on the discriminator column.
+     *
+     * @return the list of products found in the file, or an empty list if
+     *         the file does not exist
+     */
     public List<Product> loadAll() {
         List<Product> products = new ArrayList<>();
         Path path = Path.of(FILE_PATH);
