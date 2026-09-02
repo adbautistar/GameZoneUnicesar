@@ -1,36 +1,100 @@
 # GameZone Unicesar
 
+Reference implementation of Taller 1, Programación de Computadores III (SS462), Ingeniería de Sistemas, Universidad Popular del Cesar.
+
 ## About
 
-GameZone Unicesar is a console-based inventory and sales management system for a video game and console store, built with Java and a four-layer architecture (model, persistence, service, ui). It manages products (video games and consoles), people (customers and sellers), and sales, with file-based persistence and automatic inventory updates on each sale.
+GameZone Unicesar is a fictional video game and console store located in Valledupar's university sector. It exists as a teaching scenario: a small retailer that needs to keep track of what it sells, who it sells to, and who sells it.
 
-This repository is a reference implementation of Taller 1, Programación de Computadores III (SS462), Universidad Popular del Cesar. It demonstrates the full workflow expected of a taller submission: object-oriented design with abstraction and inheritance, a layered architecture with strict dependency direction, file persistence, and a Git Flow process driven by Pull Requests.
+The system registers products (video games and consoles), people (customers and sellers), and sales, and automatically updates inventory whenever a sale is registered. It is built as a Java console application on a strict four-layer architecture (model, persistence, service, ui) with file-based persistence, so data survives between runs without requiring a database.
 
 ## Reference Implementation Notice
 
-This repository is built and maintained by a single Git user (Alfredo David Bautista Romero) simulating a three-person team workflow, as documented in [TEAM.md](TEAM.md) and [CLAUDE.md](CLAUDE.md). Each simulated developer works on their own feature branch and opens Pull Requests for module integration, exactly as a real team would. The only documented deviation from the taller specification is that Pull Requests are self-approved by the single user executing this reference implementation, since no second reviewer is available in a single-user setup.
+This repository is built and maintained by a single Git user (adbautistar) simulating a three-person team workflow, as documented in [TEAM.md](TEAM.md) and [CLAUDE.md](CLAUDE.md). Each simulated developer works on their own feature branch and opens Pull Requests for module integration, exactly as a real team would.
 
-## Documentation
+Cross-review of Pull Requests is not simulated; all PRs in this repository are self-approved by the single user executing the reference implementation. This is the only documented deviation from the taller specification, and it applies only to this reference implementation — student teams must comply fully with cross-review of Pull Requests.
 
-- [TEAM.md](TEAM.md) — team roles, module ownership, and committed activities.
-- [CLAUDE.md](CLAUDE.md) — full project specification and non-negotiable rules.
-- [docs/analysis.md](docs/analysis.md) — answers to the 11 orienting design questions.
-- [docs/hierarchy-diagram.md](docs/hierarchy-diagram.md) — model layer class hierarchies.
-- [docs/class-diagram.md](docs/class-diagram.md) — full class diagram across all four layers.
-- [docs/layers-diagram.md](docs/layers-diagram.md) — layer dependency diagram.
+## Architecture
+
+The codebase is organized into four layers under `com.gamezone`, with a strict, one-directional dependency rule: `ui → service → persistence → model`. The `model` layer depends on nothing else; `persistence` depends only on `model`; `service` depends on `model` and `persistence`; `ui` depends only on `service`. See [docs/layers-diagram.md](docs/layers-diagram.md) for the full diagram and rationale.
+
+```mermaid
+flowchart TD
+    UI["ui"] --> SERVICE["service"]
+    SERVICE --> PERSISTENCE["persistence"]
+    SERVICE --> MODEL["model"]
+    PERSISTENCE --> MODEL
+```
 
 ## Requirements
 
-_(to be completed in Phase 9)_
+- Java 17 or later
+- Maven 3.8 or later
+- GitHub CLI (`gh`) — only for reproducing the workflow used to build this repository
 
 ## Build
 
-_(to be completed in Phase 9)_
+```
+mvn clean compile
+```
 
 ## Run
 
-_(to be completed in Phase 9)_
+```
+mvn exec:java "-Dexec.mainClass=com.gamezone.Main"
+```
+
+Data files under `data/` are created and updated automatically. The file `data/sellers.csv` is preloaded with 3 sellers.
+
+## Repository Structure
+
+```
+GameZoneUnicesar/
+├── README.md
+├── TEAM.md
+├── CLAUDE.md
+├── pom.xml
+├── .gitignore
+├── LICENSE
+├── src/
+│   └── main/
+│       └── java/
+│           └── com/
+│               └── gamezone/
+│                   ├── model/
+│                   ├── persistence/
+│                   ├── service/
+│                   ├── ui/
+│                   └── Main.java
+├── data/
+└── docs/
+    ├── analysis.md
+    ├── hierarchy-diagram.md
+    ├── class-diagram.md
+    ├── layers-diagram.md
+    └── ai-usage/
+        ├── leader-ai-log.md
+        ├── developer1-ai-log.md
+        └── developer2-ai-log.md
+```
+
+## Team Members
+
+See [TEAM.md](TEAM.md) for roles, module ownership, and committed activities.
+
+## Design Documentation
+
+- [Analysis](docs/analysis.md)
+- [Hierarchy Diagram](docs/hierarchy-diagram.md)
+- [Class Diagram](docs/class-diagram.md)
+- [Layers Diagram](docs/layers-diagram.md)
+
+## AI Usage Logs
+
+- [Technical Lead](docs/ai-usage/leader-ai-log.md)
+- [Developer 1](docs/ai-usage/developer1-ai-log.md)
+- [Developer 2](docs/ai-usage/developer2-ai-log.md)
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
