@@ -24,4 +24,22 @@ public class PersonService {
         customers.add(customer);
         repository.saveAllCustomers(customers);
     }
+
+    public Customer findCustomerById(String id) {
+        for (Customer customer : customers) {
+            if (customer.getId().equals(id)) {
+                return customer;
+            }
+        }
+        return null;
+    }
+
+    public Seller findSellerById(String id) {
+        for (Seller seller : sellers) {
+            if (seller.getId().equals(id)) {
+                return seller;
+            }
+        }
+        return null;
+    }
 }
