@@ -1,6 +1,8 @@
 package com.gamezone.ui;
 
+import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
+import com.gamezone.model.Seller;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
@@ -151,6 +153,77 @@ public class ConsoleMenu {
         }
         for (Product product : products) {
             System.out.println(product.getDescription());
+        }
+    }
+
+    private void showPersonMenu() {
+        boolean back = false;
+        while (!back) {
+            System.out.println();
+            System.out.println("----- Gestion de personas -----");
+            System.out.println("1. Registrar cliente");
+            System.out.println("2. Listar clientes");
+            System.out.println("3. Listar vendedores");
+            System.out.println("0. Volver");
+            System.out.print("Seleccione una opcion: ");
+            String option = scanner.nextLine().trim();
+            switch (option) {
+                case "1":
+                    registerCustomer();
+                    break;
+                case "2":
+                    listAllCustomers();
+                    break;
+                case "3":
+                    listAllSellers();
+                    break;
+                case "0":
+                    back = true;
+                    break;
+                default:
+                    System.out.println("Opcion invalida.");
+            }
+        }
+    }
+
+    private void registerCustomer() {
+        try {
+            System.out.print("ID: ");
+            String id = scanner.nextLine().trim();
+            System.out.print("Nombre: ");
+            String firstName = scanner.nextLine().trim();
+            System.out.print("Apellido: ");
+            String lastName = scanner.nextLine().trim();
+            System.out.print("Telefono: ");
+            String phone = scanner.nextLine().trim();
+            System.out.print("Correo electronico: ");
+            String email = scanner.nextLine().trim();
+            personService.registerCustomer(id, firstName, lastName, phone, email);
+            System.out.println("Cliente registrado exitosamente.");
+        } catch (RuntimeException e) {
+            System.out.println("Error al registrar el cliente: " + e.getMessage());
+        }
+    }
+
+    private void listAllCustomers() {
+        List<Customer> customers = personService.listAllCustomers();
+        if (customers.isEmpty()) {
+            System.out.println("No hay clientes registrados.");
+            return;
+        }
+        for (Customer customer : customers) {
+            System.out.println(customer.getId() + " - " + customer.getFullName() + " - " + customer.getEmail());
+        }
+    }
+
+    private void listAllSellers() {
+        List<Seller> sellers = personService.listAllSellers();
+        if (sellers.isEmpty()) {
+            System.out.println("No hay vendedores registrados.");
+            return;
+        }
+        for (Seller seller : sellers) {
+            System.out.println(seller.getId() + " - " + seller.getFullName() + " - " + seller.getShift());
         }
     }
 }
