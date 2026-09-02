@@ -37,4 +37,11 @@ public class Console extends Product {
     public void setGeneration(String generation) {
         this.generation = generation;
     }
+
+    @Override
+    public String getDescription() {
+        return String.format(
+            "[%s] %s - Brand: %s, Model: %s, Generation: %s, Price: %.2f, Stock: %d",
+            getId(), getTitle(), brand, model, generation, getPrice(), getStock());
+    }
 }
