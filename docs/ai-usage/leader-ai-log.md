@@ -68,4 +68,21 @@ registerSale has several distinct failure modes (empty product list, unknown cus
 ejecuta la fase 7
 
 **Solution obtained and decision taken:**
-SaleService.registerSale validates in order — empty list, then customer, then seller, then each product, then stock per distinct product id (counting repeated occurrences via a HashMap before comparing against product.getStock()) — throwing IllegalArgumentException with a Spanish message at the first failure. Every ConsoleMenu operation method wraps its service call in its own try/catch(RuntimeException), printing e.getMessage() directly, since IllegalArgumentException messages are already written in Spanish; this keeps error handling local to each operation instead of one global handler, matching the phase's per-operation requirement. Verified the full flow with a manual runtime test covering all 10 mandatory operations and a restart to confirm persistence, as required before opening the PR.
+SaleService.registerSale validates in order — empty list, then customer, then seller, then each product, then stock per distinct product id (counting repeated occurrences via a HashMap before comparing against product.getStock()) — throwing IllegalArgumentException with a Spanish message at the first failure. Every ConsoleMenu operation method wraps its service call in its own try/catch(RuntimeException), printing e.getMessage() directly, since IllegalArgumentException messages are already written in Spanish; this keeps error handling local to each operation instead of one global handler, matching the phase's per-operation requirement.
+
+### Entry 5
+
+**Date:** 2026-09-02
+**Tool used:** Claude Code
+
+**Reason for use:**
+Wire the four layers together in Main and validate the full application end to end before opening the Phase 7 pull request.
+
+**Problem faced:**
+Main had to instantiate repositories and services in the correct dependency order (SaleRepository and SaleService both need ProductService and PersonService already constructed), and the phase required a manual runtime test of all 10 mandatory operations plus a restart to confirm file-based persistence before the PR could be opened.
+
+**Prompt used:**
+ejecuta la fase 7
+
+**Solution obtained and decision taken:**
+Main constructs ProductRepository and PersonRepository first, then ProductService and PersonService, then SaleRepository and SaleService, then ConsoleMenu, wrapping the whole call to consoleMenu.start() in a try/catch(RuntimeException) that prints "Error fatal: " plus the message and exits with code 1 on an unrecoverable failure. Ran two full `mvn exec:java` sessions piping a scripted sequence of menu inputs: the first registered a video game, a console, and a customer, executed a sale, and exercised every list/history view; the second, run after restarting the process, listed products/customers/sellers and the sale history again to confirm data/products.csv, data/customers.csv, and data/sales.csv persisted correctly, including the decremented stock and the reconstructed sale receipt. All 10 mandatory operations passed before the PR was opened, so no additional fix commits were needed.
