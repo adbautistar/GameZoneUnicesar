@@ -86,3 +86,20 @@ ejecuta la fase 7
 
 **Solution obtained and decision taken:**
 Main constructs ProductRepository and PersonRepository first, then ProductService and PersonService, then SaleRepository and SaleService, then ConsoleMenu, wrapping the whole call to consoleMenu.start() in a try/catch(RuntimeException) that prints "Error fatal: " plus the message and exits with code 1 on an unrecoverable failure. Ran two full `mvn exec:java` sessions piping a scripted sequence of menu inputs: the first registered a video game, a console, and a customer, executed a sale, and exercised every list/history view; the second, run after restarting the process, listed products/customers/sellers and the sale history again to confirm data/products.csv, data/customers.csv, and data/sales.csv persisted correctly, including the decremented stock and the reconstructed sale receipt. All 10 mandatory operations passed before the PR was opened, so no additional fix commits were needed.
+
+### Entry 6
+
+**Date:** 2026-09-02
+**Tool used:** Claude Code
+
+**Reason for use:**
+Run a full clean end-to-end integration test on develop, after all three modules were merged, before releasing v1.0.0 to main.
+
+**Problem faced:**
+Phase 7's manual test already covered the same 10 operations, but it ran against the feature branch in isolation; Phase 8 required repeating the test from a clean data state (only the preloaded sellers.csv present) directly on the integrated develop branch, to confirm nothing broke during the three merges (product, person, sale modules).
+
+**Prompt used:**
+ejecuta la fase 8
+
+**Solution obtained and decision taken:**
+Deleted data/products.csv, data/customers.csv, and data/sales.csv (data/sellers.csv kept), ran `mvn clean compile` (BUILD SUCCESS), then executed the 10 mandatory operations in order via a scripted `mvn exec:java` session using the example data from the phase document (VG001 "The Legend of Zelda", CN001 "Nintendo Switch OLED", customer C001 "Juan Rodriguez", seller S001). All 10 operations passed on the first attempt, so no hotfix commits were needed. Restarted the application and re-ran options 3, 5, 6, and 8: products, customers, sellers, and the sale history all persisted correctly, with VG001 and CN001 stock each reduced by exactly 1 (5→4 and 3→2) as expected. The test-generated CSV files were deleted again afterward, since they are local runtime artifacts, not deliverables, matching the same cleanup done in Phase 7.
