@@ -49,4 +49,6 @@ public abstract class Product {
     public void updateStock(int quantity) {
         this.stock += quantity;
     }
+
+    public abstract String getDescription();
 }
