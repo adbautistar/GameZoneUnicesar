@@ -1,5 +1,8 @@
 package com.gamezone.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a customer of the store, with an email address in addition to
  * the attributes shared with every {@link Person}.
@@ -7,6 +10,7 @@ package com.gamezone.model;
 public class Customer extends Person {
 
     private String email;
+    private List<Sale> purchaseHistory;
 
     /**
      * Creates a new customer with the given shared and specific attributes.
@@ -20,6 +24,7 @@ public class Customer extends Person {
     public Customer(String id, String firstName, String lastName, String phone, String email) {
         super(id, firstName, lastName, phone);
         this.email = email;
+        this.purchaseHistory = new ArrayList<>();
     }
 
     /**
@@ -38,5 +43,23 @@ public class Customer extends Person {
      */
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    /**
+     * Returns the list of sales this customer has made.
+     *
+     * @return the purchase history
+     */
+    public List<Sale> getPurchaseHistory() {
+        return purchaseHistory;
+    }
+
+    /**
+     * Appends a sale to this customer's purchase history.
+     *
+     * @param sale the sale to add
+     */
+    public void addPurchase(Sale sale) {
+        purchaseHistory.add(sale);
     }
 }
