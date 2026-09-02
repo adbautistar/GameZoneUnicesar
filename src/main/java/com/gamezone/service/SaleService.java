@@ -8,6 +8,7 @@ import com.gamezone.persistence.SaleRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,5 +103,46 @@ public class SaleService {
         repository.saveAll(sales);
 
         return sale;
+    }
+
+    /**
+     * Returns an unmodifiable view of every registered sale.
+     *
+     * @return the list of all sales
+     */
+    public List<Sale> viewAllSales() {
+        return Collections.unmodifiableList(sales);
+    }
+
+    /**
+     * Returns the sales made by the customer with the given id.
+     *
+     * @param customerId the id of the customer to filter by
+     * @return the list of matching sales
+     */
+    public List<Sale> viewSalesByCustomer(String customerId) {
+        List<Sale> result = new ArrayList<>();
+        for (Sale sale : sales) {
+            if (sale.getCustomer().getId().equals(customerId)) {
+                result.add(sale);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the sales handled by the seller with the given id.
+     *
+     * @param sellerId the id of the seller to filter by
+     * @return the list of matching sales
+     */
+    public List<Sale> viewSalesBySeller(String sellerId) {
+        List<Sale> result = new ArrayList<>();
+        for (Sale sale : sales) {
+            if (sale.getSeller().getId().equals(sellerId)) {
+                result.add(sale);
+            }
+        }
+        return result;
     }
 }
