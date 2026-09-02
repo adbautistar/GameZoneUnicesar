@@ -88,6 +88,7 @@ See [TEAM.md](TEAM.md) for roles, module ownership, and committed activities.
 - [Hierarchy Diagram](docs/hierarchy-diagram.md)
 - [Class Diagram](docs/class-diagram.md)
 - [Layers Diagram](docs/layers-diagram.md)
+- [Version Control](docs/version-control.md) — branches, full commit log, commits per team member, and Pull Requests
 
 ## AI Usage Logs
 
