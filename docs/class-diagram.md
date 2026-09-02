@@ -22,7 +22,7 @@ classDiagram
     class Console {
         -brand: String
         -model: String
-        -generation: int
+        -generation: String
         +getDescription() String
     }
     class Person {
@@ -67,10 +67,10 @@ classDiagram
         +loadAll() List~Product~
     }
     class PersonRepository {
-        +saveCustomers(customers List~Customer~) void
-        +loadCustomers() List~Customer~
-        +saveSellers(sellers List~Seller~) void
-        +loadSellers() List~Seller~
+        +saveAllCustomers(customers List~Customer~) void
+        +loadAllCustomers() List~Customer~
+        +saveAllSellers(sellers List~Seller~) void
+        +loadAllSellers() List~Seller~
     }
     class SaleRepository {
         +saveAll(sales List~Sale~) void
@@ -81,18 +81,23 @@ classDiagram
     PersonRepository ..> Customer
     PersonRepository ..> Seller
     SaleRepository ..> Sale
+    SaleRepository ..> ProductService
+    SaleRepository ..> PersonService
 
     %% ===== SERVICE LAYER =====
     class ProductService {
         -repository: ProductRepository
-        +registerVideoGame(...) VideoGame
-        +registerConsole(...) Console
+        +registerVideoGame(...) void
+        +registerConsole(...) void
         +listAllProducts() List~Product~
-        +updateStock(id String, quantity int) void
+        +updateStock(productId String, quantity int) void
+        +findById(id String) Product
     }
     class PersonService {
         -repository: PersonRepository
-        +registerCustomer(...) Customer
+        +registerCustomer(...) void
+        +findCustomerById(id String) Customer
+        +findSellerById(id String) Seller
         +listAllCustomers() List~Customer~
         +listAllSellers() List~Seller~
     }
@@ -137,3 +142,5 @@ classDiagram
     Main ..> PersonService
     Main ..> SaleService
 ```
+
+**Known layering exception:** `SaleRepository` (persistence layer) depends on `ProductService` and `PersonService` (service layer) to resolve customer, seller, and product references while reconstructing a `Sale` from `data/sales.csv`. This is a reverse dependency relative to the strict `persistence → model` rule described in [layers-diagram.md](layers-diagram.md), required because a sale's persisted form only stores ids, not full records. It is an intentional, documented trade-off rather than an oversight.
