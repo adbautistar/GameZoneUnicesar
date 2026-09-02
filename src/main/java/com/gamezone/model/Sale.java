@@ -88,4 +88,19 @@ public class Sale {
     public double getTotalAmount() {
         return totalAmount;
     }
+
+    /**
+     * Calculates the total amount of this sale by summing the price of
+     * every included product, and stores it as the sale's total amount.
+     *
+     * @return the calculated total amount
+     */
+    public double calculateTotal() {
+        double total = 0.0;
+        for (Product product : products) {
+            total += product.getPrice();
+        }
+        this.totalAmount = total;
+        return totalAmount;
+    }
 }
