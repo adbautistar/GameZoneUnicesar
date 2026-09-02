@@ -5,6 +5,7 @@ import com.gamezone.model.Seller;
 import com.gamezone.persistence.PersonRepository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PersonService {
@@ -41,5 +42,13 @@ public class PersonService {
             }
         }
         return null;
+    }
+
+    public List<Customer> listAllCustomers() {
+        return Collections.unmodifiableList(customers);
+    }
+
+    public List<Seller> listAllSellers() {
+        return Collections.unmodifiableList(sellers);
     }
 }
