@@ -37,4 +37,11 @@ public class VideoGame extends Product {
     public void setAgeRating(String ageRating) {
         this.ageRating = ageRating;
     }
+
+    @Override
+    public String getDescription() {
+        return String.format(
+            "[%s] %s - Platform: %s, Genre: %s, Age Rating: %s, Price: %.2f, Stock: %d",
+            getId(), getTitle(), platform, genre, ageRating, getPrice(), getStock());
+    }
 }
