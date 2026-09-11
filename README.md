@@ -85,6 +85,16 @@ New menu operations (option 6 — Gestion de devoluciones):
 
 New menu operation (option 7 — Consultar balance mensual): reports total sales minus total refunds for a given month and year.
 
+### Warranty Module (v1.4.0)
+
+Adds `Warranty` (abstract) with two concrete types: `BasicWarranty` (6 months, no additional cost) and `ExtendedWarranty` (12 months, 10% of the product's price). A basic warranty is generated automatically for every console included in a sale — no action needed from the seller. During sale registration, the seller is also asked whether to add an extended warranty for each console; if accepted, its 10% surcharge is added to the sale total on top of any product prices (and any promotion discount already applied). Warranties are backed by `data/warranties.csv` (`WarrantyRepository`/`WarrantyService`), starting empty.
+
+New menu operations (option 8 — Gestion de garantias):
+1. Consultar garantia por producto y venta
+2. Listar todas las garantias
+3. Listar garantias vigentes
+4. Listar garantias proximas a vencer
+
 ## Repository Structure
 
 ```
