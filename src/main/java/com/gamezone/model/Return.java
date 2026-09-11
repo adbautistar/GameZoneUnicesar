@@ -33,11 +33,7 @@ public class Return {
         this.originalSale = originalSale;
         this.returnedProducts = returnedProducts;
         this.reason = reason;
-        double sum = 0.0;
-        for (Product product : returnedProducts) {
-            sum += product.getPrice();
-        }
-        this.refundAmount = sum;
+        this.refundAmount = calculateRefundAmount();
     }
 
     /**
@@ -110,5 +106,20 @@ public class Return {
      */
     public void setRefundAmount(double refundAmount) {
         this.refundAmount = refundAmount;
+    }
+
+    /**
+     * Calculates the refund amount by summing the price of every returned
+     * product, and stores it as this return's refund amount.
+     *
+     * @return the calculated refund amount
+     */
+    public double calculateRefundAmount() {
+        double sum = 0.0;
+        for (Product product : returnedProducts) {
+            sum += product.getPrice();
+        }
+        this.refundAmount = sum;
+        return refundAmount;
     }
 }
