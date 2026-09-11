@@ -1,7 +1,9 @@
 package com.gamezone.service;
 
 import com.gamezone.model.Accessory;
+import com.gamezone.model.Console;
 import com.gamezone.model.Customer;
+import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
@@ -29,6 +31,16 @@ public class SaleService {
     private final List<Sale> sales;
 
     /**
+     * The service used to assign warranties when registering a sale. Not a
+     * constructor parameter: WarrantyRepository depends on SaleService to
+     * resolve sale references on load, so a constructor parameter here would
+     * create a circular dependency (SaleService -&gt; WarrantyService -&gt;
+     * WarrantyRepository -&gt; SaleService). Wired in via {@link #setWarrantyService}
+     * after both services are constructed.
+     */
+    private WarrantyService warrantyService;
+
+    /**
      * Creates a new service backed by the given repository and collaborating
      * services, loading the current sales history into memory.
      *
@@ -49,22 +61,38 @@ public class SaleService {
     }
 
     /**
+     * Sets the service used to assign warranties when registering a sale.
+     * Must be called once, after both this service and the given
+     * {@link WarrantyService} have been constructed, and before
+     * {@link #registerSale} is first invoked.
+     *
+     * @param warrantyService the service used to assign warranties
+     */
+    public void setWarrantyService(WarrantyService warrantyService) {
+        this.warrantyService = warrantyService;
+    }
+
+    /**
      * Registers a new sale after validating that it contains at least one
      * product, that the customer, seller, and products exist, and that
      * enough stock is available for every requested product. Decrements the
      * stock of every sold product, records the sale in the customer's
      * purchase history, and persists the updated sales history.
      *
-     * @param customerId the id of the customer making the purchase
-     * @param sellerId   the id of the seller handling the sale
-     * @param productIds the ids of the products being sold, one entry per
-     *                   unit purchased
+     * @param customerId                     the id of the customer making the purchase
+     * @param sellerId                       the id of the seller handling the sale
+     * @param productIds                     the ids of the products being sold, one entry per
+     *                                       unit purchased
+     * @param productIdsWithExtendedWarranty the ids of the products (typically consoles)
+     *                                       for which an extended warranty was opted into;
+     *                                       may be {@code null} or empty
      * @return the registered sale
      * @throws IllegalArgumentException if the product list is empty, if the
      *                                  customer, seller, or a product cannot
      *                                  be found, or if stock is insufficient
      */
-    public Sale registerSale(String customerId, String sellerId, List<String> productIds) {
+    public Sale registerSale(String customerId, String sellerId, List<String> productIds,
+                              List<String> productIdsWithExtendedWarranty) {
         if (productIds == null || productIds.isEmpty()) {
             throw new IllegalArgumentException("La venta debe contener al menos un producto.");
         }
@@ -118,6 +146,19 @@ public class SaleService {
             sale.setAppliedPromotionName(bestPromotion.getName());
             sale.setDiscountAmount(discount);
             sale.setTotalAmount(originalTotal - discount);
+        }
+
+        if (warrantyService != null) {
+            for (Product product : products) {
+                if (product instanceof Console) {
+                    warrantyService.assignBasicWarranty(product, sale, sale.getDate());
+                }
+                if (productIdsWithExtendedWarranty != null
+                        && productIdsWithExtendedWarranty.contains(product.getId())) {
+                    ExtendedWarranty extended = warrantyService.assignExtendedWarranty(product, sale, sale.getDate());
+                    sale.setTotalAmount(sale.getTotalAmount() + extended.getAdditionalCost());
+                }
+            }
         }
 
         for (Product product : products) {
