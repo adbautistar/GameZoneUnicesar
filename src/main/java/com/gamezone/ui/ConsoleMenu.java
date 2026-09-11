@@ -4,12 +4,14 @@ import com.gamezone.model.Accessory;
 import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
+import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
+import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 
 import java.time.LocalDate;
@@ -28,6 +30,7 @@ public class ConsoleMenu {
     private final SaleService saleService;
     private final AccessoryService accessoryService;
     private final PromotionService promotionService;
+    private final ReturnService returnService;
     private final Scanner scanner;
 
     /**
@@ -38,14 +41,17 @@ public class ConsoleMenu {
      * @param saleService      the service used for sale operations
      * @param accessoryService the service used for accessory operations
      * @param promotionService the service used for promotion operations
+     * @param returnService    the service used for return operations
      */
     public ConsoleMenu(ProductService productService, PersonService personService, SaleService saleService,
-                        AccessoryService accessoryService, PromotionService promotionService) {
+                        AccessoryService accessoryService, PromotionService promotionService,
+                        ReturnService returnService) {
         this.productService = productService;
         this.personService = personService;
         this.saleService = saleService;
         this.accessoryService = accessoryService;
         this.promotionService = promotionService;
+        this.returnService = returnService;
         this.scanner = new Scanner(System.in);
     }
 
@@ -62,6 +68,8 @@ public class ConsoleMenu {
             System.out.println("3. Gestion de ventas");
             System.out.println("4. Gestion de accesorios");
             System.out.println("5. Gestion de promociones");
+            System.out.println("6. Gestion de devoluciones");
+            System.out.println("7. Consultar balance mensual");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
             String option = scanner.nextLine().trim();
@@ -80,6 +88,12 @@ public class ConsoleMenu {
                     break;
                 case "5":
                     showPromotionMenu();
+                    break;
+                case "6":
+                    showReturnMenu();
+                    break;
+                case "7":
+                    showMonthlyBalance();
                     break;
                 case "0":
                     running = false;
@@ -621,6 +635,90 @@ public class ConsoleMenu {
         for (Promotion promotion : promotions) {
             System.out.println(promotion.getId() + " - " + promotion.getName()
                 + " (" + promotion.getStartDate() + " a " + promotion.getEndDate() + ")");
+        }
+    }
+
+    private void showReturnMenu() {
+        boolean back = false;
+        while (!back) {
+            System.out.println();
+            System.out.println("----- Gestion de devoluciones -----");
+            System.out.println("1. Registrar una nueva devolucion");
+            System.out.println("2. Ver todas las devoluciones");
+            System.out.println("3. Ver devoluciones por cliente");
+            System.out.println("4. Ver devoluciones por venta");
+            System.out.println("0. Volver al menu principal");
+            System.out.print("Seleccione una opcion: ");
+            String option = scanner.nextLine().trim();
+            switch (option) {
+                case "1":
+                    registerReturn();
+                    break;
+                case "2":
+                    viewAllReturns();
+                    break;
+                case "3":
+                    viewReturnsByCustomer();
+                    break;
+                case "4":
+                    viewReturnsBySale();
+                    break;
+                case "0":
+                    back = true;
+                    break;
+                default:
+                    System.out.println("Opcion invalida.");
+            }
+        }
+    }
+
+    private void viewAllReturns() {
+        List<Return> returns = returnService.viewAllReturns();
+        if (returns.isEmpty()) {
+            System.out.println("No hay devoluciones registradas.");
+            return;
+        }
+        for (Return returnItem : returns) {
+            System.out.println(returnItem.generateReturnReceipt());
+        }
+    }
+
+    private void viewReturnsByCustomer() {
+        System.out.print("ID del cliente: ");
+        String customerId = scanner.nextLine().trim();
+        List<Return> returns = returnService.viewReturnsByCustomer(customerId);
+        if (returns.isEmpty()) {
+            System.out.println("Este cliente no tiene devoluciones registradas.");
+            return;
+        }
+        for (Return returnItem : returns) {
+            System.out.println(returnItem.generateReturnReceipt());
+        }
+    }
+
+    private void viewReturnsBySale() {
+        System.out.print("ID de la venta: ");
+        String saleId = scanner.nextLine().trim();
+        List<Return> returns = returnService.viewReturnsBySale(saleId);
+        if (returns.isEmpty()) {
+            System.out.println("Esta venta no tiene devoluciones registradas.");
+            return;
+        }
+        for (Return returnItem : returns) {
+            System.out.println(returnItem.generateReturnReceipt());
+        }
+    }
+
+    private void showMonthlyBalance() {
+        try {
+            System.out.print("Mes (1-12): ");
+            int month = Integer.parseInt(scanner.nextLine().trim());
+            System.out.print("Anio (yyyy): ");
+            int year = Integer.parseInt(scanner.nextLine().trim());
+            double balance = returnService.generateMonthlyBalance(month, year);
+            System.out.println("Balance del mes " + month + "/" + year + ": $" + String.format("%.2f", balance));
+        } catch (RuntimeException e) {
+            System.out.println("Error al consultar el balance: " + e.getMessage());
         }
     }
 }
