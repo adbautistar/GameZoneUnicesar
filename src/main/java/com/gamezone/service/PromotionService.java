@@ -4,10 +4,12 @@ import com.gamezone.model.BulkPurchaseDiscount;
 import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.PercentageDiscount;
 import com.gamezone.model.Promotion;
+import com.gamezone.model.Sale;
 import com.gamezone.persistence.PromotionRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PromotionService {
@@ -54,5 +56,42 @@ public class PromotionService {
         if (endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("La fecha de fin no puede ser anterior a la fecha de inicio.");
         }
+    }
+
+    public List<Promotion> listAllPromotions() {
+        return Collections.unmodifiableList(promotions);
+    }
+
+    public List<Promotion> listActivePromotions() {
+        List<Promotion> active = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (Promotion promotion : promotions) {
+            if (promotion.isActive(today)) {
+                active.add(promotion);
+            }
+        }
+        return active;
+    }
+
+    public Promotion findBestPromotionFor(Sale sale) {
+        Promotion best = null;
+        double bestDiscount = 0.0;
+        for (Promotion promotion : listActivePromotions()) {
+            double discount = promotion.calculateDiscount(sale);
+            if (discount > bestDiscount) {
+                best = promotion;
+                bestDiscount = discount;
+            }
+        }
+        return best;
+    }
+
+    public Promotion findById(String id) {
+        for (Promotion promotion : promotions) {
+            if (promotion.getId().equals(id)) {
+                return promotion;
+            }
+        }
+        return null;
     }
 }
