@@ -101,4 +101,15 @@ public abstract class Warranty {
      * @return the additional cost, or 0.0 if this warranty type has none
      */
     public abstract double getAdditionalCost();
+
+    /**
+     * Checks whether this warranty is active on the given date.
+     *
+     * @param date the date to check
+     * @return {@code true} if the date falls within the warranty's vigency,
+     *         inclusive of both start and end dates
+     */
+    public boolean isActive(LocalDate date) {
+        return !date.isBefore(startDate) && !date.isAfter(endDate);
+    }
 }
