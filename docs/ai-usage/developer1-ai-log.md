@@ -86,3 +86,37 @@ ejecuta la fase 10
 
 **Solution obtained and decision taken:**
 Followed the exact constructor pattern from VideoGame/Console: each subclass's constructor takes the shared Product/Accessory parameters plus its own specific ones, calling super(...) first. getDescription() in each subclass reuses getId()/getTitle()/getPrice() from the inherited hierarchy and appends its own fields (connection type for Controller; length and connector for Cable; capacity and type for Memory), plus the inherited compatible-console list, so all three read consistently with each other and with the existing product descriptions.
+
+### Entry 6
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Design the Promotion hierarchy so three unrelated discount strategies (flat percentage, category-restricted, bulk-quantity-gated) share one polymorphic contract that SaleService can evaluate without knowing which strategy it is calling.
+
+**Problem faced:**
+Each promotion type computes its discount from a different subset of the sale's data — the whole total, only certain products by category, or nothing at all unless a quantity threshold is met — but SaleService (Task Group C) needs to compare all of them uniformly to pick the best one, so every subclass has to return a plain currency amount from the same method signature.
+
+**Prompt used:**
+ejecuta la fase 11
+
+**Solution obtained and decision taken:**
+Declared Promotion as an abstract class holding id/name/startDate/endDate with a concrete isActive(LocalDate) vigency check, and one abstract calculateDiscount(Sale) method that every subclass implements independently: PercentageDiscount multiplies the sale's full total; CategoryDiscount filters sale.getProducts() with instanceof VideoGame/Console before summing and discounting only the matching subtotal; BulkPurchaseDiscount checks sale.getProducts().size() against a minimum before applying its percentage, returning 0.0 otherwise. Because all three return a plain double regardless of strategy, PromotionService.findBestPromotionFor (Task Group B) can iterate over any list of Promotion and compare calculateDiscount(sale) results directly.
+
+### Entry 7
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide how to store and display a promotion's effect on Sale without touching the existing calculateTotal()/generateReceipt() contract that SaleRepository, ConsoleMenu, and earlier phases already depend on.
+
+**Problem faced:**
+Sale had no way to record that a discount was applied, and no setter for totalAmount at all — but the discount needs to be visible both in memory (for SaleService to apply it) and in the printed receipt, and Sale's existing constructor and calculateTotal() are used throughout the codebase and were off-limits per this phase's additive-only constraint.
+
+**Prompt used:**
+ejecuta la fase 11
+
+**Solution obtained and decision taken:**
+Added appliedPromotionName and discountAmount as new fields with plain getters/setters (defaulting to null/0.0, exactly like every other field added additively in this project), plus a setTotalAmount(double) setter Sale never had before, so Task Group C can overwrite the already-calculated total with (total - discount) instead of Sale needing to know about promotions itself. generateReceipt() now branches: when a promotion was applied (appliedPromotionName != null and discountAmount > 0) it prints a Subtotal/Descuento/Total final breakdown instead of the single Total line, computing the subtotal as totalAmount + discountAmount rather than storing it separately, so there is only one source of truth for the post-discount total.
