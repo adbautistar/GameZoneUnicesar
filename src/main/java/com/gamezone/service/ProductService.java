@@ -103,4 +103,23 @@ public class ProductService {
         }
         return null;
     }
+
+    /**
+     * Restores stock to the product with the given id, if found, and
+     * persists the change. Semantically equivalent to
+     * {@link #updateStock(String, int)} with a positive quantity, kept as a
+     * separate method so return-registration call sites read clearly.
+     *
+     * @param productId the id of the product to restore stock to
+     * @param quantity  the amount to add back to the current stock
+     * @throws IllegalArgumentException if no product with the given id exists
+     */
+    public void restoreStock(String productId, int quantity) {
+        Product product = findById(productId);
+        if (product == null) {
+            throw new IllegalArgumentException("Producto no encontrado.");
+        }
+        product.updateStock(quantity);
+        repository.saveAll(products);
+    }
 }
