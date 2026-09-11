@@ -4,6 +4,7 @@ import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 
@@ -20,8 +21,9 @@ import java.util.List;
 
 /**
  * Handles file-based persistence of {@link Sale} instances as CSV records in
- * {@code data/sales.csv}, resolving customer, seller, and product references
- * through the injected {@link ProductService} and {@link PersonService}.
+ * {@code data/sales.csv}, resolving customer, seller, product, and accessory
+ * references through the injected {@link ProductService}, {@link PersonService},
+ * and {@link AccessoryService}.
  */
 public class SaleRepository {
 
@@ -29,17 +31,21 @@ public class SaleRepository {
 
     private final ProductService productService;
     private final PersonService personService;
+    private final AccessoryService accessoryService;
 
     /**
      * Creates a new repository that resolves sale references through the
      * given services.
      *
-     * @param productService the service used to resolve product references
-     * @param personService  the service used to resolve customer and seller references
+     * @param productService   the service used to resolve product references
+     * @param personService    the service used to resolve customer and seller references
+     * @param accessoryService the service used to resolve accessory references
      */
-    public SaleRepository(ProductService productService, PersonService personService) {
+    public SaleRepository(ProductService productService, PersonService personService,
+                           AccessoryService accessoryService) {
         this.productService = productService;
         this.personService = personService;
+        this.accessoryService = accessoryService;
     }
 
     /**
@@ -121,7 +127,10 @@ public class SaleRepository {
         for (String productId : productIds) {
             Product product = productService.findById(productId);
             if (product == null) {
-                throw new RuntimeException("Failed to resolve product " + productId + " for sale " + id);
+                product = accessoryService.findById(productId);
+            }
+            if (product == null) {
+                throw new RuntimeException("Failed to resolve product or accessory " + productId + " for sale " + id);
             }
             products.add(product);
         }
