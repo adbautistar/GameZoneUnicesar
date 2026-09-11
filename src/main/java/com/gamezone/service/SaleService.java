@@ -1,5 +1,6 @@
 package com.gamezone.service;
 
+import com.gamezone.model.Accessory;
 import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
@@ -22,20 +23,24 @@ public class SaleService {
     private final SaleRepository repository;
     private final ProductService productService;
     private final PersonService personService;
+    private final AccessoryService accessoryService;
     private final List<Sale> sales;
 
     /**
      * Creates a new service backed by the given repository and collaborating
      * services, loading the current sales history into memory.
      *
-     * @param repository     the repository used to persist and load sales
-     * @param productService the service used to resolve and update products
-     * @param personService  the service used to resolve customers and sellers
+     * @param repository       the repository used to persist and load sales
+     * @param productService   the service used to resolve and update products
+     * @param personService    the service used to resolve customers and sellers
+     * @param accessoryService the service used to resolve and update accessories
      */
-    public SaleService(SaleRepository repository, ProductService productService, PersonService personService) {
+    public SaleService(SaleRepository repository, ProductService productService, PersonService personService,
+                        AccessoryService accessoryService) {
         this.repository = repository;
         this.productService = productService;
         this.personService = personService;
+        this.accessoryService = accessoryService;
         this.sales = new ArrayList<>(repository.loadAll());
     }
 
@@ -73,9 +78,17 @@ public class SaleService {
         for (String productId : productIds) {
             Product product = productService.findById(productId);
             if (product == null) {
-                throw new IllegalArgumentException("Producto no encontrado: " + productId);
+                product = accessoryService.findById(productId);
+            }
+            if (product == null) {
+                throw new IllegalArgumentException("Producto o accesorio no encontrado: " + productId);
             }
             products.add(product);
+        }
+
+        Map<String, Product> resolvedItems = new HashMap<>();
+        for (Product product : products) {
+            resolvedItems.put(product.getId(), product);
         }
 
         Map<String, Integer> requestedQuantities = new HashMap<>();
@@ -83,7 +96,7 @@ public class SaleService {
             requestedQuantities.merge(product.getId(), 1, Integer::sum);
         }
         for (Map.Entry<String, Integer> entry : requestedQuantities.entrySet()) {
-            Product product = productService.findById(entry.getKey());
+            Product product = resolvedItems.get(entry.getKey());
             if (product.getStock() < entry.getValue()) {
                 throw new IllegalArgumentException(
                     "Stock insuficiente para el producto: " + product.getTitle());
@@ -95,7 +108,11 @@ public class SaleService {
         sale.calculateTotal();
 
         for (Product product : products) {
-            productService.updateStock(product.getId(), -1);
+            if (product instanceof Accessory) {
+                accessoryService.updateStock(product.getId(), -1);
+            } else {
+                productService.updateStock(product.getId(), -1);
+            }
         }
 
         sales.add(sale);

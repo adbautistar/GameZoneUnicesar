@@ -52,3 +52,37 @@ ejecuta la fase 6
 
 **Solution obtained and decision taken:**
 Created data/sellers.csv directly with the three specified rows (S001-S003), written as plain "Manana" instead of "Mañana" to avoid encoding issues in the CSV, as instructed. Added findCustomerById(String) and findSellerById(String) to PersonService, mirroring ProductService.findById, so SaleService can resolve both participants of a sale by id in Phase 7 using the same lookup convention already established in the product module.
+
+### Entry 4
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Design AccessoryRepository's CSV format and reconstruction logic so it stays self-contained, unlike SaleRepository which needs other services to resolve references.
+
+**Problem faced:**
+Accessory has one attribute ProductRepository's CSV format has no equivalent for: compatibleConsoleIds, a list rather than a scalar field, which needs to survive a round trip through a single CSV column without colliding with the comma used as the field separator.
+
+**Prompt used:**
+ejecuta la fase 10
+
+**Solution obtained and decision taken:**
+Reused the exact discriminator-column pattern from ProductRepository (CONTROLLER/CABLE/MEMORY as the first field, followed by the shared Product columns, then type-specific ones), and serialized compatibleConsoleIds as a single pipe-separated column (e.g., "CN001|CN002"), parsed back with String.split("\\|") and defaulting to an empty list when the field is blank. Unlike SaleRepository, AccessoryRepository needs no constructor dependencies on other services — every field it needs to reconstruct a Controller, Cable, or Memory lives in its own CSV row, so it stays a simple, self-contained repository.
+
+### Entry 5
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide how AccessoryService should expose lookup, filtering, and stock operations so Task Group C (SaleService integration) can treat accessories the same way it already treats products.
+
+**Problem faced:**
+SaleService's registerSale needed to resolve a sale item id against either ProductService or AccessoryService and, on the stock-update side, dispatch to whichever service actually owns that item — this only works cleanly if AccessoryService mirrors ProductService's findById(String) and updateStock(String, int) signatures exactly.
+
+**Prompt used:**
+ejecuta la fase 10
+
+**Solution obtained and decision taken:**
+Gave AccessoryService the same method shapes as ProductService: findById(String) returning null when not found (not throwing), and updateStock(String, int) that looks the accessory up, delegates to its inherited Product.updateStock(int), and persists — identical contract to ProductService.updateStock, so Task Group C's dispatch logic in SaleService can call either service the same way once an item's source service is known. listAccessoriesByType(String) uses instanceof against the three concrete subclasses rather than a stored type field, keeping the discriminator logic in one place (the repository) instead of duplicating it in the model.
