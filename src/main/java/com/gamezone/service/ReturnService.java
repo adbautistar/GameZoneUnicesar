@@ -92,4 +92,22 @@ public class ReturnService {
         }
         return result;
     }
+
+    public double generateMonthlyBalance(int month, int year) {
+        double totalSales = 0.0;
+        for (Sale sale : saleService.viewAllSales()) {
+            if (sale.getDate().getMonthValue() == month && sale.getDate().getYear() == year) {
+                totalSales += sale.getTotalAmount();
+            }
+        }
+
+        double totalReturns = 0.0;
+        for (Return returnItem : returns) {
+            if (returnItem.getDate().getMonthValue() == month && returnItem.getDate().getYear() == year) {
+                totalReturns += returnItem.getRefundAmount();
+            }
+        }
+
+        return totalSales - totalReturns;
+    }
 }
