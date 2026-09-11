@@ -22,20 +22,24 @@ public class SaleService {
     private final SaleRepository repository;
     private final ProductService productService;
     private final PersonService personService;
+    private final AccessoryService accessoryService;
     private final List<Sale> sales;
 
     /**
      * Creates a new service backed by the given repository and collaborating
      * services, loading the current sales history into memory.
      *
-     * @param repository     the repository used to persist and load sales
-     * @param productService the service used to resolve and update products
-     * @param personService  the service used to resolve customers and sellers
+     * @param repository       the repository used to persist and load sales
+     * @param productService   the service used to resolve and update products
+     * @param personService    the service used to resolve customers and sellers
+     * @param accessoryService the service used to resolve and update accessories
      */
-    public SaleService(SaleRepository repository, ProductService productService, PersonService personService) {
+    public SaleService(SaleRepository repository, ProductService productService, PersonService personService,
+                        AccessoryService accessoryService) {
         this.repository = repository;
         this.productService = productService;
         this.personService = personService;
+        this.accessoryService = accessoryService;
         this.sales = new ArrayList<>(repository.loadAll());
     }
 
@@ -73,7 +77,10 @@ public class SaleService {
         for (String productId : productIds) {
             Product product = productService.findById(productId);
             if (product == null) {
-                throw new IllegalArgumentException("Producto no encontrado: " + productId);
+                product = accessoryService.findById(productId);
+            }
+            if (product == null) {
+                throw new IllegalArgumentException("Producto o accesorio no encontrado: " + productId);
             }
             products.add(product);
         }
