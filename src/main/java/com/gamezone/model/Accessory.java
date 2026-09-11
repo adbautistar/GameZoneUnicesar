@@ -42,4 +42,23 @@ public abstract class Accessory extends Product {
     public void setCompatibleConsoleIds(List<String> compatibleConsoleIds) {
         this.compatibleConsoleIds = compatibleConsoleIds;
     }
+
+    /**
+     * Adds a console id to the list of consoles this accessory is compatible with.
+     *
+     * @param consoleId the console id to add
+     */
+    public void addCompatibleConsole(String consoleId) {
+        compatibleConsoleIds.add(consoleId);
+    }
+
+    /**
+     * Checks whether this accessory is compatible with the given console.
+     *
+     * @param consoleId the console id to check
+     * @return {@code true} if the console id is in the compatibility list
+     */
+    public boolean isCompatibleWith(String consoleId) {
+        return compatibleConsoleIds.contains(consoleId);
+    }
 }
