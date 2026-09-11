@@ -62,6 +62,17 @@ New menu operations (option 4 — Gestion de accesorios):
 5. Listar accesorios por tipo
 6. Consultar accesorios compatibles con una consola
 
+### Promotion Module (v1.2.0)
+
+Adds `Promotion` (abstract) with three concrete discount strategies — `PercentageDiscount` (flat percentage of the total), `CategoryDiscount` (percentage restricted to video games or consoles), and `BulkPurchaseDiscount` (percentage granted only above a minimum item count). Promotions have their own catalog (`PromotionRepository`/`PromotionService`, backed by `data/promotions.csv`, preloaded with 3 entries). When registering a sale, the system automatically finds and applies the single best active promotion (the one yielding the largest discount) — no manual selection is needed. Discount details (subtotal, promotion name, discount amount, final total) appear in the sale receipt whenever a promotion was applied.
+
+New menu operations (option 5 — Gestion de promociones):
+1. Registrar una nueva promocion por porcentaje
+2. Registrar una nueva promocion por categoria
+3. Registrar una nueva promocion por volumen
+4. Listar todas las promociones
+5. Listar promociones vigentes
+
 ## Repository Structure
 
 ```
