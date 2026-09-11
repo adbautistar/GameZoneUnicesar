@@ -46,6 +46,22 @@ mvn exec:java "-Dexec.mainClass=com.gamezone.Main"
 
 Data files under `data/` are created and updated automatically. The file `data/sellers.csv` is preloaded with 3 sellers.
 
+## Extended Modules
+
+Beyond the 10 baseline operations, the system has been extended additively with new modules. Each one is documented in its own `fase-1X-*.md` specification (not tracked in git) and summarized in [CLAUDE.md](CLAUDE.md#class-inventory-35-classes-total-15-baseline--20-from-extended-modules).
+
+### Accessory Module (v1.1.0)
+
+Adds `Accessory` (abstract, extends `Product`) with three concrete types — `Controller`, `Cable`, and `Memory` — each tracking which consoles it is compatible with. Accessories have their own catalog (`AccessoryRepository`/`AccessoryService`, backed by `data/accessories.csv`, preloaded with 3 entries) and can be included in a sale alongside regular products: when registering a sale, product and accessory ids can be entered interchangeably.
+
+New menu operations (option 4 — Gestion de accesorios):
+1. Registrar un nuevo control
+2. Registrar un nuevo cable
+3. Registrar una nueva memoria
+4. Listar todos los accesorios
+5. Listar accesorios por tipo
+6. Consultar accesorios compatibles con una consola
+
 ## Repository Structure
 
 ```
