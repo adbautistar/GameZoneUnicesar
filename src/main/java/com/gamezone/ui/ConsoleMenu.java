@@ -672,6 +672,35 @@ public class ConsoleMenu {
         }
     }
 
+    private void registerReturn() {
+        try {
+            System.out.print("ID de la venta: ");
+            String saleId = scanner.nextLine().trim();
+            Sale sale = saleService.findById(saleId);
+            if (sale == null) {
+                System.out.println("Venta no encontrada.");
+                return;
+            }
+            System.out.println("Productos de la venta:");
+            for (Product product : sale.getProducts()) {
+                System.out.println("  " + product.getId() + " - " + product.getTitle());
+            }
+            System.out.print("IDs de productos a devolver (separados por coma): ");
+            String[] productIdsInput = scanner.nextLine().trim().split(",");
+            List<String> productIds = new ArrayList<>();
+            for (String productId : productIdsInput) {
+                productIds.add(productId.trim());
+            }
+            System.out.print("Motivo: ");
+            String reason = scanner.nextLine().trim();
+            Return returnItem = returnService.registerReturn(saleId, productIds, reason);
+            System.out.println("Devolucion registrada exitosamente.");
+            System.out.println(returnItem.generateReturnReceipt());
+        } catch (RuntimeException e) {
+            System.out.println("Error al registrar la devolucion: " + e.getMessage());
+        }
+    }
+
     private void viewAllReturns() {
         List<Return> returns = returnService.viewAllReturns();
         if (returns.isEmpty()) {
