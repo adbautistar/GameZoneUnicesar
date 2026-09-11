@@ -222,3 +222,37 @@ ejecuta la fase 12
 
 **Solution obtained and decision taken:**
 registerReturn() first resolves the sale via saleService.findById and prints each of its products (id and title) before prompting for a comma-separated list of ids to return, so the user is choosing from a visible list rather than guessing ids blind. All the actual validation (sale exists, within 30 days, products belong to the sale) still happens inside ReturnService.registerReturn — the UI layer only handles input/display and wraps the call in the same try/catch(RuntimeException) pattern used everywhere else. Added main menu options 6 (devoluciones) and 7 (balance mensual) as two separate top-level entries rather than nesting the balance report inside the return submenu, since a monthly balance is a report over both sales and returns together, not strictly a return-only operation.
+
+### Entry 14
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Resolve a genuine circular dependency found during pre-execution review of fase-13: adding WarrantyService as a SaleService constructor parameter, as the phase document literally specified, would have made SaleService, WarrantyService, and WarrantyRepository each depend on the next in a closed loop.
+
+**Problem faced:**
+WarrantyRepository's constructor (Task Group B, matching the same pattern already used by SaleRepository and ReturnRepository) takes SaleService to resolve sale references on load. If SaleService's own constructor also took WarrantyService, the dependency graph would be SaleService -> WarrantyService -> WarrantyRepository -> SaleService — a cycle with no valid construction order in Java, since every constructor in the cycle would need an instance of another type in the same cycle to already exist first.
+
+**Prompt used:**
+ejecuta la fase 13
+
+**Solution obtained and decision taken:**
+Broke the cycle with setter injection on exactly one edge: SaleService's constructor is completely unchanged (still takes repository/productService/personService/accessoryService/promotionService, none of them WarrantyService), and a new non-final warrantyService field is populated later via a public setWarrantyService(WarrantyService) method. This lets Main wire things in a valid order — construct SaleService first (as it already did), then WarrantyRepository and WarrantyService (which can now safely take the fully-constructed SaleService), then call saleService.setWarrantyService(warrantyService) before consoleMenu.start() runs. The warranty-assignment block in registerSale is guarded with a null check on warrantyService as a defensive fallback in case the setter is ever skipped. This is the first genuine circular dependency across the four extended modules (Accessory and Promotion needed no cross-service dependency at all; Return's ReturnRepository depends on SaleService but nothing depends back on ReturnService) — worth watching for again if any future module both consumes and is consumed by SaleService.
+
+### Entry 15
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Extend registerSale's signature and the sale-registration UI flow to support per-console extended-warranty opt-in, and decide the order of operations relative to the existing promotion discount.
+
+**Problem faced:**
+registerSale needed a fourth parameter (the ids opted into extended warranty) without breaking its only call site, and the UI needed to ask about extended warranty per console before the sale is actually registered — while the console itself is only knowable by resolving each entered id against ProductService, something ConsoleMenu had never needed to do mid-flow before (every other prompt just collected raw ids and let the service layer resolve them).
+
+**Prompt used:**
+ejecuta la fase 13
+
+**Solution obtained and decision taken:**
+Extended registerSale directly (no overload) since ConsoleMenu was the only caller and was being updated in this same phase anyway — no need to carry a redundant 3-argument version. Inside registerSale, the warranty-assignment block runs after the promotion block and before the stock-decrement loop, exactly as specified: every Console in the sale gets an automatic BasicWarranty regardless of opt-in, and an opted-in Console additionally gets an ExtendedWarranty whose getAdditionalCost() is added on top of the (possibly already-discounted) total via the same setTotalAmount setter Phase 11 introduced — so a console bought during an active promotion still receives its full 10% extended-warranty surcharge on top of the discounted price, not on the original price. In ConsoleMenu, registerSale() now resolves each entered id via productService.findById mid-flow specifically to detect which ones are consoles, prompting "S/N" for each before the sale is registered, then confirming the automatic basic-warranty assignment per console after registration succeeds (not before), so the confirmation message is never printed for a sale that ultimately failed validation.
