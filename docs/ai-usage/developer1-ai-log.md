@@ -154,3 +154,37 @@ ejecuta la fase 12
 
 **Solution obtained and decision taken:**
 Added canBeReturned() directly to Sale rather than to Return or ReturnService, since it only depends on data Sale already owns (its own date) and reads naturally as a question the sale answers about itself — the same reasoning already used for calculateTotal() and generateReceipt(). Implemented it with ChronoUnit.DAYS.between(date, LocalDate.now()) <= 30 exactly as specified, which counts whole calendar days between the sale date and today and treats day 30 itself as still eligible (<=, not <).
+
+### Entry 10
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide whether it is safe for Warranty's constructor to call an overridable abstract method (getDurationInMonths()) to derive endDate, since calling an overridable method from a constructor is normally a well-known Java anti-pattern.
+
+**Problem faced:**
+endDate needs to be derived from startDate plus a duration that differs per concrete warranty type, and the natural place to compute it is the constructor (matching how the phase spec wants endDate to never have its own setter, since it is fully derived) — but invoking an overridden method before a subclass's own fields are initialized can read uninitialized state if that method depends on such fields.
+
+**Prompt used:**
+ejecuta la fase 13
+
+**Solution obtained and decision taken:**
+Kept the constructor calling getDurationInMonths() as specified, because both BasicWarranty and ExtendedWarranty return hard-coded literal constants (6 and 12) that depend on no instance field at all — there is no uninitialized-state hazard here, unlike the general case the anti-pattern warns about. getAdditionalCost() was deliberately NOT called from the constructor, since ExtendedWarranty's implementation depends on getProduct().getPrice() — by the time anything calls getAdditionalCost() externally (Task Group C, after the warranty is fully constructed), product is already assigned, so this stays safe without needing to special-case it in the constructor at all.
+
+### Entry 11
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide getWarrantyType() and getAdditionalCost() as separate abstract methods rather than folding both into generateWarrantyCertificate() directly, and confirm Warranty needs no setter for endDate.
+
+**Problem faced:**
+generateWarrantyCertificate() (added in the next commit, concrete on the base class) needs to print both a human-readable type label and a cost that differ per subclass, and the phase spec is explicit that endDate has no setter at all — only getDurationInMonths() derives it, so any future change to a warranty's endDate would have to go through re-deriving it, not a direct mutation.
+
+**Prompt used:**
+ejecuta la fase 13
+
+**Solution obtained and decision taken:**
+Kept getWarrantyType() and getAdditionalCost() as their own abstract methods (alongside getDurationInMonths()) rather than making generateWarrantyCertificate() itself abstract, so the certificate format stays defined once on Warranty and only the three small polymorphic facts vary per subclass — the same "template method"-style split already used by Product.getDescription() versus VideoGame/Console's specific fields. No setter was added for endDate or startDate, matching Return's precedent from Phase 12 of leaving immutable-reference fields getter-only.
