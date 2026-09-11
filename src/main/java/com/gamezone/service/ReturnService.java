@@ -8,6 +8,7 @@ import com.gamezone.persistence.ReturnRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ReturnService {
@@ -66,5 +67,29 @@ public class ReturnService {
         repository.saveAll(returns);
 
         return newReturn;
+    }
+
+    public List<Return> viewAllReturns() {
+        return Collections.unmodifiableList(returns);
+    }
+
+    public List<Return> viewReturnsByCustomer(String customerId) {
+        List<Return> result = new ArrayList<>();
+        for (Return returnItem : returns) {
+            if (returnItem.getOriginalSale().getCustomer().getId().equals(customerId)) {
+                result.add(returnItem);
+            }
+        }
+        return result;
+    }
+
+    public List<Return> viewReturnsBySale(String saleId) {
+        List<Return> result = new ArrayList<>();
+        for (Return returnItem : returns) {
+            if (returnItem.getOriginalSale().getId().equals(saleId)) {
+                result.add(returnItem);
+            }
+        }
+        return result;
     }
 }
