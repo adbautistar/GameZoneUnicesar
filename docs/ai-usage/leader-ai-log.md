@@ -103,3 +103,37 @@ ejecuta la fase 8
 
 **Solution obtained and decision taken:**
 Deleted data/products.csv, data/customers.csv, and data/sales.csv (data/sellers.csv kept), ran `mvn clean compile` (BUILD SUCCESS), then executed the 10 mandatory operations in order via a scripted `mvn exec:java` session using the example data from the phase document (VG001 "The Legend of Zelda", CN001 "Nintendo Switch OLED", customer C001 "Juan Rodriguez", seller S001). All 10 operations passed on the first attempt, so no hotfix commits were needed. Restarted the application and re-ran options 3, 5, 6, and 8: products, customers, sellers, and the sale history all persisted correctly, with VG001 and CN001 stock each reduced by exactly 1 (5→4 and 3→2) as expected. The test-generated CSV files were deleted again afterward, since they are local runtime artifacts, not deliverables, matching the same cleanup done in Phase 7.
+
+### Entry 7
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Integrate the Accessory module (Task Groups A and B, already merged into this branch) into SaleService so a sale can include accessories alongside products, without changing registerSale's public parameter types.
+
+**Problem faced:**
+During the pre-execution review of fase-10-modulo-accesorios.md, found that the existing stock-validation loop in registerSale re-queried `productService.findById(id)` a second time by id to read stock — that lookup returns null (and NPEs) for an accessory id, since accessories live in a separate AccessoryService/AccessoryRepository, not ProductService's catalog.
+
+**Prompt used:**
+ejecuta la fase 10
+
+**Solution obtained and decision taken:**
+Added an AccessoryService dependency to SaleService's constructor. Item resolution now tries productService.findById first, falling back to accessoryService.findById, matching the existing IS-A relationship (Accessory extends Product, so it fits directly into the existing List<Product> products field — no change needed in Sale). Fixed the stock-validation bug by building a Map<String, Product> from the already-resolved items during the resolution loop, and reading stock from that map instead of re-querying either service by id; the stock-update loop dispatches to accessoryService.updateStock or productService.updateStock based on an instanceof Accessory check. Wired the new dependency through Main and ConsoleMenu in the following commits.
+
+### Entry 8
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Design the accessory submenu and the sale-registration flow change so accessory ids and product ids can be entered interchangeably without confusing the user about which catalog an id belongs to.
+
+**Problem faced:**
+ConsoleMenu's registerSale flow only ever prompted for "product ids"; once accessories can also appear in a sale, the prompt text needed to make clear that either kind of id is accepted, and the new accessory submenu needed to mirror the product submenu's structure (register-by-type, list-all, list-filtered) plus one accessory-specific query (compatibility with a console) that has no product equivalent.
+
+**Prompt used:**
+ejecuta la fase 10
+
+**Solution obtained and decision taken:**
+Added main menu option 4 ("Gestion de accesorios") with a six-option submenu (register controller/cable/memory, list all, list by type, find compatible with a console), following the same try/catch(RuntimeException)-per-operation pattern established in Phase 7. Changed the sale-registration prompt to print "Puede ingresar identificadores de productos o accesorios." before asking for item ids, and reworded the per-item prompt from "ID del producto" to "ID del producto o accesorio", so the existing single-list input flow (which already worked, since SaleService now resolves against both catalogs) reads correctly to the user without requiring two separate input steps.
