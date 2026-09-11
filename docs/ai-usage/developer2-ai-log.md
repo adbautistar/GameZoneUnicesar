@@ -154,3 +154,37 @@ ejecuta la fase 12
 
 **Solution obtained and decision taken:**
 registerReturn validates in order — sale exists, sale.canBeReturned() (the 30-day rule from Task Group A), then each requested product id is matched against sale.getProducts() by id, throwing a Spanish IllegalArgumentException naming the offending id on the first failure — before any Return is constructed or any stock is touched. Stock restoration mirrors SaleService's dispatch pattern exactly (instanceof Accessory routes to accessoryService.updateStock(id, +1), everything else to productService.restoreStock(id, 1)). generateMonthlyBalance sums sale.getTotalAmount() specifically — the post-discount total already stored on Sale (Phase 11) — since that reflects what the store actually took in, not the undiscounted subtotal.
+
+### Entry 10
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide how WarrantyRepository.loadAll() should handle the stored endDate column, and whether it needs its own escape hatch for unresolvable references like ReturnRepository does.
+
+**Problem faced:**
+The CSV format stores endDate as its own column, but Warranty has no way to set endDate directly (Task Group A left it getter-only, always derived from startDate in the constructor) — so there is no method loadAll() could even call to apply a "trust the stored value" override if the derived and stored dates ever disagreed.
+
+**Prompt used:**
+ejecuta la fase 13
+
+**Solution obtained and decision taken:**
+fromCsvLine parses the endDate column but deliberately does not use it: it constructs the BasicWarranty/ExtendedWarranty from just id/product/sale/startDate, letting the constructor re-derive endDate exactly as it would have when the warranty was first created — since duration is a hard-coded constant per subtype, the derived value always matches what was stored anyway, so there is nothing to reconcile in practice. This follows the exact same recompute-on-load precedent SaleRepository set for totalAmount back in Phase 7. Reused the same graceful-skip pattern ReturnRepository introduced in Phase 12 (log to System.err and return null from fromCsvLine, rather than throwing) for both product/accessory and sale resolution failures, since a corrupted or stale warranty row is no more fatal than a corrupted return row.
+
+### Entry 11
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide id generation and the shape of assignBasicWarranty/assignExtendedWarranty, given Task Group C will call both automatically during sale registration rather than in response to a direct user action.
+
+**Problem faced:**
+Unlike every other "register" method in the codebase, which is triggered directly by a menu choice, assignBasicWarranty/assignExtendedWarranty will be called from inside SaleService.registerSale itself (Task Group C) — once automatically per console, once more only if the buyer opted in — so they needed to be simple enough to call twice in a row for the same console without any special-casing on the caller's side.
+
+**Prompt used:**
+ejecuta la fase 13
+
+**Solution obtained and decision taken:**
+Both methods follow the exact same three-line shape as every other registration method in the codebase (construct, add to the in-memory list, persist via repository.saveAll), generating ids with the same "WAR-" + System.currentTimeMillis() pattern already used for SALE-/RET- ids elsewhere. Kept them as two separate methods (rather than one method taking a type flag) so Task Group C's call sites read as plain, self-describing statements — assignBasicWarranty(...) unconditionally for every console, assignExtendedWarranty(...) only inside the opt-in branch — with no type-checking logic needed on the caller's side.
