@@ -1,5 +1,6 @@
 package com.gamezone.service;
 
+import com.gamezone.model.Accessory;
 import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
@@ -85,12 +86,17 @@ public class SaleService {
             products.add(product);
         }
 
+        Map<String, Product> resolvedItems = new HashMap<>();
+        for (Product product : products) {
+            resolvedItems.put(product.getId(), product);
+        }
+
         Map<String, Integer> requestedQuantities = new HashMap<>();
         for (Product product : products) {
             requestedQuantities.merge(product.getId(), 1, Integer::sum);
         }
         for (Map.Entry<String, Integer> entry : requestedQuantities.entrySet()) {
-            Product product = productService.findById(entry.getKey());
+            Product product = resolvedItems.get(entry.getKey());
             if (product.getStock() < entry.getValue()) {
                 throw new IllegalArgumentException(
                     "Stock insuficiente para el producto: " + product.getTitle());
@@ -102,7 +108,11 @@ public class SaleService {
         sale.calculateTotal();
 
         for (Product product : products) {
-            productService.updateStock(product.getId(), -1);
+            if (product instanceof Accessory) {
+                accessoryService.updateStock(product.getId(), -1);
+            } else {
+                productService.updateStock(product.getId(), -1);
+            }
         }
 
         sales.add(sale);
