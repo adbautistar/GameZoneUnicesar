@@ -31,7 +31,7 @@ public class Main {
             PersonService personService = new PersonService(personRepository);
             AccessoryService accessoryService = new AccessoryService(accessoryRepository);
 
-            SaleRepository saleRepository = new SaleRepository(productService, personService);
+            SaleRepository saleRepository = new SaleRepository(productService, personService, accessoryService);
             SaleService saleService = new SaleService(saleRepository, productService, personService, accessoryService);
 
             ConsoleMenu consoleMenu = new ConsoleMenu(productService, personService, saleService, accessoryService);
