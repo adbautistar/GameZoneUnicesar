@@ -175,4 +175,19 @@ public class SaleService {
         }
         return result;
     }
+
+    /**
+     * Finds a sale by its id.
+     *
+     * @param id the id to search for
+     * @return the matching sale, or {@code null} if none is found
+     */
+    public Sale findById(String id) {
+        for (Sale sale : sales) {
+            if (sale.getId().equals(id)) {
+                return sale;
+            }
+        }
+        return null;
+    }
 }

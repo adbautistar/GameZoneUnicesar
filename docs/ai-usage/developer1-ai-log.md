@@ -120,3 +120,37 @@ ejecuta la fase 11
 
 **Solution obtained and decision taken:**
 Added appliedPromotionName and discountAmount as new fields with plain getters/setters (defaulting to null/0.0, exactly like every other field added additively in this project), plus a setTotalAmount(double) setter Sale never had before, so Task Group C can overwrite the already-calculated total with (total - discount) instead of Sale needing to know about promotions itself. generateReceipt() now branches: when a promotion was applied (appliedPromotionName != null and discountAmount > 0) it prints a Subtotal/Descuento/Total final breakdown instead of the single Total line, computing the subtotal as totalAmount + discountAmount rather than storing it separately, so there is only one source of truth for the post-discount total.
+
+### Entry 8
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Design the Return class so it can compute and later recompute its own refund amount, and produce a Spanish receipt, without needing to touch Sale beyond one small addition.
+
+**Problem faced:**
+A return needed an immutable link back to the sale and the exact products being returned (which may be a subset of the sale's products, since Phase 12 supports partial returns), plus a refund amount that is naturally derived from those products but should still be independently correctable if a manual adjustment is ever needed.
+
+**Prompt used:**
+ejecuta la fase 12
+
+**Solution obtained and decision taken:**
+Made Return a concrete class (unlike Product/Person/Promotion/Warranty, it has no subtypes) with getters for every field but no setters for originalSale or date — those are immutable facts about a return, matching the "no setters for immutable relationships" convention already used in Sale. reason and refundAmount do get setters, since a refund amount might legitimately need correcting after the fact. The constructor computes refundAmount immediately by calling calculateRefundAmount() (added in the next commit and refactored into the constructor), rather than leaving it at a placeholder value the way Sale.totalAmount starts at 0.0 — a Return is only ever created once its returnedProducts list is already final, so there is no reason to defer the calculation to an external call.
+
+### Entry 9
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide the exact 30-day return-eligibility rule and where it belongs (Sale, not ReturnService), since ReturnService (Task Group B) needs to check it before allowing a return to be registered.
+
+**Problem faced:**
+The phase spec asks for a method that answers "can this sale still be returned", which is really a fact about the Sale itself (how old is it) rather than about any particular return, and needed an unambiguous day-counting rule that would not be off by one depending on how partial days are handled.
+
+**Prompt used:**
+ejecuta la fase 12
+
+**Solution obtained and decision taken:**
+Added canBeReturned() directly to Sale rather than to Return or ReturnService, since it only depends on data Sale already owns (its own date) and reads naturally as a question the sale answers about itself — the same reasoning already used for calculateTotal() and generateReceipt(). Implemented it with ChronoUnit.DAYS.between(date, LocalDate.now()) <= 30 exactly as specified, which counts whole calendar days between the sale date and today and treats day 30 itself as still eligible (<=, not <).

@@ -73,6 +73,18 @@ New menu operations (option 5 — Gestion de promociones):
 4. Listar todas las promociones
 5. Listar promociones vigentes
 
+### Return Module (v1.3.0)
+
+Adds `Return` (concrete), representing the return of one or more products from a previously registered sale. Returns are partial: a customer can return just one or a subset of the products in a multi-product sale, not necessarily the whole sale. Registering a return validates that the sale exists, that it is within 30 days of its sale date (`Sale.canBeReturned()`), and that every product being returned actually belongs to that sale — then automatically restores stock for each returned item (via `ProductService.restoreStock` or `AccessoryService.updateStock`, depending on the item's type) and computes the refund as the sum of the returned products' prices. Returns are backed by `data/returns.csv` (`ReturnRepository`/`ReturnService`), starting empty.
+
+New menu operations (option 6 — Gestion de devoluciones):
+1. Registrar una nueva devolucion
+2. Ver todas las devoluciones
+3. Ver devoluciones por cliente
+4. Ver devoluciones por venta
+
+New menu operation (option 7 — Consultar balance mensual): reports total sales minus total refunds for a given month and year.
+
 ## Repository Structure
 
 ```
