@@ -566,8 +566,12 @@ public class ConsoleMenu {
             LocalDate endDate = LocalDate.parse(scanner.nextLine().trim());
             System.out.print("Porcentaje de descuento: ");
             double percentage = Double.parseDouble(scanner.nextLine().trim());
-            System.out.print("Categoria objetivo (VIDEOGAME/CONSOLE): ");
-            String targetCategory = scanner.nextLine().trim();
+            System.out.println("Categoria objetivo:");
+            System.out.println("1. Videojuegos");
+            System.out.println("2. Consolas");
+            System.out.print("Seleccione una opcion: ");
+            String categoryOption = scanner.nextLine().trim();
+            String targetCategory = "2".equals(categoryOption) ? "CONSOLE" : "VIDEOGAME";
             promotionService.registerCategoryDiscount(id, name, startDate, endDate, percentage, targetCategory);
             System.out.println("Promocion registrada exitosamente.");
         } catch (RuntimeException e) {
