@@ -120,3 +120,37 @@ ejecuta la fase 11
 
 **Solution obtained and decision taken:**
 findBestPromotionFor iterates listActivePromotions() (itself filtering promotions by isActive(LocalDate.now())), invokes calculateDiscount(sale) polymorphically on each, and only updates the running best when a promotion's discount is strictly greater than the current best (initialized at 0.0). This means a promotion contributing exactly 0.0 never becomes "best", so the method naturally returns null both when the active list is empty and when every active promotion's condition (category match, minimum quantity) fails for this particular sale — matching the specification without a separate empty-list special case.
+
+### Entry 8
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide how ReturnRepository.loadAll() should handle a return whose sale or product references cannot be resolved, since the phase spec explicitly asks for "log error and skip" instead of the hard-failure RuntimeException every other repository in this project throws on an unresolvable reference.
+
+**Problem faced:**
+SaleRepository, PersonRepository, and the others all throw when a referenced id cannot be found, treating it as data corruption; ReturnRepository is the first repository asked to instead degrade gracefully — skip the unresolvable return (or, for a single unresolvable product within an otherwise valid return, skip just that item) and keep loading the rest of the file.
+
+**Prompt used:**
+ejecuta la fase 12
+
+**Solution obtained and decision taken:**
+fromCsvLine returns null (not an exception) when saleService.findById(saleId) fails to resolve, after printing a message to System.err; loadAll() checks for that null and simply does not add it to the result list, so one corrupted or stale return row does not stop the rest of the file from loading. Product-id resolution inside a return is handled the same way at a finer grain: a single unresolvable product (tried against productService first, then accessoryService, matching the same fallback used everywhere else) is skipped from that return's returnedProducts list rather than discarding the whole return, since the other returned products in the same row are still perfectly valid data.
+
+### Entry 9
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Design registerReturn's validation order and the stock-restoration dispatch, and decide what "total sales" means for generateMonthlyBalance now that Phase 11 added discounts.
+
+**Problem faced:**
+registerReturn has to reject a return for three distinct reasons (sale not found, sale too old, product not part of the original sale) before touching any state, and needed to route the stock restoration to whichever service actually owns each returned item (Product vs Accessory) exactly like SaleService already does for the sale-time decrement; separately, "total sales" for the monthly balance could mean the pre-discount subtotal or the actual amount the store received.
+
+**Prompt used:**
+ejecuta la fase 12
+
+**Solution obtained and decision taken:**
+registerReturn validates in order — sale exists, sale.canBeReturned() (the 30-day rule from Task Group A), then each requested product id is matched against sale.getProducts() by id, throwing a Spanish IllegalArgumentException naming the offending id on the first failure — before any Return is constructed or any stock is touched. Stock restoration mirrors SaleService's dispatch pattern exactly (instanceof Accessory routes to accessoryService.updateStock(id, +1), everything else to productService.restoreStock(id, 1)). generateMonthlyBalance sums sale.getTotalAmount() specifically — the post-discount total already stored on Sale (Phase 11) — since that reflects what the store actually took in, not the undiscounted subtotal.

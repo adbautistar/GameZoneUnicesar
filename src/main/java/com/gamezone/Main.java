@@ -4,11 +4,13 @@ import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
+import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.ui.ConsoleMenu;
 
@@ -39,8 +41,12 @@ public class Main {
             SaleService saleService = new SaleService(saleRepository, productService, personService,
                 accessoryService, promotionService);
 
+            ReturnRepository returnRepository = new ReturnRepository(saleService, productService, accessoryService);
+            ReturnService returnService = new ReturnService(returnRepository, saleService, productService,
+                accessoryService);
+
             ConsoleMenu consoleMenu = new ConsoleMenu(productService, personService, saleService, accessoryService,
-                promotionService);
+                promotionService, returnService);
             consoleMenu.start();
         } catch (RuntimeException e) {
             System.err.println("Error fatal: " + e.getMessage());

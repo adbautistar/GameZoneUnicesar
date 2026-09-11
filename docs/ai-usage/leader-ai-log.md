@@ -188,3 +188,37 @@ ejecuta la fase 11
 
 **Solution obtained and decision taken:**
 Extended the sales.csv format with two trailing columns (appliedPromotionName, using an empty string for "none"; discountAmount) written in toCsvLine. In fromCsvLine, after the usual calculateTotal() recomputes the pre-discount subtotal, if a non-empty promotion name is present the code re-applies the exact same three calls SaleService.registerSale uses (setAppliedPromotionName, setDiscountAmount, setTotalAmount(subtotal - discount)), so a reloaded sale's receipt matches the one originally printed at sale time. Guarded the column count (fields.length > 7) so the format stays backward-compatible with any pre-existing sales.csv row that predates this phase. Unlike the Phase 10 accessory-resolution bug, this one was caught by static review before running V2, not by a crash during it.
+
+### Entry 12
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Prepare two preparatory extensions to existing services (ProductService.restoreStock, SaleService.findById) before Task Group B started, so ReturnRepository and ReturnService would have everything they call already available.
+
+**Problem faced:**
+The phase document explicitly anticipated needing ProductService.restoreStock before Task Group B and gave a "commit it first" sequencing note for that one method, but review of Task Group B's own spec showed a second, unlisted gap: ReturnRepository.loadAll() and ReturnService.registerReturn both call saleService.findById(saleId), and SaleService had no such method at all (only viewAllSales/viewSalesByCustomer/viewSalesBySeller) — Task Group B would not have compiled without it.
+
+**Prompt used:**
+ejecuta la fase 12
+
+**Solution obtained and decision taken:**
+Added SaleService.findById(String) as a second preparatory commit, immediately after restoreStock and before Task Group B, following the exact same "Option 1" sequencing the phase document already used for restoreStock — a simple linear scan mirroring ProductService.findById/PersonService.findCustomerById/AccessoryService.findById, returning null rather than throwing when not found, consistent with every other findById in the codebase. This is the second phase in a row (after Phase 11's getTotal/setTotal gap and Phase 10's accessory-resolution gaps) where a phase document assumed a method existed on an already-merged service that had not actually been added yet — worth checking for this class of gap systematically before starting each new phase's Task Group B.
+
+### Entry 13
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Wire ReturnService into Main and ConsoleMenu, and design the return-registration UI flow so a user can select which specific products to return from a multi-product sale.
+
+**Problem faced:**
+Unlike every previous "register X" flow in ConsoleMenu, registering a return needs to show the user what they are choosing from (the original sale's products) before asking which ones to return, since the user is unlikely to remember every product id from a sale that may be up to 30 days old.
+
+**Prompt used:**
+ejecuta la fase 12
+
+**Solution obtained and decision taken:**
+registerReturn() first resolves the sale via saleService.findById and prints each of its products (id and title) before prompting for a comma-separated list of ids to return, so the user is choosing from a visible list rather than guessing ids blind. All the actual validation (sale exists, within 30 days, products belong to the sale) still happens inside ReturnService.registerReturn — the UI layer only handles input/display and wraps the call in the same try/catch(RuntimeException) pattern used everywhere else. Added main menu options 6 (devoluciones) and 7 (balance mensual) as two separate top-level entries rather than nesting the balance report inside the return submenu, since a monthly balance is a report over both sales and returns together, not strictly a return-only operation.
