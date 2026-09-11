@@ -137,3 +137,20 @@ ejecuta la fase 10
 
 **Solution obtained and decision taken:**
 Added main menu option 4 ("Gestion de accesorios") with a six-option submenu (register controller/cable/memory, list all, list by type, find compatible with a console), following the same try/catch(RuntimeException)-per-operation pattern established in Phase 7. Changed the sale-registration prompt to print "Puede ingresar identificadores de productos o accesorios." before asking for item ids, and reworded the per-item prompt from "ID del producto" to "ID del producto o accesorio", so the existing single-list input flow (which already worked, since SaleService now resolves against both catalogs) reads correctly to the user without requiring two separate input steps.
+
+### Entry 9
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Fix a functional-verification failure: restarting the application after registering a sale that included an accessory crashed with "Failed to resolve product ACC010 for sale SALE-...".
+
+**Problem faced:**
+The pre-execution review (Entry 7) caught and fixed the SaleService stock-validation NPE, but missed a second, analogous gap: SaleRepository.fromCsvLine (used by loadAll() on every application start) only ever tried productService.findById to resolve a sale's item ids — it had no AccessoryService dependency at all, so it could not reconstruct a sale that included an accessory once the process restarted and reloaded data/sales.csv.
+
+**Prompt used:**
+ejecuta la fase 10
+
+**Solution obtained and decision taken:**
+Applied the exact same fallback pattern already used in SaleService and SaleRepository's existing customer/seller/product resolution: added AccessoryService as a third constructor dependency to SaleRepository, and in fromCsvLine, fall back to accessoryService.findById when productService.findById returns null for an item id. Updated Main's SaleRepository instantiation to pass accessoryService (already constructed earlier in the wiring order, so no reordering was needed). Re-ran the full functional verification (register accessories, register a sale with an accessory, restart, re-verify) end to end afterward to confirm the fix, per V3's instruction to repeat verification until all operations pass.
