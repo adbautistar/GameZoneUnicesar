@@ -122,4 +122,28 @@ public class Return {
         this.refundAmount = sum;
         return refundAmount;
     }
+
+    /**
+     * Builds a human-readable receipt for this return, in Spanish, including
+     * the return id, date, original sale id, returned products, reason, and
+     * refund amount.
+     *
+     * @return the formatted receipt text
+     */
+    public String generateReturnReceipt() {
+        StringBuilder receipt = new StringBuilder();
+        receipt.append("===== Recibo de Devolucion =====\n");
+        receipt.append("ID Devolucion: ").append(id).append("\n");
+        receipt.append("Fecha: ").append(date).append("\n");
+        receipt.append("Venta original: ").append(originalSale.getId()).append("\n");
+        receipt.append("Productos devueltos:\n");
+        for (Product product : returnedProducts) {
+            receipt.append("  - ").append(product.getTitle())
+                   .append(" ($").append(String.format("%.2f", product.getPrice())).append(")\n");
+        }
+        receipt.append("Motivo: ").append(reason).append("\n");
+        receipt.append("Monto a reembolsar: $").append(String.format("%.2f", refundAmount)).append("\n");
+        receipt.append("=================================");
+        return receipt.toString();
+    }
 }
