@@ -17,6 +17,11 @@
 - ConsoleMenu
 - Main
 
+Extended modules (Phases 10-13, Task Group C — integration and UI in each):
+- SaleService extension points (accessory/promotion/warranty resolution, best-promotion application, extended-warranty parameter)
+- ProductService.restoreStock (Phase 12)
+- Main and ConsoleMenu wiring for all four new modules
+
 ### Developer 1
 - Product (abstract)
 - VideoGame
@@ -24,12 +29,25 @@
 - ProductRepository
 - ProductService
 
+Extended modules (Phases 10-13, Task Group A — domain model in each):
+- Accessory (abstract), Controller, Cable, Memory (Phase 10)
+- Promotion (abstract), PercentageDiscount, CategoryDiscount, BulkPurchaseDiscount (Phase 11)
+- Sale.appliedPromotionName / discountAmount / setTotalAmount (Phase 11, targeted edit)
+- Return, Sale.canBeReturned (Phase 12)
+- Warranty (abstract), BasicWarranty, ExtendedWarranty (Phase 13)
+
 ### Developer 2
 - Person (abstract)
 - Customer
 - Seller
 - PersonRepository
 - PersonService
+
+Extended modules (Phases 10-13, Task Group B — persistence and service in each):
+- AccessoryRepository, AccessoryService (Phase 10)
+- PromotionRepository, PromotionService (Phase 11)
+- ReturnRepository, ReturnService (Phase 12)
+- WarrantyRepository, WarrantyService (Phase 13)
 
 ## Committed Activities
 
@@ -69,3 +87,13 @@
 7. Implement PersonService with registration and listing methods.
 8. Add JavaDoc in English to all person module classes.
 9. Open a Pull Request to the Technical Lead for module integration.
+
+## Extended Modules (Phases 10-13)
+
+Starting with Phase 10, new functionality is delivered as additive modules on a shared feature branch per module (`feature/accessory-module`, `feature/promotion-module`, `feature/return-module`, `feature/warranty-module`), instead of one branch per role. Each phase follows the same fixed task-group split for all four modules:
+
+- **Task Group A (Developer 1):** implements the module's domain/model classes.
+- **Task Group B (Developer 2):** implements the module's persistence and service classes, gated on Task Group A being merged into the branch.
+- **Task Group C (Technical Lead):** integrates the module into `SaleService`/`Main`/`ConsoleMenu`/`README.md`, gated on Task Groups A and B being merged into the branch.
+
+The exact commit-by-commit breakdown, functional verification steps, and release plan for each module are fully specified in their respective `fase-1X-modulo-*.md` documents (not tracked in git — see `.gitignore`). Class ownership for these modules is listed above under Class Distribution.
