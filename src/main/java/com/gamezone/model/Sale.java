@@ -14,6 +14,8 @@ public class Sale {
     private Seller seller;
     private List<Product> products;
     private double totalAmount;
+    private String appliedPromotionName;
+    private double discountAmount;
 
     /**
      * Creates a new sale with the given participants and products. The total
@@ -90,6 +92,53 @@ public class Sale {
     }
 
     /**
+     * Sets the total amount of this sale, overriding the value last computed
+     * by {@link #calculateTotal()}. Used to apply a promotion's discount to
+     * an already-calculated total.
+     *
+     * @param totalAmount the new total amount
+     */
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    /**
+     * Returns the name of the promotion applied to this sale, if any.
+     *
+     * @return the applied promotion's name, or {@code null} if none was applied
+     */
+    public String getAppliedPromotionName() {
+        return appliedPromotionName;
+    }
+
+    /**
+     * Sets the name of the promotion applied to this sale.
+     *
+     * @param appliedPromotionName the applied promotion's name
+     */
+    public void setAppliedPromotionName(String appliedPromotionName) {
+        this.appliedPromotionName = appliedPromotionName;
+    }
+
+    /**
+     * Returns the discount amount applied to this sale.
+     *
+     * @return the discount amount, in currency, or 0.0 if none was applied
+     */
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    /**
+     * Sets the discount amount applied to this sale.
+     *
+     * @param discountAmount the discount amount, in currency
+     */
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    /**
      * Calculates the total amount of this sale by summing the price of
      * every included product, and stores it as the sale's total amount.
      *
@@ -122,7 +171,15 @@ public class Sale {
             receipt.append("  - ").append(product.getTitle())
                    .append(" ($").append(String.format("%.2f", product.getPrice())).append(")\n");
         }
-        receipt.append("Total: $").append(String.format("%.2f", totalAmount)).append("\n");
+        if (appliedPromotionName != null && discountAmount > 0) {
+            double subtotal = totalAmount + discountAmount;
+            receipt.append("Subtotal: $").append(String.format("%.2f", subtotal)).append("\n");
+            receipt.append("Descuento (").append(appliedPromotionName).append("): -$")
+                   .append(String.format("%.2f", discountAmount)).append("\n");
+            receipt.append("Total final: $").append(String.format("%.2f", totalAmount)).append("\n");
+        } else {
+            receipt.append("Total: $").append(String.format("%.2f", totalAmount)).append("\n");
+        }
         receipt.append("============================");
         return receipt.toString();
     }

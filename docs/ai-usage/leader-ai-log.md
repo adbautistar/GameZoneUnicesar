@@ -154,3 +154,37 @@ ejecuta la fase 10
 
 **Solution obtained and decision taken:**
 Applied the exact same fallback pattern already used in SaleService and SaleRepository's existing customer/seller/product resolution: added AccessoryService as a third constructor dependency to SaleRepository, and in fromCsvLine, fall back to accessoryService.findById when productService.findById returns null for an item id. Updated Main's SaleRepository instantiation to pass accessoryService (already constructed earlier in the wiring order, so no reordering was needed). Re-ran the full functional verification (register accessories, register a sale with an accessory, restart, re-verify) end to end afterward to confirm the fix, per V3's instruction to repeat verification until all operations pass.
+
+### Entry 10
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Wire PromotionService into SaleService, Main, and ConsoleMenu so registerSale applies the best active promotion automatically, matching fase-11's C1 specification.
+
+**Problem faced:**
+registerSale needed to insert the promotion step at a precise point — after calculateTotal() but before the stock-update loop — and Sale exposed no way to overwrite an already-computed total, so applying a discount required a new capability on Sale itself (added by Task Group A in this phase) rather than any change to how the total is originally calculated.
+
+**Prompt used:**
+ejecuta la fase 11
+
+**Solution obtained and decision taken:**
+Added PromotionService as SaleService's fourth constructor dependency. Right after sale.calculateTotal(), call promotionService.findBestPromotionFor(sale); when it returns a non-null Promotion, compute the discount via promotion.calculateDiscount(sale), record it on the sale (setAppliedPromotionName, setDiscountAmount), and overwrite the total with sale.setTotalAmount(originalTotal - discount) — the setter Task Group A added specifically for this. When no promotion applies, the sale is left completely untouched (appliedPromotionName stays null, discountAmount stays 0.0), so generateReceipt()'s existing single-Total-line behavior is preserved for undiscounted sales. Wired the same dependency through Main and ConsoleMenu, and added the five-option promotion submenu (menu option 5) with a numbered category-selection prompt for CategoryDiscount registration, following the exact per-operation try/catch(RuntimeException) pattern used everywhere else in ConsoleMenu.
+
+### Entry 11
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Fix a persistence gap found during pre-execution review (before running the functional verification, unlike the Phase 10 gap which surfaced only when the app actually crashed): a discounted sale would silently lose its discount on the next application restart.
+
+**Problem faced:**
+SaleRepository.fromCsvLine always recomputes a sale's total via calculateTotal(), which sums the current product prices with no knowledge of any promotion, and the CSV format had no columns for appliedPromotionName or discountAmount at all — so after any restart, every previously discounted sale's receipt would silently show a higher, undiscounted total, with no error to signal that anything had changed.
+
+**Prompt used:**
+ejecuta la fase 11
+
+**Solution obtained and decision taken:**
+Extended the sales.csv format with two trailing columns (appliedPromotionName, using an empty string for "none"; discountAmount) written in toCsvLine. In fromCsvLine, after the usual calculateTotal() recomputes the pre-discount subtotal, if a non-empty promotion name is present the code re-applies the exact same three calls SaleService.registerSale uses (setAppliedPromotionName, setDiscountAmount, setTotalAmount(subtotal - discount)), so a reloaded sale's receipt matches the one originally printed at sale time. Guarded the column count (fields.length > 7) so the format stays backward-compatible with any pre-existing sales.csv row that predates this phase. Unlike the Phase 10 accessory-resolution bug, this one was caught by static review before running V2, not by a crash during it.

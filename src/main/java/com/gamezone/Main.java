@@ -3,10 +3,12 @@ package com.gamezone;
 import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.ProductRepository;
+import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
+import com.gamezone.service.PromotionService;
 import com.gamezone.service.SaleService;
 import com.gamezone.ui.ConsoleMenu;
 
@@ -26,15 +28,19 @@ public class Main {
             ProductRepository productRepository = new ProductRepository();
             PersonRepository personRepository = new PersonRepository();
             AccessoryRepository accessoryRepository = new AccessoryRepository();
+            PromotionRepository promotionRepository = new PromotionRepository();
 
             ProductService productService = new ProductService(productRepository);
             PersonService personService = new PersonService(personRepository);
             AccessoryService accessoryService = new AccessoryService(accessoryRepository);
+            PromotionService promotionService = new PromotionService(promotionRepository);
 
             SaleRepository saleRepository = new SaleRepository(productService, personService, accessoryService);
-            SaleService saleService = new SaleService(saleRepository, productService, personService, accessoryService);
+            SaleService saleService = new SaleService(saleRepository, productService, personService,
+                accessoryService, promotionService);
 
-            ConsoleMenu consoleMenu = new ConsoleMenu(productService, personService, saleService, accessoryService);
+            ConsoleMenu consoleMenu = new ConsoleMenu(productService, personService, saleService, accessoryService,
+                promotionService);
             consoleMenu.start();
         } catch (RuntimeException e) {
             System.err.println("Error fatal: " + e.getMessage());

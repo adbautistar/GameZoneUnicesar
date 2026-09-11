@@ -100,13 +100,16 @@ public class SaleRepository {
             }
             productIds.append(products.get(i).getId());
         }
+        String appliedPromotionName = sale.getAppliedPromotionName() != null ? sale.getAppliedPromotionName() : "";
         return String.join(",",
             sale.getId(),
             sale.getDate().toString(),
             sale.getCustomer().getId(),
             sale.getSeller().getId(),
             productIds.toString(),
-            String.valueOf(sale.getTotalAmount()));
+            String.valueOf(sale.getTotalAmount()),
+            appliedPromotionName,
+            String.valueOf(sale.getDiscountAmount()));
     }
 
     private Sale fromCsvLine(String line) {
@@ -137,6 +140,12 @@ public class SaleRepository {
 
         Sale sale = new Sale(id, date, customer, seller, products);
         sale.calculateTotal();
+        if (fields.length > 7 && !fields[6].isEmpty()) {
+            double discountAmount = Double.parseDouble(fields[7]);
+            sale.setAppliedPromotionName(fields[6]);
+            sale.setDiscountAmount(discountAmount);
+            sale.setTotalAmount(sale.getTotalAmount() - discountAmount);
+        }
         customer.addPurchase(sale);
         return sale;
     }

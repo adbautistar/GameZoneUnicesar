@@ -3,6 +3,7 @@ package com.gamezone.service;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
+import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SaleRepository;
@@ -24,6 +25,7 @@ public class SaleService {
     private final ProductService productService;
     private final PersonService personService;
     private final AccessoryService accessoryService;
+    private final PromotionService promotionService;
     private final List<Sale> sales;
 
     /**
@@ -34,13 +36,15 @@ public class SaleService {
      * @param productService   the service used to resolve and update products
      * @param personService    the service used to resolve customers and sellers
      * @param accessoryService the service used to resolve and update accessories
+     * @param promotionService the service used to find the best active promotion for a sale
      */
     public SaleService(SaleRepository repository, ProductService productService, PersonService personService,
-                        AccessoryService accessoryService) {
+                        AccessoryService accessoryService, PromotionService promotionService) {
         this.repository = repository;
         this.productService = productService;
         this.personService = personService;
         this.accessoryService = accessoryService;
+        this.promotionService = promotionService;
         this.sales = new ArrayList<>(repository.loadAll());
     }
 
@@ -106,6 +110,15 @@ public class SaleService {
         String saleId = "SALE-" + System.currentTimeMillis();
         Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, products);
         sale.calculateTotal();
+
+        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+        if (bestPromotion != null) {
+            double discount = bestPromotion.calculateDiscount(sale);
+            double originalTotal = sale.getTotalAmount();
+            sale.setAppliedPromotionName(bestPromotion.getName());
+            sale.setDiscountAmount(discount);
+            sale.setTotalAmount(originalTotal - discount);
+        }
 
         for (Product product : products) {
             if (product instanceof Accessory) {
