@@ -86,3 +86,37 @@ ejecuta la fase 10
 
 **Solution obtained and decision taken:**
 Gave AccessoryService the same method shapes as ProductService: findById(String) returning null when not found (not throwing), and updateStock(String, int) that looks the accessory up, delegates to its inherited Product.updateStock(int), and persists — identical contract to ProductService.updateStock, so Task Group C's dispatch logic in SaleService can call either service the same way once an item's source service is known. listAccessoriesByType(String) uses instanceof against the three concrete subclasses rather than a stored type field, keeping the discriminator logic in one place (the repository) instead of duplicating it in the model.
+
+### Entry 6
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Design PromotionRepository's CSV format for three promotion subtypes with different column counts, following the same discriminator convention already used for products and accessories.
+
+**Problem faced:**
+PercentageDiscount, CategoryDiscount, and BulkPurchaseDiscount each need a different number of type-specific trailing columns (one, two, and two respectively), plus every row shares two LocalDate fields that need a stable, unambiguous text format to round-trip correctly.
+
+**Prompt used:**
+ejecuta la fase 11
+
+**Solution obtained and decision taken:**
+Used the same PERCENTAGE/CATEGORY/BULK discriminator-column pattern as ProductRepository and AccessoryRepository: id, name, startDate, endDate always come right after the discriminator, then each subtype appends only its own fields. Dates are formatted and parsed with DateTimeFormatter.ISO_LOCAL_DATE (yyyy-MM-dd) exactly as the phase specifies, so the same column round-trips identically regardless of which subtype's row it belongs to. loadAll() reconstructs the correct subclass by branching on the discriminator, mirroring fromCsvLine in ProductRepository and AccessoryRepository — the third repository following this exact same shape in the codebase.
+
+### Entry 7
+
+**Date:** 2026-09-11
+**Tool used:** Claude Code
+
+**Reason for use:**
+Implement findBestPromotionFor so SaleService can pick a single promotion to apply without knowing anything about how each promotion type computes its discount.
+
+**Problem faced:**
+"Best" promotion means the one with the highest calculateDiscount(sale) result among currently active promotions, but some promotions (BulkPurchaseDiscount below its threshold, CategoryDiscount with no matching products) legitimately return 0.0, which must not be treated as a valid "best" choice — the method needs to return null in that case, not a promotion that grants no actual discount.
+
+**Prompt used:**
+ejecuta la fase 11
+
+**Solution obtained and decision taken:**
+findBestPromotionFor iterates listActivePromotions() (itself filtering promotions by isActive(LocalDate.now())), invokes calculateDiscount(sale) polymorphically on each, and only updates the running best when a promotion's discount is strictly greater than the current best (initialized at 0.0). This means a promotion contributing exactly 0.0 never becomes "best", so the method naturally returns null both when the active list is empty and when every active promotion's condition (category match, minimum quantity) fails for this particular sale — matching the specification without a separate empty-list special case.
