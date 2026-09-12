@@ -95,6 +95,27 @@ New menu operations (option 8 — Gestion de garantias):
 3. Listar garantias vigentes
 4. Listar garantias proximas a vencer
 
+## Running Tests
+
+The project includes an automated test suite (JUnit 5, AssertJ, Mockito) covering the model, persistence, and service layers, plus end-to-end integration scenarios across all modules.
+
+```
+mvn test
+```
+Runs all tests.
+
+```
+mvn verify
+```
+Runs all tests and enforces the coverage check (see below).
+
+```
+mvn jacoco:report
+```
+Generates an HTML coverage report at `target/site/jacoco/index.html` (open it in a browser).
+
+A build fails if line coverage on the `com.gamezone.service` package falls below **70%**.
+
 ## Repository Structure
 
 ```

@@ -27,15 +27,16 @@ import java.util.List;
  */
 public class SaleRepository {
 
-    private static final String FILE_PATH = "data/sales.csv";
+    private static final String DEFAULT_FILE_PATH = "data/sales.csv";
 
     private final ProductService productService;
     private final PersonService personService;
     private final AccessoryService accessoryService;
+    private final String filePath;
 
     /**
      * Creates a new repository that resolves sale references through the
-     * given services.
+     * given services, backed by the default {@code data/sales.csv} file.
      *
      * @param productService   the service used to resolve product references
      * @param personService    the service used to resolve customer and seller references
@@ -43,9 +44,25 @@ public class SaleRepository {
      */
     public SaleRepository(ProductService productService, PersonService personService,
                            AccessoryService accessoryService) {
+        this(productService, personService, accessoryService, DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a new repository that resolves sale references through the
+     * given services, backed by the given file path. Used by tests to
+     * isolate file operations from the real {@code data/sales.csv}.
+     *
+     * @param productService   the service used to resolve product references
+     * @param personService    the service used to resolve customer and seller references
+     * @param accessoryService the service used to resolve accessory references
+     * @param filePath         the CSV file path to read from and write to
+     */
+    public SaleRepository(ProductService productService, PersonService personService,
+                           AccessoryService accessoryService, String filePath) {
         this.productService = productService;
         this.personService = personService;
         this.accessoryService = accessoryService;
+        this.filePath = filePath;
     }
 
     /**
@@ -54,13 +71,13 @@ public class SaleRepository {
      * @param sales the complete list of sales to persist
      */
     public void saveAll(List<Sale> sales) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Sale sale : sales) {
                 writer.write(toCsvLine(sale));
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save sales to " + FILE_PATH, e);
+            throw new RuntimeException("Failed to save sales to " + filePath, e);
         }
     }
 
@@ -73,11 +90,11 @@ public class SaleRepository {
      */
     public List<Sale> loadAll() {
         List<Sale> sales = new ArrayList<>();
-        Path path = Path.of(FILE_PATH);
+        Path path = Path.of(filePath);
         if (!Files.exists(path)) {
             return sales;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -86,7 +103,7 @@ public class SaleRepository {
                 sales.add(fromCsvLine(line));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load sales from " + FILE_PATH, e);
+            throw new RuntimeException("Failed to load sales from " + filePath, e);
         }
         return sales;
     }

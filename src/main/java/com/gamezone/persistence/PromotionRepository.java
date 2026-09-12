@@ -19,20 +19,39 @@ import java.util.List;
 
 public class PromotionRepository {
 
-    private static final String FILE_PATH = "data/promotions.csv";
+    private static final String DEFAULT_FILE_PATH = "data/promotions.csv";
     private static final String PERCENTAGE_TYPE = "PERCENTAGE";
     private static final String CATEGORY_TYPE = "CATEGORY";
     private static final String BULK_TYPE = "BULK";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
+    private final String filePath;
+
+    /**
+     * Creates a repository backed by the default {@code data/promotions.csv} file.
+     */
+    public PromotionRepository() {
+        this(DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a repository backed by the given file path. Used by tests to
+     * isolate file operations from the real {@code data/promotions.csv}.
+     *
+     * @param filePath the CSV file path to read from and write to
+     */
+    public PromotionRepository(String filePath) {
+        this.filePath = filePath;
+    }
+
     public void saveAll(List<Promotion> promotions) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Promotion promotion : promotions) {
                 writer.write(toCsvLine(promotion));
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save promotions to " + FILE_PATH, e);
+            throw new RuntimeException("Failed to save promotions to " + filePath, e);
         }
     }
 
@@ -73,11 +92,11 @@ public class PromotionRepository {
 
     public List<Promotion> loadAll() {
         List<Promotion> promotions = new ArrayList<>();
-        Path path = Path.of(FILE_PATH);
+        Path path = Path.of(filePath);
         if (!Files.exists(path)) {
             return promotions;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -86,7 +105,7 @@ public class PromotionRepository {
                 promotions.add(fromCsvLine(line));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load promotions from " + FILE_PATH, e);
+            throw new RuntimeException("Failed to load promotions from " + filePath, e);
         }
         return promotions;
     }
