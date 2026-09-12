@@ -188,3 +188,37 @@ ejecuta la fase 13
 
 **Solution obtained and decision taken:**
 Both methods follow the exact same three-line shape as every other registration method in the codebase (construct, add to the in-memory list, persist via repository.saveAll), generating ids with the same "WAR-" + System.currentTimeMillis() pattern already used for SALE-/RET- ids elsewhere. Kept them as two separate methods (rather than one method taking a type flag) so Task Group C's call sites read as plain, self-describing statements — assignBasicWarranty(...) unconditionally for every console, assignExtendedWarranty(...) only inside the opt-in branch — with no type-checking logic needed on the caller's side.
+
+### Entry 12
+
+**Date:** 2026-09-12
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide the mocking boundary for every ProductServiceTest/AccessoryServiceTest/PromotionServiceTest/ReturnServiceTest/WarrantyServiceTest, and how to seed a Mockito-mocked repository so the service under test constructs correctly.
+
+**Problem faced:**
+Every one of these services calls repository.loadAll() inside its own constructor; a bare Mockito mock returns null for any unstubbed method, so constructing the service with an unstubbed mock repository would NPE immediately on `new ArrayList<>(repository.loadAll())` before a single test method body even ran.
+
+**Prompt used:**
+ejecuta la fase 14
+
+**Solution obtained and decision taken:**
+Every service test stubs `when(repository.loadAll()).thenReturn(new ArrayList<>())` inside a shared @BeforeEach before constructing the service under test with @Mock-injected collaborators (via @ExtendWith(MockitoExtension.class)), then exercises the service's real logic against that empty in-memory starting state — registrations, lookups, validations. This keeps every one of these five test classes a true unit test of the service's own logic (never touching real file I/O), leaving the RepositoriesTest round-trips (Task Group C1) and EndToEndScenariosTest (C7) as the only two files that construct repositories against real temp files, per the mocking-strategy split already decided in Task Group A.
+
+### Entry 13
+
+**Date:** 2026-09-12
+**Tool used:** Claude Code
+
+**Reason for use:**
+Wire seven real services together for EndToEndScenariosTest without a registerSeller method anywhere in the codebase to call, and confirm the resulting JaCoCo coverage numbers.
+
+**Problem faced:**
+PersonService only exposes registerCustomer — sellers are only ever loaded from data/sellers.csv, never registered through the service — so a fully-wired integration test had no service-level way to get a Seller into the system to sell anything.
+
+**Prompt used:**
+ejecuta la fase 14
+
+**Solution obtained and decision taken:**
+Wrote a seller directly to the temp sellers.csv file via personRepository.saveAllSellers(...) before constructing PersonService, so PersonService's own constructor picks it up through the normal loadAllSellers() path — no shortcut around the service, just seeding the file the same way the real preloaded data/sellers.csv already works. All 88 tests across Task Groups B and C passed on the first `mvn clean verify`, and the JaCoCo check succeeded without needing a supplementary PersonServiceTest: com.gamezone.service ended at 85.1% line coverage (274/322 lines), com.gamezone.persistence at 74.7% (337/451), com.gamezone.model at 67.5% (210/311), and com.gamezone.ui / com.gamezone (ConsoleMenu and Main) at 0% — neither was in scope for this phase, since UI and entry-point tests were not part of the plan.
