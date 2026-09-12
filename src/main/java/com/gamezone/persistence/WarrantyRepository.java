@@ -23,7 +23,7 @@ import java.util.List;
 
 public class WarrantyRepository {
 
-    private static final String FILE_PATH = "data/warranties.csv";
+    private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
     private static final String BASIC_TYPE = "BASIC";
     private static final String EXTENDED_TYPE = "EXTENDED";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
@@ -31,22 +31,33 @@ public class WarrantyRepository {
     private final SaleService saleService;
     private final ProductService productService;
     private final AccessoryService accessoryService;
+    private final String filePath;
 
     public WarrantyRepository(SaleService saleService, ProductService productService,
                                AccessoryService accessoryService) {
+        this(saleService, productService, accessoryService, DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a new repository backed by the given file path. Used by tests
+     * to isolate file operations from the real {@code data/warranties.csv}.
+     */
+    public WarrantyRepository(SaleService saleService, ProductService productService,
+                               AccessoryService accessoryService, String filePath) {
         this.saleService = saleService;
         this.productService = productService;
         this.accessoryService = accessoryService;
+        this.filePath = filePath;
     }
 
     public void saveAll(List<Warranty> warranties) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Warranty warranty : warranties) {
                 writer.write(toCsvLine(warranty));
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save warranties to " + FILE_PATH, e);
+            throw new RuntimeException("Failed to save warranties to " + filePath, e);
         }
     }
 
@@ -63,11 +74,11 @@ public class WarrantyRepository {
 
     public List<Warranty> loadAll() {
         List<Warranty> warranties = new ArrayList<>();
-        Path path = Path.of(FILE_PATH);
+        Path path = Path.of(filePath);
         if (!Files.exists(path)) {
             return warranties;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -79,7 +90,7 @@ public class WarrantyRepository {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load warranties from " + FILE_PATH, e);
+            throw new RuntimeException("Failed to load warranties from " + filePath, e);
         }
         return warranties;
     }

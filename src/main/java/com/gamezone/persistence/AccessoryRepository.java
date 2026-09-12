@@ -18,19 +18,38 @@ import java.util.List;
 
 public class AccessoryRepository {
 
-    private static final String FILE_PATH = "data/accessories.csv";
+    private static final String DEFAULT_FILE_PATH = "data/accessories.csv";
     private static final String CONTROLLER_TYPE = "CONTROLLER";
     private static final String CABLE_TYPE = "CABLE";
     private static final String MEMORY_TYPE = "MEMORY";
 
+    private final String filePath;
+
+    /**
+     * Creates a repository backed by the default {@code data/accessories.csv} file.
+     */
+    public AccessoryRepository() {
+        this(DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a repository backed by the given file path. Used by tests to
+     * isolate file operations from the real {@code data/accessories.csv}.
+     *
+     * @param filePath the CSV file path to read from and write to
+     */
+    public AccessoryRepository(String filePath) {
+        this.filePath = filePath;
+    }
+
     public void saveAll(List<Accessory> accessories) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Accessory accessory : accessories) {
                 writer.write(toCsvLine(accessory));
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save accessories to " + FILE_PATH, e);
+            throw new RuntimeException("Failed to save accessories to " + filePath, e);
         }
     }
 
@@ -73,11 +92,11 @@ public class AccessoryRepository {
 
     public List<Accessory> loadAll() {
         List<Accessory> accessories = new ArrayList<>();
-        Path path = Path.of(FILE_PATH);
+        Path path = Path.of(filePath);
         if (!Files.exists(path)) {
             return accessories;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -86,7 +105,7 @@ public class AccessoryRepository {
                 accessories.add(fromCsvLine(line));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load accessories from " + FILE_PATH, e);
+            throw new RuntimeException("Failed to load accessories from " + filePath, e);
         }
         return accessories;
     }
