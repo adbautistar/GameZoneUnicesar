@@ -256,3 +256,37 @@ ejecuta la fase 13
 
 **Solution obtained and decision taken:**
 Extended registerSale directly (no overload) since ConsoleMenu was the only caller and was being updated in this same phase anyway — no need to carry a redundant 3-argument version. Inside registerSale, the warranty-assignment block runs after the promotion block and before the stock-decrement loop, exactly as specified: every Console in the sale gets an automatic BasicWarranty regardless of opt-in, and an opted-in Console additionally gets an ExtendedWarranty whose getAdditionalCost() is added on top of the (possibly already-discounted) total via the same setTotalAmount setter Phase 11 introduced — so a console bought during an active promotion still receives its full 10% extended-warranty surcharge on top of the discounted price, not on the original price. In ConsoleMenu, registerSale() now resolves each entered id via productService.findById mid-flow specifically to detect which ones are consoles, prompting "S/N" for each before the sale is registered, then confirming the automatic basic-warranty assignment per console after registration succeeds (not before), so the confirmation message is never printed for a sale that ultimately failed validation.
+
+### Entry 16
+
+**Date:** 2026-09-12
+**Tool used:** Claude Code
+
+**Reason for use:**
+Set up the JUnit 5 + AssertJ + Mockito + JaCoCo test infrastructure so Task Groups B and C (Developer 1 and Developer 2) could write tests against a working framework.
+
+**Problem faced:**
+Adding the test dependencies and JaCoCo's 70%-on-service-package coverage gate to pom.xml was itself low-risk, but a review of the later task groups (C1's RepositoriesTest, C7's EndToEndScenariosTest) revealed a blocking gap: none of the 7 Repository classes accepted a custom file path — each hardcoded a private static final FILE_PATH constant — so no test could isolate its file I/O from the real data/*.csv files the running application uses.
+
+**Prompt used:**
+ejecuta la fase 14
+
+**Solution obtained and decision taken:**
+Configured JUnit Jupiter 5.10.2, AssertJ 3.25.3, Mockito 5.11.0/mockito-junit-jupiter, Surefire 3.2.5 (native JUnit 5 support, no explicit provider dependency needed), and the JaCoCo plugin with three executions (prepare-agent at initialize, report at test, check at the default verify phase with a PACKAGE-scoped rule requiring 0.70 LINE COVEREDRATIO on com.gamezone.service). Fixed the file-path gap with an additive constructor overload on all 7 repositories: each keeps its original no-argument (or existing-dependencies-only) constructor unchanged, delegating to a new overload that accepts the file path(s) explicitly (two, for PersonRepository's customers/sellers split). This was a deliberate, reviewed departure from "make no production changes" — it changes zero existing behavior (every existing caller, including Main, still gets the original hardcoded path) while making C1 and C7's real temp-file isolation possible at all.
+
+### Entry 17
+
+**Date:** 2026-09-12
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide the mocking strategy split across Task Group C's test files, and flag the coverage risk from PersonService/SaleService having no dedicated test file in the phase's own list.
+
+**Problem faced:**
+Only C1 (repository round-trips) and C7 (full end-to-end scenarios) genuinely need real file-backed repositories; C2-C6 (individual service tests) only need to verify each service's own logic, and constructing real repositories for them would mean either touching the real data/*.csv files or over-relying on the newly added path overload for tests that do not actually need real file I/O. Separately, the service package's 70% coverage gate covers all 7 service classes, but the listed test files span only 5 of them.
+
+**Prompt used:**
+ejecuta la fase 14
+
+**Solution obtained and decision taken:**
+Documented (and will apply, in Task Group C) that C2-C6 mock the repository dependency with Mockito instead of using TempFileHelper — cleaner unit isolation, and it sidesteps the file-path question entirely for those five files. Only C1's ReturnRepository/WarrantyRepository sub-tests and C7 use the new file-path overload with real temp files, mocking just the collaborating services (SaleService/ProductService/AccessoryService) where those two repositories need them for reference resolution. Flagged that PersonService has no dedicated test and may need a minimal one added if the coverage check falls short after Task Group C, per the phase's own "add more tests, never weaken them" rule — to be resolved empirically once real coverage numbers exist, not guessed in advance.
