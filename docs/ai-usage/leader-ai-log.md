@@ -290,3 +290,20 @@ ejecuta la fase 14
 
 **Solution obtained and decision taken:**
 Documented (and will apply, in Task Group C) that C2-C6 mock the repository dependency with Mockito instead of using TempFileHelper — cleaner unit isolation, and it sidesteps the file-path question entirely for those five files. Only C1's ReturnRepository/WarrantyRepository sub-tests and C7 use the new file-path overload with real temp files, mocking just the collaborating services (SaleService/ProductService/AccessoryService) where those two repositories need them for reference resolution. Flagged that PersonService has no dedicated test and may need a minimal one added if the coverage check falls short after Task Group C, per the phase's own "add more tests, never weaken them" rule — to be resolved empirically once real coverage numbers exist, not guessed in advance.
+
+### Entry 18 — Coverage Report
+
+**Date:** 2026-09-12
+**Tool used:** Claude Code
+
+**Reason for use:**
+Run `mvn clean verify` after Task Group C completed, and record the final coverage numbers per package as instructed by the phase document's "Coverage Report" section.
+
+**Problem faced:**
+Entry 17 flagged a real risk — PersonService had no dedicated test file — that could only be resolved with actual numbers, not guessed in advance.
+
+**Prompt used:**
+ejecuta la fase 14
+
+**Solution obtained and decision taken:**
+`mvn clean verify` passed on the first attempt: 88 tests, 0 failures, and JaCoCo reported "All coverage checks have been met." No supplementary PersonServiceTest was needed — EndToEndScenariosTest's setUp() (which calls personService.registerCustomer/findCustomerById/findSellerById for every one of its 6 scenarios) combined with SaleService's heavy use across both ReturnServiceTest and the integration scenarios was enough to clear the gate. Final line coverage by package (from target/site/jacoco/jacoco.csv, aggregated): **com.gamezone.service: 85.1%** (274/322 lines — gate: ≥70%, met), com.gamezone.persistence: 74.7% (337/451), com.gamezone.model: 67.5% (210/311), com.gamezone.ui: 0% (628 lines, ConsoleMenu — not in scope for this phase), com.gamezone: 0% (23 lines, Main — not in scope). The two 0%-covered packages are UI and the entry point, both deliberately excluded from Task Groups B and C's test plan; a future phase could add ConsoleMenu tests (likely via input-stream simulation) if UI coverage becomes a requirement.
