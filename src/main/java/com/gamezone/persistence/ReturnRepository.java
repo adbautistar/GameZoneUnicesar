@@ -20,27 +20,38 @@ import java.util.List;
 
 public class ReturnRepository {
 
-    private static final String FILE_PATH = "data/returns.csv";
+    private static final String DEFAULT_FILE_PATH = "data/returns.csv";
 
     private final SaleService saleService;
     private final ProductService productService;
     private final AccessoryService accessoryService;
+    private final String filePath;
 
     public ReturnRepository(SaleService saleService, ProductService productService,
                              AccessoryService accessoryService) {
+        this(saleService, productService, accessoryService, DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a new repository backed by the given file path. Used by tests
+     * to isolate file operations from the real {@code data/returns.csv}.
+     */
+    public ReturnRepository(SaleService saleService, ProductService productService,
+                             AccessoryService accessoryService, String filePath) {
         this.saleService = saleService;
         this.productService = productService;
         this.accessoryService = accessoryService;
+        this.filePath = filePath;
     }
 
     public void saveAll(List<Return> returns) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Return returnItem : returns) {
                 writer.write(toCsvLine(returnItem));
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save returns to " + FILE_PATH, e);
+            throw new RuntimeException("Failed to save returns to " + filePath, e);
         }
     }
 
@@ -64,11 +75,11 @@ public class ReturnRepository {
 
     public List<Return> loadAll() {
         List<Return> returns = new ArrayList<>();
-        Path path = Path.of(FILE_PATH);
+        Path path = Path.of(filePath);
         if (!Files.exists(path)) {
             return returns;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -80,7 +91,7 @@ public class ReturnRepository {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load returns from " + FILE_PATH, e);
+            throw new RuntimeException("Failed to load returns from " + filePath, e);
         }
         return returns;
     }

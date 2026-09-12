@@ -21,9 +21,28 @@ import java.util.List;
  */
 public class ProductRepository {
 
-    private static final String FILE_PATH = "data/products.csv";
+    private static final String DEFAULT_FILE_PATH = "data/products.csv";
     private static final String VIDEOGAME_TYPE = "VIDEOGAME";
     private static final String CONSOLE_TYPE = "CONSOLE";
+
+    private final String filePath;
+
+    /**
+     * Creates a repository backed by the default {@code data/products.csv} file.
+     */
+    public ProductRepository() {
+        this(DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a repository backed by the given file path. Used by tests to
+     * isolate file operations from the real {@code data/products.csv}.
+     *
+     * @param filePath the CSV file path to read from and write to
+     */
+    public ProductRepository(String filePath) {
+        this.filePath = filePath;
+    }
 
     /**
      * Overwrites the CSV file with the given list of products.
@@ -31,13 +50,13 @@ public class ProductRepository {
      * @param products the complete list of products to persist
      */
     public void saveAll(List<Product> products) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Product product : products) {
                 writer.write(toCsvLine(product));
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save products to " + FILE_PATH, e);
+            throw new RuntimeException("Failed to save products to " + filePath, e);
         }
     }
 
@@ -50,11 +69,11 @@ public class ProductRepository {
      */
     public List<Product> loadAll() {
         List<Product> products = new ArrayList<>();
-        Path path = Path.of(FILE_PATH);
+        Path path = Path.of(filePath);
         if (!Files.exists(path)) {
             return products;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -63,7 +82,7 @@ public class ProductRepository {
                 products.add(fromCsvLine(line));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load products from " + FILE_PATH, e);
+            throw new RuntimeException("Failed to load products from " + filePath, e);
         }
         return products;
     }

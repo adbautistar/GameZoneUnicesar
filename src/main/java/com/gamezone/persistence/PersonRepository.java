@@ -20,8 +20,31 @@ import java.util.List;
  */
 public class PersonRepository {
 
-    private static final String CUSTOMERS_FILE_PATH = "data/customers.csv";
-    private static final String SELLERS_FILE_PATH = "data/sellers.csv";
+    private static final String DEFAULT_CUSTOMERS_FILE_PATH = "data/customers.csv";
+    private static final String DEFAULT_SELLERS_FILE_PATH = "data/sellers.csv";
+
+    private final String customersFilePath;
+    private final String sellersFilePath;
+
+    /**
+     * Creates a repository backed by the default {@code data/customers.csv}
+     * and {@code data/sellers.csv} files.
+     */
+    public PersonRepository() {
+        this(DEFAULT_CUSTOMERS_FILE_PATH, DEFAULT_SELLERS_FILE_PATH);
+    }
+
+    /**
+     * Creates a repository backed by the given file paths. Used by tests to
+     * isolate file operations from the real customers/sellers CSV files.
+     *
+     * @param customersFilePath the CSV file path for customers
+     * @param sellersFilePath   the CSV file path for sellers
+     */
+    public PersonRepository(String customersFilePath, String sellersFilePath) {
+        this.customersFilePath = customersFilePath;
+        this.sellersFilePath = sellersFilePath;
+    }
 
     /**
      * Overwrites the customers CSV file with the given list of customers.
@@ -29,7 +52,7 @@ public class PersonRepository {
      * @param customers the complete list of customers to persist
      */
     public void saveAllCustomers(List<Customer> customers) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(CUSTOMERS_FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(customersFilePath))) {
             for (Customer customer : customers) {
                 writer.write(String.join(",",
                     customer.getId(),
@@ -40,7 +63,7 @@ public class PersonRepository {
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save customers to " + CUSTOMERS_FILE_PATH, e);
+            throw new RuntimeException("Failed to save customers to " + customersFilePath, e);
         }
     }
 
@@ -52,11 +75,11 @@ public class PersonRepository {
      */
     public List<Customer> loadAllCustomers() {
         List<Customer> customers = new ArrayList<>();
-        Path path = Path.of(CUSTOMERS_FILE_PATH);
+        Path path = Path.of(customersFilePath);
         if (!Files.exists(path)) {
             return customers;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(CUSTOMERS_FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(customersFilePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -66,7 +89,7 @@ public class PersonRepository {
                 customers.add(new Customer(fields[0], fields[1], fields[2], fields[3], fields[4]));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load customers from " + CUSTOMERS_FILE_PATH, e);
+            throw new RuntimeException("Failed to load customers from " + customersFilePath, e);
         }
         return customers;
     }
@@ -77,7 +100,7 @@ public class PersonRepository {
      * @param sellers the complete list of sellers to persist
      */
     public void saveAllSellers(List<Seller> sellers) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(SELLERS_FILE_PATH))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(sellersFilePath))) {
             for (Seller seller : sellers) {
                 writer.write(String.join(",",
                     seller.getId(),
@@ -89,7 +112,7 @@ public class PersonRepository {
                 writer.newLine();
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save sellers to " + SELLERS_FILE_PATH, e);
+            throw new RuntimeException("Failed to save sellers to " + sellersFilePath, e);
         }
     }
 
@@ -101,11 +124,11 @@ public class PersonRepository {
      */
     public List<Seller> loadAllSellers() {
         List<Seller> sellers = new ArrayList<>();
-        Path path = Path.of(SELLERS_FILE_PATH);
+        Path path = Path.of(sellersFilePath);
         if (!Files.exists(path)) {
             return sellers;
         }
-        try (BufferedReader reader = new BufferedReader(new FileReader(SELLERS_FILE_PATH))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(sellersFilePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) {
@@ -115,7 +138,7 @@ public class PersonRepository {
                 sellers.add(new Seller(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5]));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load sellers from " + SELLERS_FILE_PATH, e);
+            throw new RuntimeException("Failed to load sellers from " + sellersFilePath, e);
         }
         return sellers;
     }
