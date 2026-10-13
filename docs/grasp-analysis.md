@@ -32,7 +32,14 @@ The pattern that guides the correction is the one whose solution removes the roo
 
 ## Q4. Non-regression strategy
 
-*Answer pending (Developer 2).*
+*Written by Developer 2.*
+
+The correction is a refactor, so "nothing broke" means: for the same inputs, every menu operation prints the same text and leaves the same content in `data/`. The team uses two complementary checks, run on `develop` **before** the first correction (baseline) and again on every Pull Request of the correction and at the end:
+
+1. **Automated test suite** — `mvn clean verify` (JUnit 5 tests for model, persistence, services and end-to-end scenarios, plus the JaCoCo coverage check on the service layer). The baseline records the number of tests and the build result. When a refactor changes a constructor or a return type, the affected tests are adapted only in how objects are built; no assertion about behavior is removed or weakened. Responsibilities that move between classes (for example, resolving references when data is loaded) get new tests in their new home.
+2. **Scripted run of the whole menu** — the application is run from a scratch copy of `data/` with a fixed input script that exercises every menu operation: all registrations and listings of products, people, accessories and promotions; sales with a console and an extended warranty and with an active promotion; the three sales histories; returns, their three queries and the monthly balance; and the four warranty queries. Values that legitimately change between runs (millisecond-based identifiers and today's date) are normalized, and the normalized output is compared with the baseline using a line-by-line diff.
+
+The evidence shown at the end is the baseline and final results of both checks, recorded in `docs/grasp-refactor-log.md`: same test count and BUILD SUCCESS, and an empty diff between the baseline and final normalized outputs. Defects recorded as out of scope are part of the expected output, so a refactor that "fixes" one by accident also shows up in the diff.
 
 ## Q5. Order of the corrections and coordination
 
