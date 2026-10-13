@@ -27,12 +27,12 @@ import java.util.Scanner;
 public class ConsoleMenu {
 
     private final SaleService saleService;
-    private final SaleRegistrationService saleRegistrationService;
     private final AccessoryService accessoryService;
     private final PromotionService promotionService;
     private final ReturnService returnService;
     private final WarrantyService warrantyService;
     private final Scanner scanner;
+    private final SaleMenu saleMenu;
     private final PersonMenu personMenu;
     private final ProductMenu productMenu;
 
@@ -53,12 +53,12 @@ public class ConsoleMenu {
                         AccessoryService accessoryService, PromotionService promotionService,
                         ReturnService returnService, WarrantyService warrantyService) {
         this.saleService = saleService;
-        this.saleRegistrationService = saleRegistrationService;
         this.accessoryService = accessoryService;
         this.promotionService = promotionService;
         this.returnService = returnService;
         this.warrantyService = warrantyService;
         this.scanner = new Scanner(System.in);
+        this.saleMenu = new SaleMenu(scanner, saleService, saleRegistrationService);
         this.personMenu = new PersonMenu(scanner, personService);
         this.productMenu = new ProductMenu(scanner, productService);
     }
@@ -90,7 +90,7 @@ public class ConsoleMenu {
                     personMenu.show();
                     break;
                 case "3":
-                    showSaleMenu();
+                    saleMenu.show();
                     break;
                 case "4":
                     showAccessoryMenu();
@@ -114,113 +114,6 @@ public class ConsoleMenu {
                 default:
                     System.out.println("Opcion invalida.");
             }
-        }
-    }
-
-    private void showSaleMenu() {
-        boolean back = false;
-        while (!back) {
-            System.out.println();
-            System.out.println("----- Gestion de ventas -----");
-            System.out.println("1. Registrar venta");
-            System.out.println("2. Ver historial completo de ventas");
-            System.out.println("3. Ver ventas por cliente");
-            System.out.println("4. Ver ventas por vendedor");
-            System.out.println("0. Volver");
-            System.out.print("Seleccione una opcion: ");
-            String option = scanner.nextLine().trim();
-            switch (option) {
-                case "1":
-                    registerSale();
-                    break;
-                case "2":
-                    viewAllSales();
-                    break;
-                case "3":
-                    viewSalesByCustomer();
-                    break;
-                case "4":
-                    viewSalesBySeller();
-                    break;
-                case "0":
-                    back = true;
-                    break;
-                default:
-                    System.out.println("Opcion invalida.");
-            }
-        }
-    }
-
-    private void registerSale() {
-        try {
-            System.out.print("ID del cliente: ");
-            String customerId = scanner.nextLine().trim();
-            System.out.print("ID del vendedor: ");
-            String sellerId = scanner.nextLine().trim();
-            System.out.println("Puede ingresar identificadores de productos o accesorios.");
-            System.out.print("Cantidad de productos a vender: ");
-            int count = Integer.parseInt(scanner.nextLine().trim());
-            List<String> productIds = new ArrayList<>();
-            for (int i = 1; i <= count; i++) {
-                System.out.print("ID del producto o accesorio " + i + ": ");
-                productIds.add(scanner.nextLine().trim());
-            }
-
-            List<String> extendedWarrantyIds = new ArrayList<>();
-            List<Product> eligibleItems = saleRegistrationService.findWarrantyEligibleItems(productIds);
-            for (Product item : eligibleItems) {
-                System.out.print("Desea agregar garantia extendida a " + item.getTitle() + "? (S/N): ");
-                String answer = scanner.nextLine().trim();
-                if ("S".equalsIgnoreCase(answer)) {
-                    extendedWarrantyIds.add(item.getId());
-                }
-            }
-
-            Sale sale = saleRegistrationService.registerSale(customerId, sellerId, productIds, extendedWarrantyIds);
-            System.out.println("Venta registrada exitosamente.");
-            for (Product item : eligibleItems) {
-                System.out.println("Garantia basica asignada automaticamente a " + item.getTitle() + ".");
-            }
-            System.out.println(sale.generateReceipt());
-        } catch (RuntimeException e) {
-            System.out.println("Error al registrar la venta: " + e.getMessage());
-        }
-    }
-
-    private void viewAllSales() {
-        List<Sale> sales = saleService.viewAllSales();
-        if (sales.isEmpty()) {
-            System.out.println("No hay ventas registradas.");
-            return;
-        }
-        for (Sale sale : sales) {
-            System.out.println(sale.generateReceipt());
-        }
-    }
-
-    private void viewSalesByCustomer() {
-        System.out.print("ID del cliente: ");
-        String customerId = scanner.nextLine().trim();
-        List<Sale> sales = saleService.viewSalesByCustomer(customerId);
-        if (sales.isEmpty()) {
-            System.out.println("Este cliente no tiene ventas registradas.");
-            return;
-        }
-        for (Sale sale : sales) {
-            System.out.println(sale.generateReceipt());
-        }
-    }
-
-    private void viewSalesBySeller() {
-        System.out.print("ID del vendedor: ");
-        String sellerId = scanner.nextLine().trim();
-        List<Sale> sales = saleService.viewSalesBySeller(sellerId);
-        if (sales.isEmpty()) {
-            System.out.println("Este vendedor no tiene ventas registradas.");
-            return;
-        }
-        for (Sale sale : sales) {
-            System.out.println(sale.generateReceipt());
         }
     }
 
