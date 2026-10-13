@@ -115,6 +115,26 @@ public class SaleRegistrationService {
         return sale;
     }
 
+    /**
+     * Returns the items, among the given ids, that receive a warranty when
+     * sold, so that the user interface can offer the extended warranty for
+     * them. The result keeps the input order and repeats an item once per
+     * occurrence of its id; ids that do not match any item are ignored.
+     *
+     * @param productIds the ids of the items to be sold, one entry per unit
+     * @return the warranty-eligible items, in input order
+     */
+    public List<Product> findWarrantyEligibleItems(List<String> productIds) {
+        List<Product> eligibleItems = new ArrayList<>();
+        for (String productId : productIds) {
+            Product item = itemCatalog.findItem(productId);
+            if (item != null && item.isWarrantyEligible()) {
+                eligibleItems.add(item);
+            }
+        }
+        return eligibleItems;
+    }
+
     private void checkStock(List<Product> products) {
         Map<String, Product> resolvedItems = new HashMap<>();
         Map<String, Integer> requestedQuantities = new HashMap<>();

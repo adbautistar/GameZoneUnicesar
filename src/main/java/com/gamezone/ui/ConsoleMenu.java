@@ -1,7 +1,6 @@
 package com.gamezone.ui;
 
 import com.gamezone.model.Accessory;
-import com.gamezone.model.Console;
 import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
@@ -328,23 +327,19 @@ public class ConsoleMenu {
             }
 
             List<String> extendedWarrantyIds = new ArrayList<>();
-            List<Product> consoles = new ArrayList<>();
-            for (String productId : productIds) {
-                Product product = productService.findById(productId);
-                if (product instanceof Console) {
-                    consoles.add(product);
-                    System.out.print("Desea agregar garantia extendida a " + product.getTitle() + "? (S/N): ");
-                    String answer = scanner.nextLine().trim();
-                    if ("S".equalsIgnoreCase(answer)) {
-                        extendedWarrantyIds.add(productId);
-                    }
+            List<Product> eligibleItems = saleRegistrationService.findWarrantyEligibleItems(productIds);
+            for (Product item : eligibleItems) {
+                System.out.print("Desea agregar garantia extendida a " + item.getTitle() + "? (S/N): ");
+                String answer = scanner.nextLine().trim();
+                if ("S".equalsIgnoreCase(answer)) {
+                    extendedWarrantyIds.add(item.getId());
                 }
             }
 
             Sale sale = saleRegistrationService.registerSale(customerId, sellerId, productIds, extendedWarrantyIds);
             System.out.println("Venta registrada exitosamente.");
-            for (Product console : consoles) {
-                System.out.println("Garantia basica asignada automaticamente a " + console.getTitle() + ".");
+            for (Product item : eligibleItems) {
+                System.out.println("Garantia basica asignada automaticamente a " + item.getTitle() + ".");
             }
             System.out.println(sale.generateReceipt());
         } catch (RuntimeException e) {
