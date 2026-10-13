@@ -61,4 +61,16 @@ public abstract class Accessory extends Product {
     public boolean isCompatibleWith(String consoleId) {
         return compatibleConsoleIds.contains(consoleId);
     }
+
+    /**
+     * Checks whether this accessory belongs to the given category. Accessories
+     * do not belong to any category handled by category-based promotions.
+     *
+     * @param category the category name to check
+     * @return always {@code false}
+     */
+    @Override
+    public boolean belongsToCategory(String category) {
+        return false;
+    }
 }

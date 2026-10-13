@@ -6,6 +6,9 @@ package com.gamezone.model;
  */
 public class Console extends Product {
 
+    /** Category name used by category-based promotions. */
+    private static final String CATEGORY = "CONSOLE";
+
     private String brand;
     private String model;
     private String generation;
@@ -94,5 +97,17 @@ public class Console extends Product {
         return String.format(
             "[%s] %s - Brand: %s, Model: %s, Generation: %s, Price: %.2f, Stock: %d",
             getId(), getTitle(), brand, model, generation, getPrice(), getStock());
+    }
+
+    /**
+     * Checks whether this console belongs to the given category. Consoles
+     * belong only to the "CONSOLE" category.
+     *
+     * @param category the category name to check
+     * @return {@code true} if the category is "CONSOLE"
+     */
+    @Override
+    public boolean belongsToCategory(String category) {
+        return CATEGORY.equals(category);
     }
 }

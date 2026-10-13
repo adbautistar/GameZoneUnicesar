@@ -117,4 +117,14 @@ public abstract class Product {
      * @return a human-readable description of the product
      */
     public abstract String getDescription();
+
+    /**
+     * Checks whether this product belongs to the given product category, as
+     * used by category-based promotions. Each concrete product type knows its
+     * own category, so callers never need to inspect the concrete class.
+     *
+     * @param category the category name to check (e.g., "VIDEOGAME")
+     * @return {@code true} if this product belongs to the given category
+     */
+    public abstract boolean belongsToCategory(String category);
 }
