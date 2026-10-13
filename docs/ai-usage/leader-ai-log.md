@@ -307,3 +307,22 @@ ejecuta la fase 14
 
 **Solution obtained and decision taken:**
 `mvn clean verify` passed on the first attempt: 88 tests, 0 failures, and JaCoCo reported "All coverage checks have been met." No supplementary PersonServiceTest was needed — EndToEndScenariosTest's setUp() (which calls personService.registerCustomer/findCustomerById/findSellerById for every one of its 6 scenarios) combined with SaleService's heavy use across both ReturnServiceTest and the integration scenarios was enough to clear the gate. Final line coverage by package (from target/site/jacoco/jacoco.csv, aggregated): **com.gamezone.service: 85.1%** (274/322 lines — gate: ≥70%, met), com.gamezone.persistence: 74.7% (337/451), com.gamezone.model: 67.5% (210/311), com.gamezone.ui: 0% (628 lines, ConsoleMenu — not in scope for this phase), com.gamezone: 0% (23 lines, Main — not in scope). The two 0%-covered packages are UI and the entry point, both deliberately excluded from Task Groups B and C's test plan; a future phase could add ConsoleMenu tests (likely via input-stream simulation) if UI coverage becomes a requirement.
+
+## Requirement 7 — Phase 1: Audit
+
+### Entry 19
+
+**Date:** 2026-10-13
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide how to merge findings that two roles reported from opposite sides of the same problem, and how to split a correction that touches classes owned by different roles.
+
+**Problem faced:**
+Developer 2 and the Technical Lead each reported the "product, otherwise accessory" lookup and the id generation in their own code, and several of Developer 2's Information Expert findings can only be fixed with new methods on `Sale`, `Return` and `Warranty`. Counting them twice would inflate the audit, and assigning them to one role would contradict the rule that each role corrects its own code.
+
+**Prompt used:**
+si
+
+**Solution obtained and decision taken:**
+The AI was used only to discuss the consolidation criteria, not to audit code (the Requerimiento 7 policy forbids using it to find violations). The Technical Lead merged duplicate findings into single violations listing every origin (V-05, V-09), assigned the new model methods to Developer 1 by the Requerimiento 3 precedent of `Sale.canBeReturned`, kept the `Main` rewiring with its owner by placing a Technical Lead commit inside Developer 2's task group, and fixed the correction order Developer 1 → Developer 2 → Technical Lead so that every commit compiles. Creator was confirmed as the only pattern applied correctly across the system.
