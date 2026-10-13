@@ -38,3 +38,10 @@ Defects recorded as out of scope (OOS-01..03) are part of the expected output. F
 
 | Class | Change | Violation ID | Pattern applied | Commit / PR | Owner |
 |---|---|---|---|---|---|
+| `Product`, `VideoGame`, `Console`, `Accessory` | Added abstract `belongsToCategory(String)`; video games answer `"VIDEOGAME"`, consoles `"CONSOLE"`, accessories never match (same results as before for every target string) | V-01 | Polymorphism, Protected Variations | `3174829` / PR #27 | Developer 1 |
+| `CategoryDiscount` | `calculateDiscount` sums the products for which `product.belongsToCategory(targetCategory)`; no more category strings or `instanceof` | V-01 | Polymorphism, Protected Variations | `3e98b77` / PR #27 | Developer 1 |
+| `Product`, `Console` | Added `isWarrantyEligible()` (false by default, `Console` overrides with true) for the sale registration to use | V-13 (model part) | Polymorphism, Protected Variations | `2812ca9` / PR #27 | Developer 1 |
+| `Accessory`, `Controller`, `Cable`, `Memory` | Added abstract `getAccessoryType()` returning `"CONTROLLER"`, `"CABLE"`, `"MEMORY"` | V-02 (model part) | Polymorphism | `9dac17d` / PR #27 | Developer 1 |
+| `Sale` | Added `findProduct(String)` and `wasMadeIn(int, int)` (return-related model work, Requerimiento 3 precedent) | V-06, V-07 (model part) | Information Expert | `c1873e9` / PR #27 | Developer 1 |
+| `Return` | Added `belongsToCustomer(String)`, `belongsToSale(String)`, `wasRegisteredIn(int, int)` | V-07 (model part) | Information Expert | `ed3f800` / PR #27 | Developer 1 |
+| `Warranty` | Added `covers(String productId, String saleId)` | V-08 (model part) | Information Expert | `345c8d7` / PR #27 | Developer 1 |
