@@ -12,19 +12,20 @@ import com.gamezone.service.WarrantyService;
 import java.util.Scanner;
 
 /**
- * Console-based user interface for GameZone Unicesar, displaying menus in
- * Spanish and delegating all business operations to the injected services.
+ * Console-based user interface for GameZone Unicesar. Shows the main menu in
+ * Spanish and delegates each module to its own submenu class, which in turn
+ * delegates every operation to the service layer.
  */
 public class ConsoleMenu {
 
     private final Scanner scanner;
-    private final WarrantyMenu warrantyMenu;
-    private final ReturnMenu returnMenu;
-    private final PromotionMenu promotionMenu;
-    private final AccessoryMenu accessoryMenu;
-    private final SaleMenu saleMenu;
-    private final PersonMenu personMenu;
     private final ProductMenu productMenu;
+    private final PersonMenu personMenu;
+    private final SaleMenu saleMenu;
+    private final AccessoryMenu accessoryMenu;
+    private final PromotionMenu promotionMenu;
+    private final ReturnMenu returnMenu;
+    private final WarrantyMenu warrantyMenu;
 
     /**
      * Creates a new console menu backed by the given services.
@@ -43,13 +44,13 @@ public class ConsoleMenu {
                         AccessoryService accessoryService, PromotionService promotionService,
                         ReturnService returnService, WarrantyService warrantyService) {
         this.scanner = new Scanner(System.in);
-        this.warrantyMenu = new WarrantyMenu(scanner, warrantyService);
-        this.returnMenu = new ReturnMenu(scanner, returnService, saleService);
-        this.promotionMenu = new PromotionMenu(scanner, promotionService);
-        this.accessoryMenu = new AccessoryMenu(scanner, accessoryService);
-        this.saleMenu = new SaleMenu(scanner, saleService, saleRegistrationService);
-        this.personMenu = new PersonMenu(scanner, personService);
         this.productMenu = new ProductMenu(scanner, productService);
+        this.personMenu = new PersonMenu(scanner, personService);
+        this.saleMenu = new SaleMenu(scanner, saleService, saleRegistrationService);
+        this.accessoryMenu = new AccessoryMenu(scanner, accessoryService);
+        this.promotionMenu = new PromotionMenu(scanner, promotionService);
+        this.returnMenu = new ReturnMenu(scanner, returnService, saleService);
+        this.warrantyMenu = new WarrantyMenu(scanner, warrantyService);
     }
 
     /**
@@ -105,5 +106,4 @@ public class ConsoleMenu {
             }
         }
     }
-
 }
