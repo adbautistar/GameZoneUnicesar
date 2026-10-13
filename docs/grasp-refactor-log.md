@@ -54,3 +54,31 @@ Defects recorded as out of scope (OOS-01..03) are part of the expected output. F
 | `Main` | **Boundary coordination:** the Technical Lead (owner of `Main`) rewired returns and warranties inside Developer 2's task group — `ItemCatalog` created, path-only repositories, new service constructors | V-03, V-04 | Low Coupling | `7512a7b` / PR #28 | Technical Lead |
 | `ReturnRepository`, `WarrantyRepository`, `ReturnService`, `WarrantyService` + tests | Removed the transitional `@Deprecated` API; `loadAll()` now returns records. Tests adapted only in construction and in what a repository round-trip returns (ids instead of resolved objects) | V-03, V-04 | Low Coupling | `c0a4b5f` / PR #28 | Developer 2 |
 | `ReturnServiceTest`, `WarrantyServiceTest` | New tests for the responsibility that moved into the services: resolving stored records (88 → 90 tests) | V-03, V-04 | — | `29bff08` / PR #28 | Developer 2 |
+| `Sale`, `SaleService`, `SaleRepository` | Added `applyPromotion(name, discount)` and `addCharge(amount)`; services and repositories no longer adjust the total through setters (setters kept as public API, unused by production code) | V-10 | Information Expert | `b2d3d9c` / PR #29 | Technical Lead |
+| `Sale`, `SaleService` | Added `wasMadeBy(customerId)` and `wasHandledBy(sellerId)`; history queries use them | V-16 | Information Expert | `0bdcf6b` / PR #29 | Technical Lead |
+| `SaleRecord` (new), `SaleRepository`, `SaleService`, `Main` | Repository loads `SaleRecord`s (ids only) and no longer depends on services; `SaleService` resolves customer, seller and items through `ItemCatalog`, reapplies the stored discount and rebuilds the purchase history (same messages; OOS-01 preserved) | V-11, V-05 (sales part) | Low Coupling, High Cohesion, Indirection | `819b498` / PR #29 | Technical Lead |
+| `SaleRegistrationService` (new), `SaleService`, `Main`, `ConsoleMenu` | Use-case controller for registering a sale (same validations, messages and order); uses `isWarrantyEligible()`, `ItemCatalog` and `IdGenerator`. `SaleService` keeps storage and queries plus `recordSale`; `setWarrantyService` and the silent `null` guard are gone, so the service graph has no cycle | V-12, V-13, V-05, V-09 (sales part) | Controller, High Cohesion, Low Coupling, Polymorphism, Protected Variations | `29eb2d4` / PR #29 | Technical Lead |
+| `SaleRegistrationService`, `ConsoleMenu` | Added `findWarrantyEligibleItems(productIds)`; the menu uses it for the extended-warranty questions and the basic-warranty messages (same text and order) | V-14 | Controller | `a4d48b8` / PR #29 | Technical Lead |
+| `ConsoleMenu` → `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `PromotionMenu`, `ReturnMenu`, `WarrantyMenu` (new) | Each module's submenu moved verbatim into its own class sharing the same `Scanner`; `ConsoleMenu` keeps only the main loop (863 → 109 lines) | V-15 | High Cohesion | `03867d5`, `8aa1963`, `8dd334d`, `143e16f`, `d78894c`, `9918a3c`, `a60734d`, `5ed00b6` / PR #29 | Technical Lead |
+| `SaleServiceTest` (new) | Tests for the responsibility that moved into `SaleService`: resolving stored sales, failing on missing references, recording new sales (90 → 93 tests) | V-11 | — | `2de8859` / PR #29 | Technical Lead |
+
+## Coordination and trade-off notes
+
+- **Boundary coordination (V-03, V-04):** `Main` belongs to the Technical Lead, so its rewiring for the new return and warranty constructors was committed by the Technical Lead (`7512a7b`) inside Developer 2's task group, between Developer 2's transitional commits and the removal of the deprecated API. Every commit of the phase compiles.
+- **`ItemCatalog` keeps one type check (V-05):** `decreaseStock`/`restoreStock` still ask `item instanceof Accessory`. This is deliberate: the intermediary is the only class that knows which catalog owns an item, and no client checks types any more. Adding a third catalog changes only this class.
+- **Repository serialization keeps type tags:** `ProductRepository`, `AccessoryRepository`, `PromotionRepository` and `WarrantyRepository` still branch on the concrete type to write the CSV tag. The audit judged this correct (Pure Fabrication isolating the file format), so it was not changed.
+- **Out-of-scope defects preserved:** OOS-01 (warranty surcharge lost on reload), OOS-02 (receipt subtotal) and OOS-03 (possible duplicate `WAR-` id) behave exactly as in the baseline; the scripted run and `SaleServiceTest` show OOS-01 explicitly.
+
+## Final results (end of Phase 2)
+
+| Check | Baseline | Final |
+|---|---|---|
+| `mvn clean verify` | BUILD SUCCESS, 88 tests | BUILD SUCCESS, **93 tests** (88 baseline, all unchanged in their assertions, + 5 new), 0 failures, 0 errors; JaCoCo check passed |
+| Line coverage `com.gamezone.service` | 85.1% | 83.2% (323/388) — above the 70% threshold; two new service classes added |
+| Line coverage `com.gamezone.persistence` | 74.7% | 83.3% (353/424) |
+| Scripted menu run | 1,051 normalized lines, SHA-256 `d404c06d889e6046` | 1,051 normalized lines, SHA-256 `d404c06d889e6046` — **diff empty** |
+| Persistence → service imports | 3 repositories | none |
+| `instanceof` outside repository serialization | 9 occurrences in model, services and UI | 2, both inside `ItemCatalog` |
+| Largest UI class | `ConsoleMenu`, 863 lines | `AccessoryMenu`, 188 lines; `ConsoleMenu`, 109 lines |
+
+The scripted run was also repeated after each of the 16 Phase 2 code commits that change production behavior paths (Developer 1, Developer 2, every Technical Lead commit and each menu extraction); every intermediate diff was empty.
