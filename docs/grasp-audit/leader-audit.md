@@ -18,12 +18,15 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Sales (Taller 1) | `SaleRepository` |
 | Sales (Taller 1) and integrations (Requerimientos 1, 2, 4) | `SaleService`, including product-or-accessory resolution, promotion application and warranty assignment in `registerSale` |
 | User interface (Taller 1 and Requerimientos 1-4) | `ConsoleMenu`, including every module submenu |
+| Entry point (Taller 1) and returns integration (Requerimiento 3) | `Main`, `ProductService.restoreStock` |
 
 ## Information Expert
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-03, V-09.
 
 - **Sale — Correct.** `Sale.calculateTotal()` (`Sale.java:148`) sums the prices of the products it holds; `generateReceipt()` (`Sale.java:163`) formats only its own data. The problem is not in `Sale` but in the classes that adjust its total from outside (V-03).
+
+- **ProductService.restoreStock — Correct.** It locates the product and delegates to `Product.updateStock` (`ProductService.java:117`).
 
 ### V-03
 
@@ -53,7 +56,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Creator
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — the Sale is created by the service that records it; repositories create what they read.
 
 - **Sale — Not applicable.** `Sale` creates no other domain object.
 
@@ -61,11 +64,15 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **SaleService — Correct.** `registerSale` creates the `Sale` (`SaleService.java:139`) that it then records, aggregates and persists.
 
+- **Main — Correct.** `Main` is the composition root: it creates repositories and services and passes them to the classes that use them.
+
 ## Controller
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-10.
 
 - **ConsoleMenu — Mixed.** Every submenu delegates the operation to a service, except the sale registration (V-10).
+
+- **Main — Not applicable.** `Main` receives no system events; it only starts `ConsoleMenu`.
 
 ### V-10
 
@@ -82,9 +89,11 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Low Coupling
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01, V-05.
 
 - **Sale — Correct.** `Sale` depends only on `Customer`, `Seller` and `Product`.
+
+- **Main — Correct as a composition root.** It necessarily knows every service; the extra wiring step `saleService.setWarrantyService(warrantyService)` (`Main.java:53`) is a symptom of V-05, not a separate violation.
 
 ### V-01
 
@@ -114,9 +123,11 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## High Cohesion
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-02, V-04, V-11.
 
 - **Sale — Correct.** `Sale` holds sale data, its total and its receipt.
+
+- **Main and ProductService.restoreStock — Correct.** `Main` only wires the application; `restoreStock` only adds stock back.
 
 ### V-02
 
@@ -159,7 +170,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Polymorphism
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-06.
 
 - **SaleService — Violation (V-06).** See the full analysis below.
 
@@ -178,7 +189,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Pure Fabrication
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-08.
 
 - **SaleRepository — Correct as a fabrication.** File access is kept out of `Sale`; the problems of this class are its dependencies and its extra responsibilities (V-01, V-02), not its existence.
 
@@ -197,7 +208,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Indirection
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-07.
 
 - **ConsoleMenu — Correct.** The menu reaches persistence only through services; it never imports a repository.
 
@@ -216,6 +227,25 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Protected Variations
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-05, V-06.
 
 - **SaleService — Violation (V-05, V-06).** The circular dependency is wired by hand and guarded by a silent `null` check (V-05); warranty eligibility is fixed to `Console` in two layers (V-06).
+
+## Summary of verdicts
+
+| Pattern | Verdict | Violations |
+|---|---|---|
+| Information Expert | Violation | V-03, V-09 |
+| Creator | Correct | — |
+| Controller | Violation | V-10 |
+| Low Coupling | Violation | V-01, V-05 |
+| High Cohesion | Violation | V-02, V-04, V-11 |
+| Polymorphism | Violation | V-06 |
+| Pure Fabrication | Violation | V-08 |
+| Indirection | Violation | V-07 |
+| Protected Variations | Violation | V-05, V-06 |
+
+## Notes
+
+- Reported for the consolidation (boundary items): V-05 and V-07 share their root cause with Developer 2's repository dependencies and lookups; V-06 needs a polymorphic method in Developer 1's product hierarchy; V-08 overlaps with Developer 2's identifier generation.
+- Observed while auditing `SaleRepository` and `Sale` (functional defects, not GRASP violations; for the out-of-scope section): the persisted total is ignored on load, so the extended-warranty surcharge is lost after a restart; the receipt's "Subtotal" includes that surcharge without listing it.
