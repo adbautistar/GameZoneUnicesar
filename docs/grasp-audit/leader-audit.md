@@ -16,12 +16,39 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 |---|---|
 | Sales (Taller 1) and promotion changes (Requerimiento 2) | `Sale` (including `applied promotion` fields and the receipt breakdown; excluding `canBeReturned`, owned by Developer 1) |
 | Sales (Taller 1) | `SaleRepository` |
+| Sales (Taller 1) and integrations (Requerimientos 1, 2, 4) | `SaleService`, including product-or-accessory resolution, promotion application and warranty assignment in `registerSale` |
 
 ## Information Expert
 
 **Verdict:** Pending — audit in progress.
 
 - **Sale — Correct.** `Sale.calculateTotal()` (`Sale.java:148`) sums the prices of the products it holds; `generateReceipt()` (`Sale.java:163`) formats only its own data. The problem is not in `Sale` but in the classes that adjust its total from outside (V-03).
+
+### V-03
+
+| Field | Content |
+|---|---|
+| ID | V-03 |
+| Pattern | Information Expert |
+| Module | Sales (Taller 1) and Promotions/Warranties integration (Requerimientos 2 and 4) |
+| Evidence | `SaleService.registerSale`, `SaleService.java:145-148` (`sale.setAppliedPromotionName(...)`, `sale.setDiscountAmount(discount)`, `sale.setTotalAmount(originalTotal - discount)`) and `:159` (`sale.setTotalAmount(sale.getTotalAmount() + extended.getAdditionalCost())`); `SaleRepository.fromCsvLine`, `:162-164`, repeats the discount arithmetic. |
+| Explanation | The sale is the expert on its own total, but the arithmetic that changes it is written in a service and in a repository, which push the result back through setters. |
+| Consequence | The total rules are duplicated in two classes and can drift apart; any client can leave a sale with an inconsistent total. |
+| Proposed solution | Let `Sale` apply a promotion (`applyPromotion(name, discount)`) and add a surcharge (`addCharge(amount)`) to its own total; clients only call those methods. |
+| Other role's code involved | No. |
+
+### V-09
+
+| Field | Content |
+|---|---|
+| ID | V-09 |
+| Pattern | Information Expert |
+| Module | Sales (Taller 1) |
+| Evidence | `SaleService.viewSalesByCustomer` (`SaleService.java:197`) `sale.getCustomer().getId().equals(customerId)`; `viewSalesBySeller` (`:213`) `sale.getSeller().getId().equals(sellerId)`. |
+| Explanation | The service navigates the sale's associations instead of asking the sale. |
+| Consequence | The service depends on how `Sale` stores its participants. |
+| Proposed solution | Ask the sale: `wasMadeBy(customerId)` and `wasHandledBy(sellerId)`. |
+| Other role's code involved | No. |
 
 ## Creator
 
@@ -30,6 +57,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Sale — Not applicable.** `Sale` creates no other domain object.
 
 - **SaleRepository — Correct.** `fromCsvLine` creates each `Sale` from the record it reads, so it holds the initializing data.
+
+- **SaleService — Correct.** `registerSale` creates the `Sale` (`SaleService.java:139`) that it then records, aggregates and persists.
 
 ## Controller
 
@@ -56,6 +85,19 @@ _No module audited yet contributes to this pattern._
 | Proposed solution | Persist and load only references (a `SaleRecord` with ids); `SaleService` resolves them when it loads. |
 | Other role's code involved | No. |
 
+### V-05
+
+| Field | Content |
+|---|---|
+| ID | V-05 |
+| Pattern | Low Coupling (also Protected Variations) |
+| Module | Warranties integration (Requerimiento 4) |
+| Evidence | `SaleService` field `warrantyService` injected by `setWarrantyService` (`SaleService.java:71`) because of the cycle `SaleService → WarrantyService → WarrantyRepository → SaleService`; `registerSale` guards it with `if (warrantyService != null)` (`:151`); `Main.java:53` wires it after construction. |
+| Explanation | Two services depend on each other through persistence. The cycle is broken by hand and the guard hides a wiring mistake instead of failing. |
+| Consequence | If the setter call is forgotten, sales are registered silently without warranties; construction order in `Main` becomes fragile. |
+| Proposed solution | Break the cycle: move registration into a use-case controller that depends on both services (V-04), and remove the reverse dependency from the warranty repository (reported for consolidation). |
+| Other role's code involved | Yes — `WarrantyRepository` is Developer 2's code. |
+
 ## High Cohesion
 
 **Verdict:** Pending — audit in progress.
@@ -75,11 +117,37 @@ _No module audited yet contributes to this pattern._
 | Proposed solution | Let `SaleService` record the purchase history when it rebuilds sales and when it registers a new one. |
 | Other role's code involved | No. |
 
+### V-04
+
+| Field | Content |
+|---|---|
+| ID | V-04 |
+| Pattern | High Cohesion |
+| Module | Sales (Taller 1) and integrations (Requerimientos 1, 2, 4) |
+| Evidence | `SaleService.registerSale`, `SaleService.java:94-177` (about 80 lines). |
+| Explanation | One method validates input, resolves people and items, checks stock, generates the id, applies promotions, assigns warranties, updates stock, records history and persists. `SaleService` mixes the sale registration use case with sale storage and queries. |
+| Consequence | Every new module that touches a sale (accessories, promotions, warranties) was added to the same method; the method is hard to read, test and change safely. |
+| Proposed solution | Extract the registration use case into its own class (a use-case controller such as `SaleRegistrationService`), leaving `SaleService` with storage and queries. |
+| Other role's code involved | No. |
+
 ## Polymorphism
 
 **Verdict:** Pending — audit in progress.
 
-_No module audited yet contributes to this pattern._
+- **SaleService — Violation (V-06).** See the full analysis below.
+
+### V-06
+
+| Field | Content |
+|---|---|
+| ID | V-06 |
+| Pattern | Polymorphism (also Protected Variations) |
+| Module | Accessories and Warranties integration (Requerimientos 1 and 4) |
+| Evidence | `SaleService.registerSale`: `if (product instanceof Console)` for warranty eligibility (`SaleService.java:153`) and `if (product instanceof Accessory)` for stock dispatch (`:165`); `ConsoleMenu.registerSale`: `if (product instanceof Console)` (`ConsoleMenu.java:329`). |
+| Explanation | Two variations — which items receive a warranty and where an item's stock lives — are decided with type checks in the clients, and the warranty rule is repeated in the service and in the UI. |
+| Consequence | Making another product type eligible for warranties, or adding another kind of sellable item, requires editing several classes in two layers. |
+| Proposed solution | Let products answer their warranty eligibility polymorphically (`isWarrantyEligible()`, overridden by `Console`) and move the stock dispatch behind a single intermediary (see V-07). |
+| Other role's code involved | Yes — the product hierarchy is Developer 1's code. |
 
 ## Pure Fabrication
 
@@ -87,14 +155,38 @@ _No module audited yet contributes to this pattern._
 
 - **SaleRepository — Correct as a fabrication.** File access is kept out of `Sale`; the problems of this class are its dependencies and its extra responsibilities (V-01, V-02), not its existence.
 
+### V-08
+
+| Field | Content |
+|---|---|
+| ID | V-08 |
+| Pattern | Pure Fabrication |
+| Module | Sales (Taller 1) |
+| Evidence | `SaleService.registerSale`, `SaleService.java:138`: `"SALE-" + System.currentTimeMillis()`. |
+| Explanation | Identifier generation is a technical responsibility written inline in a domain service. |
+| Consequence | The identifier scheme is repeated wherever entities are created. |
+| Proposed solution | Use a fabricated `IdGenerator` shared by every service that creates entities. |
+| Other role's code involved | Yes — reported to the consolidation: Developer 2's services generate `RET-`/`WAR-` ids the same way. |
+
 ## Indirection
 
 **Verdict:** Pending — audit in progress.
 
-_No module audited yet contributes to this pattern._
+### V-07
+
+| Field | Content |
+|---|---|
+| ID | V-07 |
+| Pattern | Indirection |
+| Module | Accessories integration (Requerimiento 1) |
+| Evidence | `productService.findById(id)`, then `accessoryService.findById(id)` in `SaleService.registerSale` (`SaleService.java:111-113`) and `SaleRepository.fromCsvLine` (`SaleRepository.java:148-150`). |
+| Explanation | Sale code talks directly to the product and accessory catalogs and knows the lookup order; there is no intermediary for "a sellable item". |
+| Consequence | The lookup and the stock dispatch are duplicated; a third catalog would require editing every client. |
+| Proposed solution | Use a single intermediary for sellable items (find, decrease stock, restore stock). |
+| Other role's code involved | Yes — reported to the consolidation as the same duplication exists in Developer 2's return and warranty code. |
 
 ## Protected Variations
 
 **Verdict:** Pending — audit in progress.
 
-_No module audited yet contributes to this pattern._
+- **SaleService — Violation (V-05, V-06).** The circular dependency is wired by hand and guarded by a silent `null` check (V-05); warranty eligibility is fixed to `Console` in two layers (V-06).
