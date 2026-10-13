@@ -14,6 +14,7 @@ import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
 import com.gamezone.service.ReturnService;
+import com.gamezone.service.SaleRegistrationService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
 
@@ -31,6 +32,7 @@ public class ConsoleMenu {
     private final ProductService productService;
     private final PersonService personService;
     private final SaleService saleService;
+    private final SaleRegistrationService saleRegistrationService;
     private final AccessoryService accessoryService;
     private final PromotionService promotionService;
     private final ReturnService returnService;
@@ -42,18 +44,21 @@ public class ConsoleMenu {
      *
      * @param productService   the service used for product operations
      * @param personService    the service used for customer and seller operations
-     * @param saleService      the service used for sale operations
+     * @param saleService      the service used for sale queries
+     * @param saleRegistrationService the use case used to register new sales
      * @param accessoryService the service used for accessory operations
      * @param promotionService the service used for promotion operations
      * @param returnService    the service used for return operations
      * @param warrantyService  the service used for warranty operations
      */
     public ConsoleMenu(ProductService productService, PersonService personService, SaleService saleService,
+                        SaleRegistrationService saleRegistrationService,
                         AccessoryService accessoryService, PromotionService promotionService,
                         ReturnService returnService, WarrantyService warrantyService) {
         this.productService = productService;
         this.personService = personService;
         this.saleService = saleService;
+        this.saleRegistrationService = saleRegistrationService;
         this.accessoryService = accessoryService;
         this.promotionService = promotionService;
         this.returnService = returnService;
@@ -336,7 +341,7 @@ public class ConsoleMenu {
                 }
             }
 
-            Sale sale = saleService.registerSale(customerId, sellerId, productIds, extendedWarrantyIds);
+            Sale sale = saleRegistrationService.registerSale(customerId, sellerId, productIds, extendedWarrantyIds);
             System.out.println("Venta registrada exitosamente.");
             for (Product console : consoles) {
                 System.out.println("Garantia basica asignada automaticamente a " + console.getTitle() + ".");

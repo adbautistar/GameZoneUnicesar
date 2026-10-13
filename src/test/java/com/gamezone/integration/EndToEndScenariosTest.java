@@ -18,6 +18,7 @@ import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
 import com.gamezone.service.ReturnService;
+import com.gamezone.service.SaleRegistrationService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
 import com.gamezone.testutil.TestDataFactory;
@@ -47,6 +48,7 @@ class EndToEndScenariosTest {
     private ProductService productService;
     private PromotionService promotionService;
     private SaleService saleService;
+    private SaleRegistrationService saleRegistrationService;
     private ReturnService returnService;
     private WarrantyService warrantyService;
 
@@ -71,14 +73,15 @@ class EndToEndScenariosTest {
         ItemCatalog itemCatalog = new ItemCatalog(productService, accessoryService);
 
         SaleRepository saleRepository = new SaleRepository(tempDir.resolve("sales.csv").toString());
-        saleService = new SaleService(saleRepository, personService, itemCatalog, promotionService);
+        saleService = new SaleService(saleRepository, personService, itemCatalog);
 
         ReturnRepository returnRepository = new ReturnRepository(tempDir.resolve("returns.csv").toString());
         returnService = new ReturnService(returnRepository, saleService, itemCatalog);
 
         WarrantyRepository warrantyRepository = new WarrantyRepository(tempDir.resolve("warranties.csv").toString());
         warrantyService = new WarrantyService(warrantyRepository, saleService, itemCatalog);
-        saleService.setWarrantyService(warrantyService);
+        saleRegistrationService = new SaleRegistrationService(saleService, personService, itemCatalog,
+            promotionService, warrantyService);
 
         personService.registerCustomer("C001", "Test", "Customer", "3000000000", "test@example.com");
         customer = personService.findCustomerById("C001");
@@ -90,7 +93,7 @@ class EndToEndScenariosTest {
     void scenario1_consoleSaleGetsBasicWarrantyNoDiscount() {
         productService.registerConsole("CN001", "PS5", 2000000, 5, "Sony", "PS5", "9th");
 
-        Sale sale = saleService.registerSale(customer.getId(), seller.getId(), List.of("CN001"), List.of());
+        Sale sale = saleRegistrationService.registerSale(customer.getId(), seller.getId(), List.of("CN001"), List.of());
 
         assertThat(sale.getDiscountAmount()).isEqualTo(0.0);
         assertThat(sale.getTotalAmount()).isEqualTo(2000000);
@@ -108,7 +111,7 @@ class EndToEndScenariosTest {
         promotionService.registerBulkPurchaseDiscount("PR001", "Bulk 10%", LocalDate.now().minusDays(1),
             LocalDate.now().plusDays(1), 3, 10);
 
-        Sale sale = saleService.registerSale(customer.getId(), seller.getId(),
+        Sale sale = saleRegistrationService.registerSale(customer.getId(), seller.getId(),
             List.of("VG001", "VG002", "VG003"), List.of());
 
         assertThat(sale.getDiscountAmount()).isGreaterThan(0.0);
@@ -120,7 +123,7 @@ class EndToEndScenariosTest {
     void scenario3_extendedWarrantyOptInAddsSurcharge() {
         productService.registerConsole("CN001", "PS5", 2000000, 5, "Sony", "PS5", "9th");
 
-        Sale sale = saleService.registerSale(customer.getId(), seller.getId(), List.of("CN001"), List.of("CN001"));
+        Sale sale = saleRegistrationService.registerSale(customer.getId(), seller.getId(), List.of("CN001"), List.of("CN001"));
 
         assertThat(sale.getTotalAmount()).isEqualTo(2000000 + 200000);
         List<Warranty> warranties = warrantyService.listAllWarranties();
@@ -133,7 +136,7 @@ class EndToEndScenariosTest {
     @DisplayName("Scenario 4: registering a return the same day restores stock")
     void scenario4_sameDayReturnRestoresStock() {
         productService.registerVideoGame("VG001", "Game A", 50000, 10, "PS5", "Action", "T");
-        Sale sale = saleService.registerSale(customer.getId(), seller.getId(), List.of("VG001"), List.of());
+        Sale sale = saleRegistrationService.registerSale(customer.getId(), seller.getId(), List.of("VG001"), List.of());
 
         Return returnItem = returnService.registerReturn(sale.getId(), List.of("VG001"), "Defective");
 
@@ -145,7 +148,7 @@ class EndToEndScenariosTest {
     @DisplayName("Scenario 5: monthly balance equals sale total minus refund for the same month")
     void scenario5_monthlyBalanceReflectsSaleAndReturn() {
         productService.registerVideoGame("VG001", "Game A", 50000, 10, "PS5", "Action", "T");
-        Sale sale = saleService.registerSale(customer.getId(), seller.getId(), List.of("VG001"), List.of());
+        Sale sale = saleRegistrationService.registerSale(customer.getId(), seller.getId(), List.of("VG001"), List.of());
         Return returnItem = returnService.registerReturn(sale.getId(), List.of("VG001"), "Defective");
 
         LocalDate today = LocalDate.now();
@@ -162,7 +165,7 @@ class EndToEndScenariosTest {
         promotionService.registerCategoryDiscount("PR002", "20% Videogames", LocalDate.now().minusDays(1),
             LocalDate.now().plusDays(1), 20, "VIDEOGAME");
 
-        Sale sale = saleService.registerSale(customer.getId(), seller.getId(), List.of("VG001", "CN001"), List.of());
+        Sale sale = saleRegistrationService.registerSale(customer.getId(), seller.getId(), List.of("VG001", "CN001"), List.of());
 
         assertThat(sale.getDiscountAmount()).isEqualTo(50000 * 0.20);
     }
