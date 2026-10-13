@@ -1,6 +1,5 @@
 package com.gamezone.service;
 
-import com.gamezone.model.Accessory;
 import com.gamezone.model.Console;
 import com.gamezone.model.Customer;
 import com.gamezone.model.ExtendedWarranty;
@@ -8,6 +7,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.persistence.SaleRecord;
 import com.gamezone.persistence.SaleRepository;
 
 import java.time.LocalDate;
@@ -24,40 +24,68 @@ import java.util.Map;
 public class SaleService {
 
     private final SaleRepository repository;
-    private final ProductService productService;
     private final PersonService personService;
-    private final AccessoryService accessoryService;
+    private final ItemCatalog itemCatalog;
     private final PromotionService promotionService;
     private final List<Sale> sales;
 
     /**
      * The service used to assign warranties when registering a sale. Not a
-     * constructor parameter: WarrantyRepository depends on SaleService to
+     * constructor parameter: WarrantyService depends on SaleService to
      * resolve sale references on load, so a constructor parameter here would
      * create a circular dependency (SaleService -&gt; WarrantyService -&gt;
-     * WarrantyRepository -&gt; SaleService). Wired in via {@link #setWarrantyService}
-     * after both services are constructed.
+     * SaleService). Wired in via {@link #setWarrantyService} after both
+     * services are constructed.
      */
     private WarrantyService warrantyService;
 
     /**
      * Creates a new service backed by the given repository and collaborating
-     * services, loading the current sales history into memory.
+     * services, loading the current sales history into memory. Stored
+     * references are resolved here, and every loaded sale is added to its
+     * customer's purchase history.
      *
      * @param repository       the repository used to persist and load sales
-     * @param productService   the service used to resolve and update products
      * @param personService    the service used to resolve customers and sellers
-     * @param accessoryService the service used to resolve and update accessories
+     * @param itemCatalog      the catalog used to resolve sold items and update their stock
      * @param promotionService the service used to find the best active promotion for a sale
+     * @throws RuntimeException if a stored sale references a customer, seller
+     *                          or item that no longer exists
      */
-    public SaleService(SaleRepository repository, ProductService productService, PersonService personService,
-                        AccessoryService accessoryService, PromotionService promotionService) {
+    public SaleService(SaleRepository repository, PersonService personService, ItemCatalog itemCatalog,
+                        PromotionService promotionService) {
         this.repository = repository;
-        this.productService = productService;
         this.personService = personService;
-        this.accessoryService = accessoryService;
+        this.itemCatalog = itemCatalog;
         this.promotionService = promotionService;
-        this.sales = new ArrayList<>(repository.loadAll());
+        this.sales = new ArrayList<>();
+        for (SaleRecord record : repository.loadAll()) {
+            sales.add(resolve(record));
+        }
+    }
+
+    private Sale resolve(SaleRecord record) {
+        Customer customer = personService.findCustomerById(record.getCustomerId());
+        Seller seller = personService.findSellerById(record.getSellerId());
+        if (customer == null || seller == null) {
+            throw new RuntimeException("Failed to resolve customer or seller for sale " + record.getId());
+        }
+        List<Product> products = new ArrayList<>();
+        for (String productId : record.getProductIds()) {
+            Product product = itemCatalog.findItem(productId);
+            if (product == null) {
+                throw new RuntimeException("Failed to resolve product or accessory " + productId
+                    + " for sale " + record.getId());
+            }
+            products.add(product);
+        }
+        Sale sale = new Sale(record.getId(), record.getDate(), customer, seller, products);
+        sale.calculateTotal();
+        if (record.getAppliedPromotionName() != null) {
+            sale.applyPromotion(record.getAppliedPromotionName(), record.getDiscountAmount());
+        }
+        customer.addPurchase(sale);
+        return sale;
     }
 
     /**
@@ -108,10 +136,7 @@ public class SaleService {
 
         List<Product> products = new ArrayList<>();
         for (String productId : productIds) {
-            Product product = productService.findById(productId);
-            if (product == null) {
-                product = accessoryService.findById(productId);
-            }
+            Product product = itemCatalog.findItem(productId);
             if (product == null) {
                 throw new IllegalArgumentException("Producto o accesorio no encontrado: " + productId);
             }
@@ -158,11 +183,7 @@ public class SaleService {
         }
 
         for (Product product : products) {
-            if (product instanceof Accessory) {
-                accessoryService.updateStock(product.getId(), -1);
-            } else {
-                productService.updateStock(product.getId(), -1);
-            }
+            itemCatalog.decreaseStock(product);
         }
 
         sales.add(sale);

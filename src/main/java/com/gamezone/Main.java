@@ -40,11 +40,10 @@ public class Main {
             AccessoryService accessoryService = new AccessoryService(accessoryRepository);
             PromotionService promotionService = new PromotionService(promotionRepository);
 
-            SaleRepository saleRepository = new SaleRepository(productService, personService, accessoryService);
-            SaleService saleService = new SaleService(saleRepository, productService, personService,
-                accessoryService, promotionService);
-
             ItemCatalog itemCatalog = new ItemCatalog(productService, accessoryService);
+
+            SaleRepository saleRepository = new SaleRepository();
+            SaleService saleService = new SaleService(saleRepository, personService, itemCatalog, promotionService);
 
             ReturnRepository returnRepository = new ReturnRepository();
             ReturnService returnService = new ReturnService(returnRepository, saleService, itemCatalog);

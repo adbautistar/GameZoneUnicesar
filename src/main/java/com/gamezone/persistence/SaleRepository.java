@@ -1,12 +1,7 @@
 package com.gamezone.persistence;
 
-import com.gamezone.model.Customer;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
-import com.gamezone.model.Seller;
-import com.gamezone.service.AccessoryService;
-import com.gamezone.service.PersonService;
-import com.gamezone.service.ProductService;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -17,51 +12,35 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Handles file-based persistence of {@link Sale} instances as CSV records in
- * {@code data/sales.csv}, resolving customer, seller, product, and accessory
- * references through the injected {@link ProductService}, {@link PersonService},
- * and {@link AccessoryService}.
+ * {@code data/sales.csv}. Sales are saved with their customer, seller and
+ * items as ids and loaded back as {@link SaleRecord}s; resolving those ids
+ * into domain objects is the responsibility of the service layer.
  */
 public class SaleRepository {
 
     private static final String DEFAULT_FILE_PATH = "data/sales.csv";
 
-    private final ProductService productService;
-    private final PersonService personService;
-    private final AccessoryService accessoryService;
     private final String filePath;
 
     /**
-     * Creates a new repository that resolves sale references through the
-     * given services, backed by the default {@code data/sales.csv} file.
-     *
-     * @param productService   the service used to resolve product references
-     * @param personService    the service used to resolve customer and seller references
-     * @param accessoryService the service used to resolve accessory references
+     * Creates a new repository backed by the default {@code data/sales.csv} file.
      */
-    public SaleRepository(ProductService productService, PersonService personService,
-                           AccessoryService accessoryService) {
-        this(productService, personService, accessoryService, DEFAULT_FILE_PATH);
+    public SaleRepository() {
+        this(DEFAULT_FILE_PATH);
     }
 
     /**
-     * Creates a new repository that resolves sale references through the
-     * given services, backed by the given file path. Used by tests to
-     * isolate file operations from the real {@code data/sales.csv}.
+     * Creates a new repository backed by the given file path. Used by tests
+     * to isolate file operations from the real {@code data/sales.csv}.
      *
-     * @param productService   the service used to resolve product references
-     * @param personService    the service used to resolve customer and seller references
-     * @param accessoryService the service used to resolve accessory references
-     * @param filePath         the CSV file path to read from and write to
+     * @param filePath the CSV file path to read from and write to
      */
-    public SaleRepository(ProductService productService, PersonService personService,
-                           AccessoryService accessoryService, String filePath) {
-        this.productService = productService;
-        this.personService = personService;
-        this.accessoryService = accessoryService;
+    public SaleRepository(String filePath) {
         this.filePath = filePath;
     }
 
@@ -82,17 +61,16 @@ public class SaleRepository {
     }
 
     /**
-     * Reads the CSV file and reconstructs the list of sales, resolving each
-     * sale's customer, seller, and products by id.
+     * Reads the CSV file and returns one record per stored sale, keeping the
+     * customer, seller and items as ids.
      *
-     * @return the list of sales found in the file, or an empty list if the
-     *         file does not exist
+     * @return the stored sale records, or an empty list if the file does not exist
      */
-    public List<Sale> loadAll() {
-        List<Sale> sales = new ArrayList<>();
+    public List<SaleRecord> loadAll() {
+        List<SaleRecord> records = new ArrayList<>();
         Path path = Path.of(filePath);
         if (!Files.exists(path)) {
-            return sales;
+            return records;
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -100,12 +78,12 @@ public class SaleRepository {
                 if (line.isBlank()) {
                     continue;
                 }
-                sales.add(fromCsvLine(line));
+                records.add(toRecord(line));
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load sales from " + filePath, e);
         }
-        return sales;
+        return records;
     }
 
     private String toCsvLine(Sale sale) {
@@ -129,38 +107,18 @@ public class SaleRepository {
             String.valueOf(sale.getDiscountAmount()));
     }
 
-    private Sale fromCsvLine(String line) {
+    private SaleRecord toRecord(String line) {
         String[] fields = line.split(",", -1);
-        String id = fields[0];
-        LocalDate date = LocalDate.parse(fields[1]);
-        String customerId = fields[2];
-        String sellerId = fields[3];
-        String[] productIds = fields[4].isEmpty() ? new String[0] : fields[4].split(";");
-
-        Customer customer = personService.findCustomerById(customerId);
-        Seller seller = personService.findSellerById(sellerId);
-        if (customer == null || seller == null) {
-            throw new RuntimeException("Failed to resolve customer or seller for sale " + id);
-        }
-
-        List<Product> products = new ArrayList<>();
-        for (String productId : productIds) {
-            Product product = productService.findById(productId);
-            if (product == null) {
-                product = accessoryService.findById(productId);
-            }
-            if (product == null) {
-                throw new RuntimeException("Failed to resolve product or accessory " + productId + " for sale " + id);
-            }
-            products.add(product);
-        }
-
-        Sale sale = new Sale(id, date, customer, seller, products);
-        sale.calculateTotal();
-        if (fields.length > 7 && !fields[6].isEmpty()) {
-            sale.applyPromotion(fields[6], Double.parseDouble(fields[7]));
-        }
-        customer.addPurchase(sale);
-        return sale;
+        List<String> productIds = fields[4].isEmpty() ? List.of() : Arrays.asList(fields[4].split(";"));
+        boolean hasPromotion = fields.length > 7 && !fields[6].isEmpty();
+        return new SaleRecord(
+            fields[0],
+            LocalDate.parse(fields[1]),
+            fields[2],
+            fields[3],
+            productIds,
+            Double.parseDouble(fields[5]),
+            hasPromotion ? fields[6] : null,
+            hasPromotion ? Double.parseDouble(fields[7]) : 0.0);
     }
 }

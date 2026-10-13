@@ -68,11 +68,10 @@ class EndToEndScenariosTest {
         AccessoryService accessoryService = new AccessoryService(accessoryRepository);
         promotionService = new PromotionService(promotionRepository);
 
-        SaleRepository saleRepository = new SaleRepository(productService, personService, accessoryService,
-            tempDir.resolve("sales.csv").toString());
-        saleService = new SaleService(saleRepository, productService, personService, accessoryService, promotionService);
-
         ItemCatalog itemCatalog = new ItemCatalog(productService, accessoryService);
+
+        SaleRepository saleRepository = new SaleRepository(tempDir.resolve("sales.csv").toString());
+        saleService = new SaleService(saleRepository, personService, itemCatalog, promotionService);
 
         ReturnRepository returnRepository = new ReturnRepository(tempDir.resolve("returns.csv").toString());
         returnService = new ReturnService(returnRepository, saleService, itemCatalog);
