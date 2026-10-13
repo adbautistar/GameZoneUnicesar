@@ -21,6 +21,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Handles file-based persistence of warranties as CSV records in
+ * {@code data/warranties.csv}. Warranties are saved with their product and
+ * sale as ids and loaded back as {@link WarrantyRecord}s; resolving those ids
+ * into domain objects is the responsibility of the service layer.
+ */
 public class WarrantyRepository {
 
     private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
@@ -33,15 +39,42 @@ public class WarrantyRepository {
     private final AccessoryService accessoryService;
     private final String filePath;
 
+    /**
+     * Creates a new repository backed by the default {@code data/warranties.csv} file.
+     */
+    public WarrantyRepository() {
+        this(DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a new repository backed by the given file path. Used by tests
+     * to isolate file operations from the real {@code data/warranties.csv}.
+     *
+     * @param filePath the CSV file path to read from and write to
+     */
+    public WarrantyRepository(String filePath) {
+        this(null, null, null, filePath);
+    }
+
+    /**
+     * Creates a repository that can still resolve references itself.
+     *
+     * @deprecated transitional constructor kept only until {@code Main} is
+     *             rewired; use {@link #WarrantyRepository()}
+     */
+    @Deprecated
     public WarrantyRepository(SaleService saleService, ProductService productService,
                                AccessoryService accessoryService) {
         this(saleService, productService, accessoryService, DEFAULT_FILE_PATH);
     }
 
     /**
-     * Creates a new repository backed by the given file path. Used by tests
-     * to isolate file operations from the real {@code data/warranties.csv}.
+     * Creates a repository that can still resolve references itself.
+     *
+     * @deprecated transitional constructor kept only until the tests are
+     *             adapted; use {@link #WarrantyRepository(String)}
      */
+    @Deprecated
     public WarrantyRepository(SaleService saleService, ProductService productService,
                                AccessoryService accessoryService, String filePath) {
         this.saleService = saleService;
@@ -72,6 +105,44 @@ public class WarrantyRepository {
             warranty.getEndDate().format(DATE_FORMATTER));
     }
 
+    /**
+     * Reads the CSV file and returns one record per stored warranty, keeping
+     * the product and sale as ids.
+     *
+     * @return the stored warranty records, or an empty list if the file does not exist
+     */
+    public List<WarrantyRecord> loadRecords() {
+        List<WarrantyRecord> records = new ArrayList<>();
+        Path path = Path.of(filePath);
+        if (!Files.exists(path)) {
+            return records;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                String[] fields = line.split(",", -1);
+                // fields[5] holds the persisted endDate; warranties always re-derive
+                // it from startDate and their fixed duration, so it is not read.
+                records.add(new WarrantyRecord(fields[0], fields[1], fields[2], fields[3],
+                    LocalDate.parse(fields[4], DATE_FORMATTER)));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load warranties from " + filePath, e);
+        }
+        return records;
+    }
+
+    /**
+     * Reads the CSV file and resolves every warranty through the services.
+     *
+     * @return the resolved warranties
+     * @deprecated transitional method kept only until the tests are adapted;
+     *             use {@link #loadRecords()}
+     */
+    @Deprecated
     public List<Warranty> loadAll() {
         List<Warranty> warranties = new ArrayList<>();
         Path path = Path.of(filePath);
