@@ -5,6 +5,7 @@ import com.gamezone.model.Console;
 import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.testutil.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,13 +28,17 @@ class WarrantyServiceTest {
 
     @Mock
     private WarrantyRepository repository;
+    @Mock
+    private SaleService saleService;
+    @Mock
+    private ItemCatalog itemCatalog;
 
     private WarrantyService service;
 
     @BeforeEach
     void setUp() {
         when(repository.loadAll()).thenReturn(new ArrayList<>());
-        service = new WarrantyService(repository);
+        service = new WarrantyService(repository, saleService, itemCatalog);
     }
 
     @Test
@@ -110,5 +115,32 @@ class WarrantyServiceTest {
     private Sale sampleSale(Console console) {
         return TestDataFactory.sampleSale("SALE001", TestDataFactory.sampleCustomer("C001"),
             TestDataFactory.sampleSeller("S001"), List.of(console), LocalDate.now());
+    }
+
+    @Test
+    @DisplayName("constructor rebuilds BASIC and EXTENDED records with the resolved product and sale")
+    void constructorRebuildsStoredRecords() {
+        Console console = TestDataFactory.sampleConsole("CN001");
+        Sale sale = TestDataFactory.sampleSale("SALE001", TestDataFactory.sampleCustomer("C001"),
+            TestDataFactory.sampleSeller("S001"), List.of(console), LocalDate.now());
+        LocalDate start = LocalDate.now().minusDays(10);
+        when(itemCatalog.findItem("CN001")).thenReturn(console);
+        when(saleService.findById("SALE001")).thenReturn(sale);
+        when(repository.loadAll()).thenReturn(List.of(
+            new WarrantyRecord("BASIC", "WAR001", "CN001", "SALE001", start),
+            new WarrantyRecord("EXTENDED", "WAR002", "CN001", "SALE001", start)));
+
+        WarrantyService reloaded = new WarrantyService(repository, saleService, itemCatalog);
+
+        List<Warranty> loaded = reloaded.listAllWarranties();
+        assertThat(loaded).hasSize(2);
+        assertThat(loaded.get(0)).isInstanceOf(BasicWarranty.class);
+        assertThat(loaded.get(0).getEndDate()).isEqualTo(start.plusMonths(6));
+        assertThat(loaded.get(1)).isInstanceOf(ExtendedWarranty.class);
+        assertThat(loaded.get(1).getEndDate()).isEqualTo(start.plusMonths(12));
+        assertThat(loaded).allSatisfy(warranty -> {
+            assertThat(warranty.getProduct()).isSameAs(console);
+            assertThat(warranty.getSale()).isSameAs(sale);
+        });
     }
 }

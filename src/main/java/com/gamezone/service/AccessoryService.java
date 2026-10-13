@@ -48,11 +48,7 @@ public class AccessoryService {
     public List<Accessory> listAccessoriesByType(String type) {
         List<Accessory> result = new ArrayList<>();
         for (Accessory accessory : accessories) {
-            if ("CONTROLLER".equals(type) && accessory instanceof Controller) {
-                result.add(accessory);
-            } else if ("CABLE".equals(type) && accessory instanceof Cable) {
-                result.add(accessory);
-            } else if ("MEMORY".equals(type) && accessory instanceof Memory) {
+            if (accessory.getAccessoryType().equals(type)) {
                 result.add(accessory);
             }
         }

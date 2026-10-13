@@ -13,6 +13,7 @@ import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
+import com.gamezone.service.ItemCatalog;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
@@ -71,13 +72,13 @@ class EndToEndScenariosTest {
             tempDir.resolve("sales.csv").toString());
         saleService = new SaleService(saleRepository, productService, personService, accessoryService, promotionService);
 
-        ReturnRepository returnRepository = new ReturnRepository(saleService, productService, accessoryService,
-            tempDir.resolve("returns.csv").toString());
-        returnService = new ReturnService(returnRepository, saleService, productService, accessoryService);
+        ItemCatalog itemCatalog = new ItemCatalog(productService, accessoryService);
 
-        WarrantyRepository warrantyRepository = new WarrantyRepository(saleService, productService, accessoryService,
-            tempDir.resolve("warranties.csv").toString());
-        warrantyService = new WarrantyService(warrantyRepository);
+        ReturnRepository returnRepository = new ReturnRepository(tempDir.resolve("returns.csv").toString());
+        returnService = new ReturnService(returnRepository, saleService, itemCatalog);
+
+        WarrantyRepository warrantyRepository = new WarrantyRepository(tempDir.resolve("warranties.csv").toString());
+        warrantyService = new WarrantyService(warrantyRepository, saleService, itemCatalog);
         saleService.setWarrantyService(warrantyService);
 
         personService.registerCustomer("C001", "Test", "Customer", "3000000000", "test@example.com");
