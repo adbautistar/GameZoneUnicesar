@@ -73,4 +73,13 @@ public abstract class Accessory extends Product {
     public boolean belongsToCategory(String category) {
         return false;
     }
+
+    /**
+     * Returns the type of this accessory (for example, "CONTROLLER"), so that
+     * callers can filter accessories by type without inspecting the concrete
+     * class. Each concrete subclass returns its own type.
+     *
+     * @return the accessory type name
+     */
+    public abstract String getAccessoryType();
 }
