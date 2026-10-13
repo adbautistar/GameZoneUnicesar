@@ -19,10 +19,11 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 | Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
+| Exceptions and validation (Requerimiento 6) | Not present in the reference repository — nothing to audit |
 
 ## Information Expert
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — every class in scope computes what it knows from its own data.
 
 - **Products — Correct.** `Product.updateStock(int)` (`Product.java:108`) changes the stock it owns; `ProductService.updateStock` (`ProductService.java:84`) locates the product and delegates the change to it instead of computing the new value itself. `VideoGame.getDescription` and `Console.getDescription` build the description from their own fields.
 
@@ -36,19 +37,23 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Creator
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — objects are created by the class that aggregates them or holds their initializing data.
 
 - **Products — Correct.** `ProductService.registerVideoGame` and `registerConsole` (`ProductService.java:43`, `:61`) create the products they add to the inventory list they aggregate. `ProductRepository.fromCsvLine` (`ProductRepository.java:116`) creates products from the records it reads, so it holds the initializing data.
 
+- **Model classes in general — Correct.** Domain classes in scope do not create other domain objects; creation stays in the services and repositories that aggregate them or hold their data.
+
 ## Controller
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Not applicable — no class in scope receives system events.
 
 - **Products — Not applicable.** None of these classes receives a system event; menu events are received by `ConsoleMenu` (Technical Lead).
 
+- **Exceptions and validation — Not applicable.** The reference repository has no `exceptions` or `validation` packages.
+
 ## Low Coupling
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — model classes depend only on the model; ProductRepository and ProductService follow the allowed layer direction.
 
 - **Products — Correct.** `Product`, `VideoGame` and `Console` import nothing outside the model. `ProductRepository` depends only on the model; `ProductService` depends only on `ProductRepository` and the model.
 
@@ -62,7 +67,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## High Cohesion
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — each class in scope has one focused purpose.
 
 - **Products — Correct.** `ProductRepository` only reads and writes `data/products.csv`; `ProductService` only applies inventory rules; the product classes only hold product data and behavior.
 
@@ -76,7 +81,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Polymorphism
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01.
 
 - **Products — Correct.** `Product.getDescription()` is abstract and `VideoGame`/`Console` override it. `ProductRepository.toCsvLine`/`fromCsvLine` (`ProductRepository.java:90-126`) branch on the concrete type and on a type tag; this is **not** treated as a violation: the repository is a Pure Fabrication whose job is to keep the CSV format out of the model, and moving serialization into the hierarchy would put persistence knowledge inside the domain classes, which Taller 1 forbids.
 
@@ -101,22 +106,43 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Pure Fabrication
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — ProductRepository is the fabrication that keeps file access out of the product hierarchy.
 
 - **Products — Correct.** `ProductRepository` is an artificial class that owns file access so that `Product` stays free of I/O.
 
 ## Indirection
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — ProductService mediates between the UI and ProductRepository.
 
 - **Products — Correct.** `ProductService` sits between `ConsoleMenu` and `ProductRepository`; the UI never touches the repository.
 
+- **Model classes — Not applicable.** The model classes have no collaborators that need an intermediary.
+
 ## Protected Variations
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01 (same fragment).
 
 - **Products — Correct.** A change of storage format is confined to `ProductRepository`; `ProductService` and the model are protected from it.
 
 - **Promotions — Violation (V-01).** The vocabulary of product categories (`"VIDEOGAME"`, `"CONSOLE"`) and its mapping to classes is hard-coded inside `CategoryDiscount`, so the discount is not protected from a new product category. The full analysis is recorded once, under Polymorphism.
 
 - **Warranties — Correct.** A new warranty type is added as a subclass without touching `Warranty` or the existing subclasses.
+
+## Summary of verdicts
+
+| Pattern | Verdict | Violations |
+|---|---|---|
+| Information Expert | Correct | — |
+| Creator | Correct | — |
+| Controller | Not applicable | — |
+| Low Coupling | Correct | — |
+| High Cohesion | Correct | — |
+| Polymorphism | Violation | V-01 |
+| Pure Fabrication | Correct | — |
+| Indirection | Correct | — |
+| Protected Variations | Violation | V-01 |
+
+## Notes
+
+- Fragments that were examined and judged **not** to be violations are recorded above with their justification (for example, the type tags in `ProductRepository`), so that the consolidation can see why they were discarded.
+- No problem originating in another role's code was detected while auditing this scope, so nothing was reported to the Technical Lead.
