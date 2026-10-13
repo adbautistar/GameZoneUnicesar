@@ -18,6 +18,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository`, `ReturnService` (including `generateMonthlyBalance`) |
+| Warranties (Requerimiento 4) | `WarrantyRepository`, `WarrantyService` |
 
 ## Information Expert
 
@@ -28,6 +29,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Accessories — Correct.** `AccessoryService.findAccessoriesCompatibleWith` (`AccessoryService.java:62`) asks each accessory `isCompatibleWith(consoleId)` instead of reading its list.
 
 - **Promotions — Correct.** `PromotionService.listActivePromotions` asks each promotion `isActive(today)`; `findBestPromotionFor` (`PromotionService.java:76`) asks each promotion `calculateDiscount(sale)` and only compares the results.
+
+- **Warranties — Mixed.** `listActiveWarranties` asks each warranty `isActive(today)` (correct); `findWarrantyByProduct` navigates the warranty's associations (V-07).
 
 ### V-04
 
@@ -55,6 +58,19 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Proposed solution | Ask the experts: `Return.belongsToCustomer(customerId)`, `Return.belongsToSale(saleId)`, `Return.wasRegisteredIn(month, year)` and `Sale.wasMadeIn(month, year)`. |
 | Other role's code involved | Yes — `Return` is Developer 1's code; `Sale.wasMadeIn` follows the same precedent as V-04. |
 
+### V-07
+
+| Field | Content |
+|---|---|
+| ID | V-07 |
+| Pattern | Information Expert |
+| Module | Warranties (Requerimiento 4) |
+| Evidence | `WarrantyService.findWarrantyByProduct`, `WarrantyService.java:43`: `warranty.getProduct().getId().equals(productId) && warranty.getSale().getId().equals(saleId)` |
+| Explanation | The service navigates the warranty's associations instead of asking the warranty whether it covers a product in a sale. |
+| Consequence | The service depends on the internal structure of `Warranty`. |
+| Proposed solution | Ask the warranty: `warranty.covers(productId, saleId)`. |
+| Other role's code involved | Yes — `Warranty` is Developer 1's code. |
+
 ## Creator
 
 **Verdict:** Pending — audit in progress.
@@ -66,6 +82,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `PromotionService.registerPercentageDiscount/CategoryDiscount/BulkPurchaseDiscount` create the promotions they aggregate.
 
 - **Returns — Correct.** `ReturnService.registerReturn` creates the `Return` it records.
+
+- **Warranties — Correct.** `WarrantyService.assignBasicWarranty/assignExtendedWarranty` create the warranties they record.
 
 ## Controller
 
@@ -92,6 +110,19 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Proposed solution | The repository persists and loads only references (a `ReturnRecord` with ids); `ReturnService` resolves those ids into `Sale` and `Product` objects when it loads. |
 | Other role's code involved | No — both classes are Developer 2's code (the `Main` wiring that builds them belongs to the Technical Lead). |
 
+### V-06
+
+| Field | Content |
+|---|---|
+| ID | V-06 |
+| Pattern | Low Coupling |
+| Module | Warranties (Requerimiento 4) |
+| Evidence | `WarrantyRepository` imports and stores `SaleService`, `ProductService` and `AccessoryService` (`WarrantyRepository.java:8-10`, `:31-33`, constructors `:36`, `:45`) and calls them in `fromCsvLine` (`:109-119`). |
+| Explanation | Same reverse dependency as V-02. Here it is also part of a cycle: the sale registration needs the warranty service, and the warranty repository needs the sale service. |
+| Consequence | The cycle forces a special construction order in `Main` (a setter instead of a constructor parameter); the repository cannot be built without three services. |
+| Proposed solution | Persist and load only references (a `WarrantyRecord`); `WarrantyService` resolves them when it loads. |
+| Other role's code involved | No — both classes are Developer 2's code (the `Main` wiring belongs to the Technical Lead). |
+
 ## High Cohesion
 
 **Verdict:** Pending — audit in progress.
@@ -103,6 +134,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `PromotionService` holds registration, validation of percentage and dates, and selection of the best promotion — all promotion rules.
 
 - **Returns — Correct.** `ReturnService` groups return registration, return queries and the monthly balance, which the requirement defines as part of the returns module.
+
+- **Warranties — Correct.** `WarrantyService` only assigns and queries warranties.
 
 ## Polymorphism
 
