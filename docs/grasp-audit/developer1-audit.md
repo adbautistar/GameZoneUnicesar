@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (every method except `restoreStock`, which belongs to the Technical Lead) |
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
+| Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 
 ## Information Expert
 
@@ -27,6 +28,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Accessories — Correct.** `Accessory.isCompatibleWith(String)` (`Accessory.java:61`) answers with the list of compatible consoles it owns.
 
 - **Promotions — Correct.** `Promotion.isActive(LocalDate)` (`Promotion.java:111`) uses its own start and end dates; each subclass computes its own discount for the sale it receives.
+
+- **Returns — Correct.** `Return.calculateRefundAmount()` (`Return.java:117`) sums the prices of the products it holds and is called from its own constructor; `generateReturnReceipt()` uses only its own data. `Sale.canBeReturned()` (`Sale.java:194`) decides the 30-day rule from the sale's own date.
 
 ## Creator
 
@@ -50,6 +53,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Promotions — Correct except for V-01.** `Promotion` and its subclasses depend on `Sale` and `Product`, which they need to compute a discount; `CategoryDiscount` additionally depends on the concrete classes `VideoGame` and `Console` (part of V-01).
 
+- **Returns — Correct.** `Return` depends on `Sale` and `Product`, the two objects it describes.
+
 ## High Cohesion
 
 **Verdict:** Pending — audit in progress.
@@ -59,6 +64,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Accessories — Correct.** Each subclass adds only its own attributes (`connectionType`; `lengthInMeters`/`connectorType`; `capacityInGB`/`memoryType`) and its description.
 
 - **Promotions — Correct.** Each promotion class holds only its parameters and its calculation.
+
+- **Returns — Correct.** `Return` holds only return data, its refund calculation and its receipt.
 
 ## Polymorphism
 
