@@ -19,10 +19,11 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository`, `ReturnService` (including `generateMonthlyBalance`) |
 | Warranties (Requerimiento 4) | `WarrantyRepository`, `WarrantyService` |
+| Exceptions and validation (Requerimiento 6) | Not present in the reference repository — nothing to audit |
 
 ## Information Expert
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-04, V-05, V-07.
 
 - **Persons — Correct.** `Person.getFullName()` builds the name from its own fields; `Customer.addPurchase(Sale)` updates the history it owns.
 
@@ -73,7 +74,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Creator
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — each service creates the entities it registers and aggregates.
 
 - **Persons — Correct.** `PersonService.registerCustomer` (`PersonService.java:42`) creates the `Customer` it adds to the list it aggregates; `PersonRepository` creates customers and sellers from the records it reads.
 
@@ -87,13 +88,15 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Controller
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Not applicable — no class in scope receives system events from the user.
 
 - **Persons — Not applicable.** No class in scope receives menu events; `ConsoleMenu` (Technical Lead) does.
 
+- **Exceptions and validation — Not applicable.** The reference repository has no `exceptions` or `validation` packages.
+
 ## Low Coupling
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-02, V-06.
 
 - **Persons — Correct.** `PersonRepository` depends only on the model; `PersonService` depends only on `PersonRepository` and the model.
 
@@ -125,7 +128,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## High Cohesion
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — each class in scope has one focused purpose.
 
 - **Persons — Correct.** `PersonRepository` only reads and writes the two CSV files; `PersonService` only registers and looks up people.
 
@@ -139,7 +142,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Polymorphism
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01, V-03.
 
 - **Accessories — Mixed.** `AccessoryRepository.toCsvLine`/`fromCsvLine` branch on the concrete accessory type; judged **correct** for the same reason as the other repositories (the repository is a Pure Fabrication that keeps the CSV format out of the model). `AccessoryService.listAccessoriesByType` is a violation (V-01).
 
@@ -173,20 +176,68 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Pure Fabrication
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-09.
 
 - **Persons — Correct.** `PersonRepository` is the fabrication that keeps file access out of `Customer` and `Seller`.
 
+### V-09
+
+| Field | Content |
+|---|---|
+| ID | V-09 |
+| Pattern | Pure Fabrication |
+| Module | Returns and Warranties (Requerimientos 3 and 4) |
+| Evidence | `ReturnService.registerReturn` (`ReturnService.java:55`) `"RET-" + System.currentTimeMillis()`; `WarrantyService.assignBasicWarranty` and `assignExtendedWarranty` (`WarrantyService.java:26`, `:34`) `"WAR-" + System.currentTimeMillis()`. |
+| Explanation | Generating identifiers is a technical responsibility that belongs to no domain concept; it is scattered across services instead of living in one fabricated class. |
+| Consequence | Any change to the identifier scheme must be repeated in every service. |
+| Proposed solution | Create a fabrication `IdGenerator.next(prefix)` and use it everywhere identifiers are generated. |
+| Other role's code involved | Yes — the sale registration code (Technical Lead) generates `SALE-` identifiers the same way; reported for consolidation. |
+
 ## Indirection
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-08.
 
 - **Persons — Correct.** `PersonService` mediates between the UI and `PersonRepository`.
 
+- **Reported to the Technical Lead.** While auditing V-08 and V-09, the same duplication was observed from the calling side in the sale registration code, which belongs to the Technical Lead. It is not audited here; it was reported for the consolidation.
+
+### V-08
+
+| Field | Content |
+|---|---|
+| ID | V-08 |
+| Pattern | Indirection |
+| Module | Returns and Warranties (Requerimientos 3 and 4) |
+| Evidence | The lookup `productService.findById(id)`, then `accessoryService.findById(id)` is written in `ReturnRepository.fromCsvLine` (`:115-117`) and `WarrantyRepository.fromCsvLine` (`:109-111`); the stock dispatch of V-03 is the same problem on the write side. |
+| Explanation | Two catalogs (products and accessories) must collaborate with every client that handles a sellable item, but no intermediary exists, so each client talks to both and knows the lookup order. |
+| Consequence | The lookup order and the stock dispatch are repeated in several classes; a third catalog would require editing all of them. |
+| Proposed solution | Introduce an intermediary (for example an `ItemCatalog` in the service layer) with `findItem(id)`, `decreaseStock(item)` and `restoreStock(item)`, and make every client use it. |
+| Other role's code involved | Yes — the same duplication exists in the sale registration code (Technical Lead); reported for consolidation. |
+
 ## Protected Variations
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01 (same fragment).
 
 - **Persons — Correct.** A change of file format is confined to `PersonRepository`.
 
 - **Accessories — Violation (V-01).** The accessory type vocabulary (`"CONTROLLER"`, `"CABLE"`, `"MEMORY"`) and its mapping to classes is hard-coded in the service. Full analysis under Polymorphism.
+
+## Summary of verdicts
+
+| Pattern | Verdict | Violations |
+|---|---|---|
+| Information Expert | Violation | V-04, V-05, V-07 |
+| Creator | Correct | — |
+| Controller | Not applicable | — |
+| Low Coupling | Violation | V-02, V-06 |
+| High Cohesion | Correct | — |
+| Polymorphism | Violation | V-01, V-03 |
+| Pure Fabrication | Violation | V-09 |
+| Indirection | Violation | V-08 |
+| Protected Variations | Violation | V-01 |
+
+## Notes
+
+- Repository serialization branches (`AccessoryRepository`, `PromotionRepository`, and the `BASIC`/`EXTENDED` tag in `WarrantyRepository.toCsvLine`) were examined and judged correct: the repositories are Pure Fabrications that keep the CSV format out of the model.
+- Findings V-04, V-05 and V-07 need model methods in Developer 1's code; V-08 and V-09 have a counterpart in the Technical Lead's code. These were reported to the Technical Lead for the consolidation.
+- While auditing `WarrantyService`, it was noticed that `assignBasicWarranty` and `assignExtendedWarranty` called in the same millisecond produce the same `WAR-` id. This is a functional defect, not a GRASP violation; it was reported to the Technical Lead for the out-of-scope section.
