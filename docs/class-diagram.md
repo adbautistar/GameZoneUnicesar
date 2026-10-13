@@ -131,7 +131,7 @@ classDiagram
         -itemCatalog: ItemCatalog
         -promotionService: PromotionService
         -warrantyService: WarrantyService
-        +registerSale(customerId String, sellerId String, productIds List~String~, extendedWarrantyIds List~String~) Sale
+        +registerSale(customerId, sellerId, productIds, extendedWarrantyIds) Sale
         +findWarrantyEligibleItems(productIds List~String~) List~Product~
     }
 
