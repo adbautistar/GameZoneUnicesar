@@ -207,3 +207,22 @@ si
 
 **Solution obtained and decision taken:**
 Used the AI only to confirm the conceptual difference between a type check inside a domain rule and a type check inside a Pure Fabrication whose purpose is to isolate a file format. The verdicts were decided by Developer 1: `CategoryDiscount` was recorded as V-01 (Polymorphism and Protected Variations, recorded once with a cross-reference) and the repository branches were recorded as correct with their justification, so the consolidation can see why they were discarded.
+
+## Requirement 7 — Phase 2: Correction
+
+### Entry 13
+
+**Date:** 2026-10-13
+**Tool used:** Claude Code
+
+**Reason for use:**
+Choose the polymorphic method that replaces the category check in `CategoryDiscount` without changing which products receive the discount.
+
+**Problem faced:**
+Adding a `getCategory()` that returned a category for every product (including `"ACCESSORY"` for accessories) would have let a promotion stored with that target start discounting accessories, which never happened before. The refactor must keep the exact behavior for every target string, including unknown ones.
+
+**Prompt used:**
+si
+
+**Solution obtained and decision taken:**
+Used `belongsToCategory(String)` instead of `getCategory()`: each subclass answers only for its own category and accessories always answer `false`, so the set of discounted products is identical for any target string. The other additive methods (`isWarrantyEligible`, `getAccessoryType`, `Sale.findProduct`/`wasMadeIn`, the `Return` queries and `Warranty.covers`) were added before their callers exist, so every commit compiles and the Developer 2 and Technical Lead corrections can build on them. `mvn clean verify` kept all 88 tests green and the scripted menu run matched the baseline line by line.
