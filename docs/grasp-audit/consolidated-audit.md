@@ -100,3 +100,27 @@ The full evidence, explanation and consequence of each violation are in the indi
 | V-14 | The sale registration use case answers which items are eligible; `ConsoleMenu` only asks and prints | Controller |
 | V-15 | One submenu class per module in `com.gamezone.ui`; `ConsoleMenu` keeps the main loop | High Cohesion |
 | V-16 | `Sale.wasMadeBy(customerId)`, `Sale.wasHandledBy(sellerId)` | Information Expert |
+
+## Boundary findings
+
+| ID | How the correction is split |
+|---|---|
+| V-02 | Developer 1 adds `getAccessoryType()` to the accessory hierarchy first; Developer 2 then rewrites `listAccessoriesByType`. |
+| V-03, V-04 | Developer 2 changes the repositories and services. Because `Main` belongs to the Technical Lead, the Technical Lead commits the new wiring inside Developer 2's task group; Developer 2 keeps the old constructors as `@Deprecated` until that commit and removes them afterwards, so every commit compiles. |
+| V-05 | Reported by Developer 2 (returns/warranties) and the Technical Lead (sales). Developer 2 creates `ItemCatalog` because both catalogs it bridges are already used by Developer 2's code; each owner then replaces the duplicated lookups in their own classes. |
+| V-06, V-07 | The violation is in Developer 2's service, but the fix needs query methods on `Return` (Developer 1) and on `Sale`. Following the Requerimiento 3 precedent (`Sale.canBeReturned` was written by Developer 1 as return-related model work), the new return-related methods on `Sale` are also written by Developer 1. |
+| V-08 | Developer 1 adds `Warranty.covers`; Developer 2 uses it. |
+| V-09 | Reported by both Developer 2 and the Technical Lead. Developer 2 creates `IdGenerator` (two of the three call sites); the Technical Lead adopts it for sales. |
+| V-13 | Developer 1 adds `isWarrantyEligible()`; the Technical Lead uses it in the sale registration and the UI. |
+
+**Correction order** (see `grasp-analysis.md`, Q5): Developer 1 first (model methods that other corrections need), then Developer 2 (fabrications and repositories), then the Technical Lead (sale registration, UI and documentation).
+
+## Out-of-scope findings
+
+Functional defects found during the audit. They are **not** corrected in Requerimiento 7, because correcting them would change what the user observes; the refactor must preserve them.
+
+| ID | Defect | Evidence | Reported by |
+|---|---|---|---|
+| OOS-01 | The extended-warranty surcharge is lost after a restart. | `SaleRepository.fromCsvLine` ignores the persisted total (field 5) and recomputes it as the sum of prices minus the discount; sales with an extended warranty reload with a lower total, which also changes the monthly balance. | Technical Lead |
+| OOS-02 | The receipt subtotal includes the warranty surcharge without listing it. | `Sale.generateReceipt` prints `Subtotal = totalAmount + discountAmount`; when an extended warranty was added, the subtotal no longer matches the listed product prices. | Technical Lead |
+| OOS-03 | Two warranties can receive the same id. | `WarrantyService.assignBasicWarranty` and `assignExtendedWarranty` both use `"WAR-" + System.currentTimeMillis()`; for a console with an extended warranty both run in the same registration and can share the millisecond. | Developer 2 |
