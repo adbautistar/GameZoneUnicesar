@@ -56,4 +56,14 @@ public class Controller extends Accessory {
             "[%s] %s - Connection: %s, Price: %.2f, Compatible consoles: %s",
             getId(), getTitle(), connectionType, getPrice(), getCompatibleConsoleIds());
     }
+
+    /**
+     * Returns the type of this accessory.
+     *
+     * @return always "CONTROLLER"
+     */
+    @Override
+    public String getAccessoryType() {
+        return "CONTROLLER";
+    }
 }

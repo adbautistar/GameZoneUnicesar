@@ -95,6 +95,28 @@ New menu operations (option 8 — Gestion de garantias):
 3. Listar garantias vigentes
 4. Listar garantias proximas a vencer
 
+## GRASP Audit and Correction (Requerimiento 7, v1.5.0)
+
+A design-only release: no menu operation, message or data format changed.
+
+**Audit.** Each role audited, against the nine GRASP patterns, only the code it wrote in Taller 1 and Requerimientos 1-4; the Technical Lead also consolidated the three reports. Result: Creator applied correctly everywhere; 16 violations of the other eight patterns, 7 of them on the boundary between two roles' code; 3 functional defects recorded as out of scope (not fixed, on purpose).
+
+- Individual reports: [leader](docs/grasp-audit/leader-audit.md), [developer 1](docs/grasp-audit/developer1-audit.md), [developer 2](docs/grasp-audit/developer2-audit.md)
+- [Consolidated audit](docs/grasp-audit/consolidated-audit.md) — coverage, team verdicts, V-01..V-16 with owners, boundary findings, out-of-scope defects
+- [Orienting questions](docs/grasp-analysis.md)
+
+**Correction.** Main design changes:
+
+- **Polymorphism:** products answer `belongsToCategory` and `isWarrantyEligible`; accessories expose `getAccessoryType`. No business rule checks concrete types any more.
+- **Information Expert:** `Sale` applies promotions and surcharges to its own total and answers queries such as `findProduct` or `wasMadeBy`; `Return` and `Warranty` answer their own queries.
+- **Low Coupling:** the sale, return and warranty repositories load records with ids (`SaleRecord`, `ReturnRecord`, `WarrantyRecord`) and no longer depend on services; the services resolve the ids.
+- **Indirection / Pure Fabrication:** `ItemCatalog` is the single entry point for sellable items (products and accessories); `IdGenerator` generates every id.
+- **Controller / High Cohesion:** `SaleRegistrationService` owns the sale registration use case, which removes the old `SaleService` ↔ `WarrantyService` cycle; `ConsoleMenu` keeps only the main loop and delegates to one submenu class per module.
+
+Change log, non-regression strategy and evidence: [grasp-refactor-log.md](docs/grasp-refactor-log.md). Before/after diagrams: [grasp-class-diagram.md](docs/grasp-class-diagram.md).
+
+**Non-regression evidence:** `mvn clean verify` stays green (88 → 93 tests); a scripted run of every menu operation produces the same normalized output before and after the correction (empty diff).
+
 ## Running Tests
 
 The project includes an automated test suite (JUnit 5, AssertJ, Mockito) covering the model, persistence, and service layers, plus end-to-end integration scenarios across all modules.
@@ -127,21 +149,31 @@ GameZoneUnicesar/
 ├── .gitignore
 ├── LICENSE
 ├── src/
-│   └── main/
-│       └── java/
-│           └── com/
-│               └── gamezone/
-│                   ├── model/
-│                   ├── persistence/
-│                   ├── service/
-│                   ├── ui/
-│                   └── Main.java
+│   ├── main/
+│   │   └── java/
+│   │       └── com/
+│   │           └── gamezone/
+│   │               ├── model/
+│   │               ├── persistence/
+│   │               ├── service/
+│   │               ├── ui/
+│   │               └── Main.java
+│   └── test/
 ├── data/
 └── docs/
     ├── analysis.md
     ├── hierarchy-diagram.md
     ├── class-diagram.md
     ├── layers-diagram.md
+    ├── version-control.md
+    ├── grasp-analysis.md
+    ├── grasp-class-diagram.md
+    ├── grasp-refactor-log.md
+    ├── grasp-audit/
+    │   ├── leader-audit.md
+    │   ├── developer1-audit.md
+    │   ├── developer2-audit.md
+    │   └── consolidated-audit.md
     └── ai-usage/
         ├── leader-ai-log.md
         ├── developer1-ai-log.md
@@ -159,6 +191,7 @@ See [TEAM.md](TEAM.md) for roles, module ownership, and committed activities.
 - [Class Diagram](docs/class-diagram.md)
 - [Layers Diagram](docs/layers-diagram.md)
 - [Version Control](docs/version-control.md) — branches, full commit log, commits per team member, and Pull Requests
+- [GRASP Consolidated Audit](docs/grasp-audit/consolidated-audit.md) and [GRASP Refactor Log](docs/grasp-refactor-log.md)
 
 ## AI Usage Logs
 

@@ -222,3 +222,41 @@ ejecuta la fase 14
 
 **Solution obtained and decision taken:**
 Wrote a seller directly to the temp sellers.csv file via personRepository.saveAllSellers(...) before constructing PersonService, so PersonService's own constructor picks it up through the normal loadAllSellers() path — no shortcut around the service, just seeding the file the same way the real preloaded data/sellers.csv already works. All 88 tests across Task Groups B and C passed on the first `mvn clean verify`, and the JaCoCo check succeeded without needing a supplementary PersonServiceTest: com.gamezone.service ended at 85.1% line coverage (274/322 lines), com.gamezone.persistence at 74.7% (337/451), com.gamezone.model at 67.5% (210/311), and com.gamezone.ui / com.gamezone (ConsoleMenu and Main) at 0% — neither was in scope for this phase, since UI and entry-point tests were not part of the plan.
+
+## Requirement 7 — Phase 1: Audit
+
+### Entry 14
+
+**Date:** 2026-10-13
+**Tool used:** Claude Code
+
+**Reason for use:**
+Clarify whether a repository that calls services to resolve references breaks Low Coupling even though it works correctly, and how to describe a non-regression strategy for a refactor.
+
+**Problem faced:**
+`ReturnRepository` and `WarrantyRepository` resolve sale and product references through three services, which makes them work but points the dependency from persistence to service. It was not obvious whether that was a GRASP problem or only a layering detail, and the Requerimiento 7 AI policy does not allow asking the AI to find the violations themselves.
+
+**Prompt used:**
+si
+
+**Solution obtained and decision taken:**
+Asked only conceptual questions: what Low Coupling evaluates and how a refactor proves it preserved behavior. Developer 2 then decided the verdicts: both repositories were recorded as Low Coupling violations (V-02, V-06), and the duplicated "product, then accessory" lookup across those repositories was recorded separately as an Indirection violation (V-08) because its correction is a different design move. The non-regression answer (Q4) combines the automated suite with a scripted, normalized run of every menu operation, so out-of-scope defects remain part of the expected output.
+
+## Requirement 7 — Phase 2: Correction
+
+### Entry 15
+
+**Date:** 2026-10-13
+**Tool used:** Claude Code
+
+**Reason for use:**
+Plan how to remove the service dependencies from `ReturnRepository` and `WarrantyRepository` without leaving any commit that fails to compile, given that `Main` belongs to the Technical Lead.
+
+**Problem faced:**
+Changing the repository and service constructors breaks `Main` and the existing tests at the same time. Changing `Main` directly would mean editing another role's code, and a commit that changed only the repositories would leave the build broken.
+
+**Prompt used:**
+si
+
+**Solution obtained and decision taken:**
+Used a three-step transition: add path-only constructors and a `loadRecords()` method returning `ReturnRecord`/`WarrantyRecord` while keeping the old API as `@Deprecated`; let the Technical Lead rewire `Main` in one commit inside this task group; then remove the deprecated API and rename `loadRecords()` to `loadAll()`, adapting the tests only in how objects are built. Reference resolution moved into `ReturnService` and `WarrantyService` with the same skip messages, and two new tests cover it. `ItemCatalog` keeps the single remaining `instanceof Accessory` on purpose, as the one class that knows which catalog owns an item. The full suite went from 88 to 90 green tests, and the scripted menu run still matches the baseline line by line.

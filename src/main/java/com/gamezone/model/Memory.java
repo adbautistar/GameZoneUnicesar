@@ -77,4 +77,14 @@ public class Memory extends Accessory {
             "[%s] %s - Capacity: %dGB, Type: %s, Price: %.2f, Compatible consoles: %s",
             getId(), getTitle(), capacityInGB, memoryType, getPrice(), getCompatibleConsoleIds());
     }
+
+    /**
+     * Returns the type of this accessory.
+     *
+     * @return always "MEMORY"
+     */
+    @Override
+    public String getAccessoryType() {
+        return "MEMORY";
+    }
 }

@@ -188,3 +188,41 @@ ejecuta la fase 13
 
 **Solution obtained and decision taken:**
 Kept getWarrantyType() and getAdditionalCost() as their own abstract methods (alongside getDurationInMonths()) rather than making generateWarrantyCertificate() itself abstract, so the certificate format stays defined once on Warranty and only the three small polymorphic facts vary per subclass — the same "template method"-style split already used by Product.getDescription() versus VideoGame/Console's specific fields. No setter was added for endDate or startDate, matching Return's precedent from Phase 12 of leaving immutable-reference fields getter-only.
+
+## Requirement 7 — Phase 1: Audit
+
+### Entry 12
+
+**Date:** 2026-10-13
+**Tool used:** Claude Code
+
+**Reason for use:**
+Check whether the type tags and `instanceof` branches found while auditing Developer 1's code were GRASP violations or justified design.
+
+**Problem faced:**
+Both `CategoryDiscount.calculateDiscount` and `ProductRepository.toCsvLine`/`fromCsvLine` branch on the concrete product type, which is the warning sign of a Polymorphism violation, but treating both the same way would have forced persistence knowledge into the model. The Requerimiento 7 AI policy forbids asking the AI to find violations, so the question was limited to the concept.
+
+**Prompt used:**
+si
+
+**Solution obtained and decision taken:**
+Used the AI only to confirm the conceptual difference between a type check inside a domain rule and a type check inside a Pure Fabrication whose purpose is to isolate a file format. The verdicts were decided by Developer 1: `CategoryDiscount` was recorded as V-01 (Polymorphism and Protected Variations, recorded once with a cross-reference) and the repository branches were recorded as correct with their justification, so the consolidation can see why they were discarded.
+
+## Requirement 7 — Phase 2: Correction
+
+### Entry 13
+
+**Date:** 2026-10-13
+**Tool used:** Claude Code
+
+**Reason for use:**
+Choose the polymorphic method that replaces the category check in `CategoryDiscount` without changing which products receive the discount.
+
+**Problem faced:**
+Adding a `getCategory()` that returned a category for every product (including `"ACCESSORY"` for accessories) would have let a promotion stored with that target start discounting accessories, which never happened before. The refactor must keep the exact behavior for every target string, including unknown ones.
+
+**Prompt used:**
+si
+
+**Solution obtained and decision taken:**
+Used `belongsToCategory(String)` instead of `getCategory()`: each subclass answers only for its own category and accessories always answer `false`, so the set of discounted products is identical for any target string. The other additive methods (`isWarrantyEligible`, `getAccessoryType`, `Sale.findProduct`/`wasMadeIn`, the `Return` queries and `Warranty.covers`) were added before their callers exist, so every commit compiles and the Developer 2 and Technical Lead corrections can build on them. `mvn clean verify` kept all 88 tests green and the scripted menu run matched the baseline line by line.

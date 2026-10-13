@@ -155,6 +155,30 @@ public class Sale {
     }
 
     /**
+     * Applies a promotion to this sale: records the promotion's name and the
+     * discount amount, and subtracts the discount from the current total.
+     * Must be called after {@link #calculateTotal()}.
+     *
+     * @param promotionName the name of the applied promotion
+     * @param discount      the discount amount, in currency
+     */
+    public void applyPromotion(String promotionName, double discount) {
+        this.appliedPromotionName = promotionName;
+        this.discountAmount = discount;
+        this.totalAmount = totalAmount - discount;
+    }
+
+    /**
+     * Adds an extra charge (for example, the cost of an extended warranty)
+     * to the current total of this sale.
+     *
+     * @param amount the amount to add, in currency
+     */
+    public void addCharge(double amount) {
+        this.totalAmount = totalAmount + amount;
+    }
+
+    /**
      * Builds a human-readable receipt for this sale, in Spanish, including
      * the sale id, date, customer, seller, purchased products, and total.
      *
@@ -193,5 +217,53 @@ public class Sale {
      */
     public boolean canBeReturned() {
         return ChronoUnit.DAYS.between(date, LocalDate.now()) <= 30;
+    }
+
+    /**
+     * Finds the first product of this sale with the given id. Used when
+     * registering a return to check that each returned product belongs to
+     * this sale.
+     *
+     * @param productId the id of the product to look for
+     * @return the matching product, or {@code null} if this sale does not include it
+     */
+    public Product findProduct(String productId) {
+        for (Product product : products) {
+            if (product.getId().equals(productId)) {
+                return product;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks whether this sale was made in the given month and year.
+     *
+     * @param month the month, from 1 to 12
+     * @param year  the year
+     * @return {@code true} if this sale's date falls in that month and year
+     */
+    public boolean wasMadeIn(int month, int year) {
+        return date.getMonthValue() == month && date.getYear() == year;
+    }
+
+    /**
+     * Checks whether this sale was made by the customer with the given id.
+     *
+     * @param customerId the id of the customer
+     * @return {@code true} if this sale's customer has that id
+     */
+    public boolean wasMadeBy(String customerId) {
+        return customer.getId().equals(customerId);
+    }
+
+    /**
+     * Checks whether this sale was handled by the seller with the given id.
+     *
+     * @param sellerId the id of the seller
+     * @return {@code true} if this sale's seller has that id
+     */
+    public boolean wasHandledBy(String sellerId) {
+        return seller.getId().equals(sellerId);
     }
 }
