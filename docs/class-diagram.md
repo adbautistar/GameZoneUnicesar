@@ -72,17 +72,24 @@ classDiagram
         +saveAllSellers(sellers List~Seller~) void
         +loadAllSellers() List~Seller~
     }
+    class SaleRecord {
+        -id: String
+        -customerId: String
+        -sellerId: String
+        -productIds: List~String~
+        -appliedPromotionName: String
+        -discountAmount: double
+    }
     class SaleRepository {
         +saveAll(sales List~Sale~) void
-        +loadAll() List~Sale~
+        +loadAll() List~SaleRecord~
     }
 
     ProductRepository ..> Product
     PersonRepository ..> Customer
     PersonRepository ..> Seller
     SaleRepository ..> Sale
-    SaleRepository ..> ProductService
-    SaleRepository ..> PersonService
+    SaleRepository ..> SaleRecord
 
     %% ===== SERVICE LAYER =====
     class ProductService {
@@ -101,33 +108,69 @@ classDiagram
         +listAllCustomers() List~Customer~
         +listAllSellers() List~Seller~
     }
-    class SaleService {
-        -saleRepository: SaleRepository
+    class ItemCatalog {
         -productService: ProductService
-        +registerSale(customer Customer, seller Seller, products List~Product~) Sale
+        -accessoryService: AccessoryService
+        +findItem(id String) Product
+        +decreaseStock(item Product) void
+        +restoreStock(item Product) void
+    }
+    class SaleService {
+        -repository: SaleRepository
+        -personService: PersonService
+        -itemCatalog: ItemCatalog
+        +recordSale(sale Sale) void
         +viewAllSales() List~Sale~
-        +viewSalesByCustomer(customer Customer) List~Sale~
-        +viewSalesBySeller(seller Seller) List~Sale~
+        +viewSalesByCustomer(customerId String) List~Sale~
+        +viewSalesBySeller(sellerId String) List~Sale~
+        +findById(id String) Sale
+    }
+    class SaleRegistrationService {
+        -saleService: SaleService
+        -personService: PersonService
+        -itemCatalog: ItemCatalog
+        -promotionService: PromotionService
+        -warrantyService: WarrantyService
+        +registerSale(customerId, sellerId, productIds, extendedWarrantyIds) Sale
+        +findWarrantyEligibleItems(productIds List~String~) List~Product~
     }
 
     ProductService "1" --> "1" ProductRepository
     ProductService ..> Product
     PersonService "1" --> "1" PersonRepository
+    ItemCatalog "1" --> "1" ProductService
     SaleService "1" --> "1" SaleRepository
-    SaleService "1" --> "1" ProductService
+    SaleService "1" --> "1" PersonService
+    SaleService "1" --> "1" ItemCatalog
     SaleService ..> Sale
+    SaleRegistrationService "1" --> "1" SaleService
+    SaleRegistrationService "1" --> "1" PersonService
+    SaleRegistrationService "1" --> "1" ItemCatalog
 
     %% ===== UI LAYER =====
     class ConsoleMenu {
-        -productService: ProductService
-        -personService: PersonService
-        -saleService: SaleService
+        -productMenu: ProductMenu
+        -personMenu: PersonMenu
+        -saleMenu: SaleMenu
         +start() void
     }
+    class ProductMenu {
+        +show() void
+    }
+    class PersonMenu {
+        +show() void
+    }
+    class SaleMenu {
+        +show() void
+    }
 
-    ConsoleMenu "1" --> "1" ProductService
-    ConsoleMenu "1" --> "1" PersonService
-    ConsoleMenu "1" --> "1" SaleService
+    ConsoleMenu "1" --> "1" ProductMenu
+    ConsoleMenu "1" --> "1" PersonMenu
+    ConsoleMenu "1" --> "1" SaleMenu
+    ProductMenu "1" --> "1" ProductService
+    PersonMenu "1" --> "1" PersonService
+    SaleMenu "1" --> "1" SaleService
+    SaleMenu "1" --> "1" SaleRegistrationService
 
     %% ===== ENTRY POINT =====
     class Main {
@@ -141,6 +184,10 @@ classDiagram
     Main ..> ProductService
     Main ..> PersonService
     Main ..> SaleService
+    Main ..> ItemCatalog
+    Main ..> SaleRegistrationService
 ```
 
-**Known layering exception:** `SaleRepository` (persistence layer) depends on `ProductService` and `PersonService` (service layer) to resolve customer, seller, and product references while reconstructing a `Sale` from `data/sales.csv`. This is a reverse dependency relative to the strict `persistence → model` rule described in [layers-diagram.md](layers-diagram.md), required because a sale's persisted form only stores ids, not full records. It is an intentional, documented trade-off rather than an oversight.
+**Scope of this diagram:** the classes of Taller 1 (products, people, sales, UI and entry point) as they stand after the GRASP correction of Requerimiento 7 (v1.5.0), including the new classes that replaced parts of them (`SaleRecord`, `ItemCatalog`, `SaleRegistrationService`, and the product, person and sale submenus). `ItemCatalog` also depends on `AccessoryService`, and `SaleRegistrationService` on `PromotionService` and `WarrantyService`; those modules (Requerimientos 1-4) and the other four submenus are shown in [grasp-class-diagram.md](grasp-class-diagram.md).
+
+**No layering exceptions remain.** Until v1.4.1, `SaleRepository` depended on `ProductService` and `PersonService` to resolve references while loading `data/sales.csv`, a reverse dependency that the GRASP audit classified as a Low Coupling violation (V-11). Since v1.5.0 the repository loads `SaleRecord`s that keep only ids, and `SaleService` resolves them, so persistence depends only on the model.

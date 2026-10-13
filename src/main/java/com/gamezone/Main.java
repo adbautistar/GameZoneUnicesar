@@ -13,6 +13,7 @@ import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
 import com.gamezone.service.ReturnService;
+import com.gamezone.service.SaleRegistrationService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
 import com.gamezone.ui.ConsoleMenu;
@@ -40,21 +41,22 @@ public class Main {
             AccessoryService accessoryService = new AccessoryService(accessoryRepository);
             PromotionService promotionService = new PromotionService(promotionRepository);
 
-            SaleRepository saleRepository = new SaleRepository(productService, personService, accessoryService);
-            SaleService saleService = new SaleService(saleRepository, productService, personService,
-                accessoryService, promotionService);
-
             ItemCatalog itemCatalog = new ItemCatalog(productService, accessoryService);
+
+            SaleRepository saleRepository = new SaleRepository();
+            SaleService saleService = new SaleService(saleRepository, personService, itemCatalog);
 
             ReturnRepository returnRepository = new ReturnRepository();
             ReturnService returnService = new ReturnService(returnRepository, saleService, itemCatalog);
 
             WarrantyRepository warrantyRepository = new WarrantyRepository();
             WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleService, itemCatalog);
-            saleService.setWarrantyService(warrantyService);
 
-            ConsoleMenu consoleMenu = new ConsoleMenu(productService, personService, saleService, accessoryService,
-                promotionService, returnService, warrantyService);
+            SaleRegistrationService saleRegistrationService = new SaleRegistrationService(saleService, personService,
+                itemCatalog, promotionService, warrantyService);
+
+            ConsoleMenu consoleMenu = new ConsoleMenu(productService, personService, saleService,
+                saleRegistrationService, accessoryService, promotionService, returnService, warrantyService);
             consoleMenu.start();
         } catch (RuntimeException e) {
             System.err.println("Error fatal: " + e.getMessage());

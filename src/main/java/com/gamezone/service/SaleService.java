@@ -1,179 +1,83 @@
 package com.gamezone.service;
 
-import com.gamezone.model.Accessory;
-import com.gamezone.model.Console;
 import com.gamezone.model.Customer;
-import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
-import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.persistence.SaleRecord;
 import com.gamezone.persistence.SaleRepository;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Provides the business operations available for registering and querying
- * sales, backed by a {@link SaleRepository}.
+ * Keeps the sales history: loads it, records new sales and answers queries
+ * about it, backed by a {@link SaleRepository}. Registering a new sale is
+ * coordinated by {@link SaleRegistrationService}.
  */
 public class SaleService {
 
     private final SaleRepository repository;
-    private final ProductService productService;
     private final PersonService personService;
-    private final AccessoryService accessoryService;
-    private final PromotionService promotionService;
+    private final ItemCatalog itemCatalog;
     private final List<Sale> sales;
 
     /**
-     * The service used to assign warranties when registering a sale. Not a
-     * constructor parameter: WarrantyRepository depends on SaleService to
-     * resolve sale references on load, so a constructor parameter here would
-     * create a circular dependency (SaleService -&gt; WarrantyService -&gt;
-     * WarrantyRepository -&gt; SaleService). Wired in via {@link #setWarrantyService}
-     * after both services are constructed.
-     */
-    private WarrantyService warrantyService;
-
-    /**
-     * Creates a new service backed by the given repository and collaborating
-     * services, loading the current sales history into memory.
+     * Creates a new service backed by the given repository, loading the
+     * current sales history into memory. Stored references are resolved
+     * here, and every loaded sale is added to its customer's purchase history.
      *
-     * @param repository       the repository used to persist and load sales
-     * @param productService   the service used to resolve and update products
-     * @param personService    the service used to resolve customers and sellers
-     * @param accessoryService the service used to resolve and update accessories
-     * @param promotionService the service used to find the best active promotion for a sale
+     * @param repository    the repository used to persist and load sales
+     * @param personService the service used to resolve customers and sellers
+     * @param itemCatalog   the catalog used to resolve sold items
+     * @throws RuntimeException if a stored sale references a customer, seller
+     *                          or item that no longer exists
      */
-    public SaleService(SaleRepository repository, ProductService productService, PersonService personService,
-                        AccessoryService accessoryService, PromotionService promotionService) {
+    public SaleService(SaleRepository repository, PersonService personService, ItemCatalog itemCatalog) {
         this.repository = repository;
-        this.productService = productService;
         this.personService = personService;
-        this.accessoryService = accessoryService;
-        this.promotionService = promotionService;
-        this.sales = new ArrayList<>(repository.loadAll());
+        this.itemCatalog = itemCatalog;
+        this.sales = new ArrayList<>();
+        for (SaleRecord record : repository.loadAll()) {
+            sales.add(resolve(record));
+        }
     }
 
-    /**
-     * Sets the service used to assign warranties when registering a sale.
-     * Must be called once, after both this service and the given
-     * {@link WarrantyService} have been constructed, and before
-     * {@link #registerSale} is first invoked.
-     *
-     * @param warrantyService the service used to assign warranties
-     */
-    public void setWarrantyService(WarrantyService warrantyService) {
-        this.warrantyService = warrantyService;
-    }
-
-    /**
-     * Registers a new sale after validating that it contains at least one
-     * product, that the customer, seller, and products exist, and that
-     * enough stock is available for every requested product. Decrements the
-     * stock of every sold product, records the sale in the customer's
-     * purchase history, and persists the updated sales history.
-     *
-     * @param customerId                     the id of the customer making the purchase
-     * @param sellerId                       the id of the seller handling the sale
-     * @param productIds                     the ids of the products being sold, one entry per
-     *                                       unit purchased
-     * @param productIdsWithExtendedWarranty the ids of the products (typically consoles)
-     *                                       for which an extended warranty was opted into;
-     *                                       may be {@code null} or empty
-     * @return the registered sale
-     * @throws IllegalArgumentException if the product list is empty, if the
-     *                                  customer, seller, or a product cannot
-     *                                  be found, or if stock is insufficient
-     */
-    public Sale registerSale(String customerId, String sellerId, List<String> productIds,
-                              List<String> productIdsWithExtendedWarranty) {
-        if (productIds == null || productIds.isEmpty()) {
-            throw new IllegalArgumentException("La venta debe contener al menos un producto.");
+    private Sale resolve(SaleRecord record) {
+        Customer customer = personService.findCustomerById(record.getCustomerId());
+        Seller seller = personService.findSellerById(record.getSellerId());
+        if (customer == null || seller == null) {
+            throw new RuntimeException("Failed to resolve customer or seller for sale " + record.getId());
         }
-
-        Customer customer = personService.findCustomerById(customerId);
-        if (customer == null) {
-            throw new IllegalArgumentException("Cliente no encontrado: " + customerId);
-        }
-        Seller seller = personService.findSellerById(sellerId);
-        if (seller == null) {
-            throw new IllegalArgumentException("Vendedor no encontrado: " + sellerId);
-        }
-
         List<Product> products = new ArrayList<>();
-        for (String productId : productIds) {
-            Product product = productService.findById(productId);
+        for (String productId : record.getProductIds()) {
+            Product product = itemCatalog.findItem(productId);
             if (product == null) {
-                product = accessoryService.findById(productId);
-            }
-            if (product == null) {
-                throw new IllegalArgumentException("Producto o accesorio no encontrado: " + productId);
+                throw new RuntimeException("Failed to resolve product or accessory " + productId
+                    + " for sale " + record.getId());
             }
             products.add(product);
         }
-
-        Map<String, Product> resolvedItems = new HashMap<>();
-        for (Product product : products) {
-            resolvedItems.put(product.getId(), product);
-        }
-
-        Map<String, Integer> requestedQuantities = new HashMap<>();
-        for (Product product : products) {
-            requestedQuantities.merge(product.getId(), 1, Integer::sum);
-        }
-        for (Map.Entry<String, Integer> entry : requestedQuantities.entrySet()) {
-            Product product = resolvedItems.get(entry.getKey());
-            if (product.getStock() < entry.getValue()) {
-                throw new IllegalArgumentException(
-                    "Stock insuficiente para el producto: " + product.getTitle());
-            }
-        }
-
-        String saleId = "SALE-" + System.currentTimeMillis();
-        Sale sale = new Sale(saleId, LocalDate.now(), customer, seller, products);
+        Sale sale = new Sale(record.getId(), record.getDate(), customer, seller, products);
         sale.calculateTotal();
-
-        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
-        if (bestPromotion != null) {
-            double discount = bestPromotion.calculateDiscount(sale);
-            double originalTotal = sale.getTotalAmount();
-            sale.setAppliedPromotionName(bestPromotion.getName());
-            sale.setDiscountAmount(discount);
-            sale.setTotalAmount(originalTotal - discount);
+        if (record.getAppliedPromotionName() != null) {
+            sale.applyPromotion(record.getAppliedPromotionName(), record.getDiscountAmount());
         }
-
-        if (warrantyService != null) {
-            for (Product product : products) {
-                if (product instanceof Console) {
-                    warrantyService.assignBasicWarranty(product, sale, sale.getDate());
-                }
-                if (productIdsWithExtendedWarranty != null
-                        && productIdsWithExtendedWarranty.contains(product.getId())) {
-                    ExtendedWarranty extended = warrantyService.assignExtendedWarranty(product, sale, sale.getDate());
-                    sale.setTotalAmount(sale.getTotalAmount() + extended.getAdditionalCost());
-                }
-            }
-        }
-
-        for (Product product : products) {
-            if (product instanceof Accessory) {
-                accessoryService.updateStock(product.getId(), -1);
-            } else {
-                productService.updateStock(product.getId(), -1);
-            }
-        }
-
-        sales.add(sale);
         customer.addPurchase(sale);
-        repository.saveAll(sales);
-
         return sale;
+    }
+
+    /**
+     * Records a newly registered sale: adds it to the history and to its
+     * customer's purchase history, and persists the updated history.
+     *
+     * @param sale the sale to record
+     */
+    public void recordSale(Sale sale) {
+        sales.add(sale);
+        sale.getCustomer().addPurchase(sale);
+        repository.saveAll(sales);
     }
 
     /**
@@ -194,7 +98,7 @@ public class SaleService {
     public List<Sale> viewSalesByCustomer(String customerId) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : sales) {
-            if (sale.getCustomer().getId().equals(customerId)) {
+            if (sale.wasMadeBy(customerId)) {
                 result.add(sale);
             }
         }
@@ -210,7 +114,7 @@ public class SaleService {
     public List<Sale> viewSalesBySeller(String sellerId) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : sales) {
-            if (sale.getSeller().getId().equals(sellerId)) {
+            if (sale.wasHandledBy(sellerId)) {
                 result.add(sale);
             }
         }

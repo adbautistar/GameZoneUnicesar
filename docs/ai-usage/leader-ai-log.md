@@ -326,3 +326,22 @@ si
 
 **Solution obtained and decision taken:**
 The AI was used only to discuss the consolidation criteria, not to audit code (the Requerimiento 7 policy forbids using it to find violations). The Technical Lead merged duplicate findings into single violations listing every origin (V-05, V-09), assigned the new model methods to Developer 1 by the Requerimiento 3 precedent of `Sale.canBeReturned`, kept the `Main` rewiring with its owner by placing a Technical Lead commit inside Developer 2's task group, and fixed the correction order Developer 1 → Developer 2 → Technical Lead so that every commit compiles. Creator was confirmed as the only pattern applied correctly across the system.
+
+## Requirement 7 — Phase 2: Correction
+
+### Entry 20
+
+**Date:** 2026-10-13
+**Tool used:** Claude Code
+
+**Reason for use:**
+Design the correction of the sale registration code and the console menu so that the circular dependency disappears and the behavior stays byte-for-byte identical.
+
+**Problem faced:**
+`SaleService.registerSale` mixed the whole use case with sale storage, needed `WarrantyService` through a setter because `WarrantyService` needed `SaleService` back, and `ConsoleMenu` applied the warranty eligibility rule itself. Any reordering of the registration steps, of the promotion and surcharge arithmetic or of the console prompts would change the output that the non-regression check compares.
+
+**Prompt used:**
+si
+
+**Solution obtained and decision taken:**
+Extracted `SaleRegistrationService` as a use-case controller that keeps the exact order of the original steps (validate, resolve, check stock, create, promotion, warranties, stock, record), leaving `SaleService` with loading, `recordSale` and queries; with registration outside `SaleService`, the service graph has no cycle and the setter and its silent `null` guard were removed. `Sale` now applies promotions and surcharges to its own total, and `SaleRepository` loads `SaleRecord`s that `SaleService` resolves, keeping out-of-scope defect OOS-01 on purpose. `ConsoleMenu` was split into seven submenu classes by moving methods verbatim and sharing one `Scanner`. After every step, `mvn clean verify` stayed green (93 tests at the end) and the normalized scripted run of every menu operation matched the baseline exactly.

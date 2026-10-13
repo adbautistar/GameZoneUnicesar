@@ -53,7 +53,7 @@ com.gamezone
 - `service` depends on `model` and `persistence`.
 - `ui` depends only on `service`.
 
-## Class inventory (35 classes total: 15 baseline + 20 from extended modules)
+## Class inventory (48 classes total: 15 baseline + 20 from extended modules + 13 from the GRASP correction)
 
 ### Baseline (Taller 1, v1.0.x — 15 classes)
 
@@ -69,7 +69,7 @@ com.gamezone
 **Persistence (3):**
 - `ProductRepository`: `saveAll(List<Product>)`, `loadAll(): List<Product>`.
 - `PersonRepository`: separate methods for customers and sellers.
-- `SaleRepository`: `saveAll(List<Sale>)`, `loadAll(): List<Sale>`. Known layering exception: depends on `ProductService`/`PersonService` (service layer) to resolve references while reconstructing a `Sale` — documented in `docs/class-diagram.md`.
+- `SaleRepository`: `saveAll(List<Sale>)`, `loadAll(): List<SaleRecord>` (since Phase 15). Until v1.4.1 it depended on `ProductService`/`PersonService` to resolve references (a documented layering exception); the GRASP correction removed that dependency — see "GRASP correction" below.
 
 **Service (3):**
 - `ProductService`: `registerVideoGame(...)`, `registerConsole(...)`, `listAllProducts()`, `updateStock(...)`, `findById(...)`.
@@ -77,7 +77,7 @@ com.gamezone
 - `SaleService`: `registerSale(...)` (validates stock, updates inventory, calculates total), `viewAllSales()`, `viewSalesByCustomer(...)`, `viewSalesBySeller(...)`.
 
 **UI (1):**
-- `ConsoleMenu`: main menu and submenus in Spanish. Uses only services.
+- `ConsoleMenu`: main menu in Spanish. Uses only services. Since Phase 15 it keeps only the main loop and delegates each module to a submenu class (see "GRASP correction" below).
 
 **Entry point (1):**
 - `Main`: loads data via repositories, injects services into `ConsoleMenu`, launches menu.
@@ -100,15 +100,26 @@ Each module below is implemented additively: it must not change the existing pub
 
 **Phase 12 — Return module (same role split). Release: v1.3.0.**
 - Model (1): `Return` (concrete): `originalSale`, `returnedProducts`, `reason`, `refundAmount`; `calculateRefundAmount()`, `generateReturnReceipt()`.
-- Persistence (1): `ReturnRepository` — depends on `SaleService`, `ProductService`, **and** `AccessoryService` (three dependencies) to resolve references from `data/returns.csv`.
+- Persistence (1): `ReturnRepository` — originally depended on `SaleService`, `ProductService` and `AccessoryService` to resolve references from `data/returns.csv`; since Phase 15 it loads `ReturnRecord`s and `ReturnService` resolves them.
 - Service (1): `ReturnService` — `registerReturn(saleId, productIds, reason)` (supports partial, per-product returns; enforces the 30-day window; validates the products belong to the original sale), `viewAllReturns()`, `viewReturnsByCustomer(...)`, `viewReturnsBySale(...)`, `generateMonthlyBalance(month, year)`.
 - Targeted extension points: `Sale` gains `canBeReturned()` (30-day rule via `ChronoUnit.DAYS`). `ProductService` gains `restoreStock(productId, quantity)` — functionally equivalent to `updateStock(id, +quantity)`, added for call-site clarity; must be committed before `ReturnService` depends on it. `AccessoryService.updateStock` is reused directly (no separate `restoreStock`) for accessory returns. New main menu options 6 (returns) and 7 (monthly balance).
 
 **Phase 13 — Warranty module (same role split). Release: v1.4.0.**
 - Model (3): `Warranty` (abstract): `product`, `sale`, `startDate`, `endDate` (derived in the constructor from the abstract `getDurationInMonths()` — safe here because both subclasses return literal constants, not subclass-field-dependent values); abstract `getDurationInMonths()`, `getWarrantyType()`, `getAdditionalCost()`; concrete `isActive(date)`, `generateWarrantyCertificate()`. `BasicWarranty` (6 months, no cost) and `ExtendedWarranty` (12 months, 10% of product price) extend `Warranty`.
-- Persistence (1): `WarrantyRepository` — depends on `SaleService`, `ProductService`, `AccessoryService` to resolve references from `data/warranties.csv`.
+- Persistence (1): `WarrantyRepository` — originally depended on `SaleService`, `ProductService`, `AccessoryService` to resolve references from `data/warranties.csv`; since Phase 15 it loads `WarrantyRecord`s and `WarrantyService` resolves them.
 - Service (1): `WarrantyService` — `assignBasicWarranty(...)`, `assignExtendedWarranty(...)`, `findWarrantyByProduct(...)`, `listAllWarranties()`, `listActiveWarranties()`, `listWarrantiesExpiringSoon(daysAhead)`.
 - Targeted extension points: `SaleService` gains a `WarrantyService` dependency and an additional `registerSale` parameter (`productIdsWithExtendedWarranty`); every `Console` in a sale automatically receives a `BasicWarranty`, and an opted-in `Console` additionally receives an `ExtendedWarranty` whose `getAdditionalCost()` is added to the sale total (applied after the promotion discount). New main menu option 8.
+
+### GRASP correction (Phase 15 — Requerimiento 7, v1.5.0 — 13 new classes)
+
+Phase 15 audits the code against the nine GRASP patterns (each role audits only the code it wrote; the Technical Lead consolidates) and corrects the 16 consolidated violations without changing external behavior. Audit and change log: `docs/grasp-audit/`, `docs/grasp-analysis.md`, `docs/grasp-refactor-log.md`, `docs/grasp-class-diagram.md`.
+
+- Persistence (3): `SaleRecord`, `ReturnRecord`, `WarrantyRecord` — persisted forms that keep references as ids. No repository depends on a service any more.
+- Service (3): `ItemCatalog` (single entry point to find sellable items and adjust their stock; keeps the only `instanceof Accessory`), `IdGenerator` (identifier generation, `PREFIX-<millis>`), `SaleRegistrationService` (sale registration use case; `SaleService` keeps storage, `recordSale` and queries; the old `setWarrantyService` setter injection is gone).
+- UI (7): `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `PromotionMenu`, `ReturnMenu` (returns + monthly balance), `WarrantyMenu`.
+- Additive model methods: `Product.belongsToCategory` (abstract) and `isWarrantyEligible` (overridden by `Console`), `Accessory.getAccessoryType` (abstract), `Sale.applyPromotion/addCharge/findProduct/wasMadeIn/wasMadeBy/wasHandledBy`, `Return.belongsToCustomer/belongsToSale/wasRegisteredIn`, `Warranty.covers`.
+- Constructors after Phase 15: `SaleService(SaleRepository, PersonService, ItemCatalog)`, `ReturnService(ReturnRepository, SaleService, ItemCatalog)`, `WarrantyService(WarrantyRepository, SaleService, ItemCatalog)`, `SaleRegistrationService(SaleService, PersonService, ItemCatalog, PromotionService, WarrantyService)`; repositories take only an optional file path.
+- Out-of-scope defects (recorded, deliberately not fixed): OOS-01 extended-warranty surcharge lost when sales are reloaded; OOS-02 receipt subtotal includes that surcharge; OOS-03 basic and extended warranty ids can collide within the same millisecond.
 
 ## Encapsulation rules
 
@@ -198,6 +209,7 @@ Each module below is implemented additively: it must not change the existing pub
 
 - **Baseline (Taller 1, v1.0.x):** minimum 12 atomic commits per simulated developer, minimum 36 total, minimum 6 Pull Requests.
 - **Per extended-module phase (10-13):** minimum 6 atomic commits per task group (18 per phase), plus 1 PR into `develop` and 1 release PR into `main`.
+- **Phase 15 (Requerimiento 7):** two parts (audit on `feature/grasp-audit`, correction on `feature/grasp-refactor`); in each part minimum 6 atomic commits per role and 3 PRs into `develop` (Developer 1, Developer 2, then Technical Lead, all from the same branch), plus 1 release PR into `main`.
 - These are floors, not targets — actual counts may exceed them (see `docs/version-control.md` for the running total as of the last phase executed).
 
 ## Commit attribution strategy
@@ -228,6 +240,7 @@ Located under `docs/`:
 - `ai-usage/developer1-ai-log.md` — Developer 1 AI usage log.
 - `ai-usage/developer2-ai-log.md` — Developer 2 AI usage log.
 - `version-control.md` — branching strategy, every branch created, full commit log, commits per simulated team member, and every Pull Request (added in Phase 9+; keep it current after each new phase/release).
+- `grasp-analysis.md`, `grasp-audit/{leader,developer1,developer2,consolidated}-audit.md`, `grasp-refactor-log.md`, `grasp-class-diagram.md` — Requerimiento 7 (Phase 15).
 
 ## AI log entry template
 
