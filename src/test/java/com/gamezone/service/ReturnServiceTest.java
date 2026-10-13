@@ -5,6 +5,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
 import com.gamezone.model.VideoGame;
+import com.gamezone.persistence.ReturnRecord;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.testutil.TestDataFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -130,6 +131,29 @@ class ReturnServiceTest {
         double balance = service.generateMonthlyBalance(1, 2000);
 
         assertThat(balance).isEqualTo(0.0);
+    }
+
+    @Test
+    @DisplayName("constructor resolves stored records and skips returns whose sale no longer exists")
+    void constructorResolvesStoredRecords() {
+        VideoGame product = TestDataFactory.sampleVideoGame("VG001");
+        Sale sale = sale(product, LocalDate.now());
+        when(saleService.findById("SALE001")).thenReturn(sale);
+        when(saleService.findById("GONE")).thenReturn(null);
+        when(productService.findById("VG001")).thenReturn(product);
+        when(repository.loadAll()).thenReturn(List.of(
+            new ReturnRecord("RET001", LocalDate.now(), "SALE001", List.of("VG001"), "Defective"),
+            new ReturnRecord("RET002", LocalDate.now(), "GONE", List.of("VG001"), "Late")));
+
+        ReturnService reloaded = new ReturnService(repository, saleService,
+            new ItemCatalog(productService, accessoryService));
+
+        assertThat(reloaded.viewAllReturns()).hasSize(1);
+        Return loaded = reloaded.viewAllReturns().get(0);
+        assertThat(loaded.getId()).isEqualTo("RET001");
+        assertThat(loaded.getOriginalSale()).isSameAs(sale);
+        assertThat(loaded.getReturnedProducts()).containsExactly(product);
+        assertThat(loaded.getRefundAmount()).isEqualTo(product.getPrice());
     }
 
     private Sale sale(Product product, LocalDate date) {
