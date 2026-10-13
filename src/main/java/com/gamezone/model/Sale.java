@@ -246,4 +246,24 @@ public class Sale {
     public boolean wasMadeIn(int month, int year) {
         return date.getMonthValue() == month && date.getYear() == year;
     }
+
+    /**
+     * Checks whether this sale was made by the customer with the given id.
+     *
+     * @param customerId the id of the customer
+     * @return {@code true} if this sale's customer has that id
+     */
+    public boolean wasMadeBy(String customerId) {
+        return customer.getId().equals(customerId);
+    }
+
+    /**
+     * Checks whether this sale was handled by the seller with the given id.
+     *
+     * @param sellerId the id of the seller
+     * @return {@code true} if this sale's seller has that id
+     */
+    public boolean wasHandledBy(String sellerId) {
+        return seller.getId().equals(sellerId);
+    }
 }

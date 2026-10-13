@@ -190,7 +190,7 @@ public class SaleService {
     public List<Sale> viewSalesByCustomer(String customerId) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : sales) {
-            if (sale.getCustomer().getId().equals(customerId)) {
+            if (sale.wasMadeBy(customerId)) {
                 result.add(sale);
             }
         }
@@ -206,7 +206,7 @@ public class SaleService {
     public List<Sale> viewSalesBySeller(String sellerId) {
         List<Sale> result = new ArrayList<>();
         for (Sale sale : sales) {
-            if (sale.getSeller().getId().equals(sellerId)) {
+            if (sale.wasHandledBy(sellerId)) {
                 result.add(sale);
             }
         }
