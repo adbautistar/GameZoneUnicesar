@@ -73,7 +73,7 @@ Defects recorded as out of scope (OOS-01..03) are part of the expected output. F
 
 | Check | Baseline | Final |
 |---|---|---|
-| `mvn clean verify` | BUILD SUCCESS, 88 tests | BUILD SUCCESS, **93 tests** (88 baseline, all unchanged in their assertions, + 5 new), 0 failures, 0 errors; JaCoCo check passed |
+| `mvn clean verify` | BUILD SUCCESS, 88 tests | BUILD SUCCESS, **93 tests** (all 88 baseline tests kept + 5 new; only the return and warranty repository round-trips now assert on stored ids instead of resolved objects, because resolution moved to the services and is covered there), 0 failures, 0 errors; JaCoCo check passed |
 | Line coverage `com.gamezone.service` | 85.1% | 83.2% (323/388) — above the 70% threshold; two new service classes added |
 | Line coverage `com.gamezone.persistence` | 74.7% | 83.3% (353/424) |
 | Scripted menu run | 1,051 normalized lines, SHA-256 `d404c06d889e6046` | 1,051 normalized lines, SHA-256 `d404c06d889e6046` — **diff empty** |
