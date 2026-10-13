@@ -81,4 +81,4 @@ Defects recorded as out of scope (OOS-01..03) are part of the expected output. F
 | `instanceof` outside repository serialization | 9 occurrences in model, services and UI | 2, both inside `ItemCatalog` |
 | Largest UI class | `ConsoleMenu`, 863 lines | `AccessoryMenu`, 188 lines; `ConsoleMenu`, 109 lines |
 
-The scripted run was also repeated after each of the 16 Phase 2 code commits that change production behavior paths (Developer 1, Developer 2, every Technical Lead commit and each menu extraction); every intermediate diff was empty.
+Intermediate runs of the scripted check (all with an empty diff): at the end of the Developer 1 group, after the `Main` rewiring (`7512a7b`), at the end of the Developer 2 group, after `819b498`, `29eb2d4` and `a4d48b8`, and after each of the seven menu extractions. `mvn clean compile` was run before every code commit.
