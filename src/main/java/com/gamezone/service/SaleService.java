@@ -141,11 +141,7 @@ public class SaleService {
 
         Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
         if (bestPromotion != null) {
-            double discount = bestPromotion.calculateDiscount(sale);
-            double originalTotal = sale.getTotalAmount();
-            sale.setAppliedPromotionName(bestPromotion.getName());
-            sale.setDiscountAmount(discount);
-            sale.setTotalAmount(originalTotal - discount);
+            sale.applyPromotion(bestPromotion.getName(), bestPromotion.calculateDiscount(sale));
         }
 
         if (warrantyService != null) {
@@ -156,7 +152,7 @@ public class SaleService {
                 if (productIdsWithExtendedWarranty != null
                         && productIdsWithExtendedWarranty.contains(product.getId())) {
                     ExtendedWarranty extended = warrantyService.assignExtendedWarranty(product, sale, sale.getDate());
-                    sale.setTotalAmount(sale.getTotalAmount() + extended.getAdditionalCost());
+                    sale.addCharge(extended.getAdditionalCost());
                 }
             }
         }

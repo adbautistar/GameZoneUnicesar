@@ -158,10 +158,7 @@ public class SaleRepository {
         Sale sale = new Sale(id, date, customer, seller, products);
         sale.calculateTotal();
         if (fields.length > 7 && !fields[6].isEmpty()) {
-            double discountAmount = Double.parseDouble(fields[7]);
-            sale.setAppliedPromotionName(fields[6]);
-            sale.setDiscountAmount(discountAmount);
-            sale.setTotalAmount(sale.getTotalAmount() - discountAmount);
+            sale.applyPromotion(fields[6], Double.parseDouble(fields[7]));
         }
         customer.addPurchase(sale);
         return sale;
