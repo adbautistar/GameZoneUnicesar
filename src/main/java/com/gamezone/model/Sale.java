@@ -194,4 +194,32 @@ public class Sale {
     public boolean canBeReturned() {
         return ChronoUnit.DAYS.between(date, LocalDate.now()) <= 30;
     }
+
+    /**
+     * Finds the first product of this sale with the given id. Used when
+     * registering a return to check that each returned product belongs to
+     * this sale.
+     *
+     * @param productId the id of the product to look for
+     * @return the matching product, or {@code null} if this sale does not include it
+     */
+    public Product findProduct(String productId) {
+        for (Product product : products) {
+            if (product.getId().equals(productId)) {
+                return product;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Checks whether this sale was made in the given month and year.
+     *
+     * @param month the month, from 1 to 12
+     * @param year  the year
+     * @return {@code true} if this sale's date falls in that month and year
+     */
+    public boolean wasMadeIn(int month, int year) {
+        return date.getMonthValue() == month && date.getYear() == year;
+    }
 }
