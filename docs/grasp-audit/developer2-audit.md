@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 |---|---|
 | Persons (Taller 1) | `Person`, `Customer`, `Seller`, `PersonRepository`, `PersonService` |
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
+| Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 
 ## Information Expert
 
@@ -25,6 +26,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** `AccessoryService.findAccessoriesCompatibleWith` (`AccessoryService.java:62`) asks each accessory `isCompatibleWith(consoleId)` instead of reading its list.
 
+- **Promotions — Correct.** `PromotionService.listActivePromotions` asks each promotion `isActive(today)`; `findBestPromotionFor` (`PromotionService.java:76`) asks each promotion `calculateDiscount(sale)` and only compares the results.
+
 ## Creator
 
 **Verdict:** Pending — audit in progress.
@@ -32,6 +35,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Persons — Correct.** `PersonService.registerCustomer` (`PersonService.java:42`) creates the `Customer` it adds to the list it aggregates; `PersonRepository` creates customers and sellers from the records it reads.
 
 - **Accessories — Correct.** `AccessoryService.registerController/registerCable/registerMemory` (`AccessoryService.java:23-42`) create the accessories they aggregate.
+
+- **Promotions — Correct.** `PromotionService.registerPercentageDiscount/CategoryDiscount/BulkPurchaseDiscount` create the promotions they aggregate.
 
 ## Controller
 
@@ -53,11 +58,15 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** `AccessoryRepository` only handles `data/accessories.csv`; `AccessoryService` only handles accessory rules.
 
+- **Promotions — Correct.** `PromotionService` holds registration, validation of percentage and dates, and selection of the best promotion — all promotion rules.
+
 ## Polymorphism
 
 **Verdict:** Pending — audit in progress.
 
 - **Accessories — Mixed.** `AccessoryRepository.toCsvLine`/`fromCsvLine` branch on the concrete accessory type; judged **correct** for the same reason as the other repositories (the repository is a Pure Fabrication that keeps the CSV format out of the model). `AccessoryService.listAccessoriesByType` is a violation (V-01).
+
+- **Promotions — Correct.** `findBestPromotionFor` relies on the polymorphic `calculateDiscount` and never asks for the promotion's type; `PromotionRepository` serialization judged correct (Pure Fabrication).
 
 ### V-01
 
