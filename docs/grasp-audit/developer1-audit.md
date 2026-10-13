@@ -18,6 +18,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
+| Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
 
 ## Information Expert
 
@@ -30,6 +31,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `Promotion.isActive(LocalDate)` (`Promotion.java:111`) uses its own start and end dates; each subclass computes its own discount for the sale it receives.
 
 - **Returns — Correct.** `Return.calculateRefundAmount()` (`Return.java:117`) sums the prices of the products it holds and is called from its own constructor; `generateReturnReceipt()` uses only its own data. `Sale.canBeReturned()` (`Sale.java:194`) decides the 30-day rule from the sale's own date.
+
+- **Warranties — Correct.** `Warranty` derives `endDate` from `getDurationInMonths()` in its constructor (`Warranty.java:35`); `isActive(LocalDate)` (`Warranty.java:112`) uses its own dates; `ExtendedWarranty.getAdditionalCost()` uses the price of the product it covers.
 
 ## Creator
 
@@ -55,6 +58,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Returns — Correct.** `Return` depends on `Sale` and `Product`, the two objects it describes.
 
+- **Warranties — Correct.** The hierarchy depends only on `Product` and `Sale`.
+
 ## High Cohesion
 
 **Verdict:** Pending — audit in progress.
@@ -67,6 +72,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Returns — Correct.** `Return` holds only return data, its refund calculation and its receipt.
 
+- **Warranties — Correct.** Each subclass contributes only its three polymorphic facts.
+
 ## Polymorphism
 
 **Verdict:** Pending — audit in progress.
@@ -76,6 +83,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Accessories — Correct.** `Controller`, `Cable` and `Memory` override `getDescription()`; no code in scope asks an accessory for its concrete type.
 
 - **Promotions — Mixed.** `Promotion.calculateDiscount(Sale)` (`Promotion.java:122`) is abstract and overridden by the three subclasses, which is correct use of Polymorphism. Inside `CategoryDiscount.calculateDiscount`, however, the category of each product is resolved with conditionals on the concrete type (V-01).
+
+- **Warranties — Correct.** `getDurationInMonths()`, `getWarrantyType()` and `getAdditionalCost()` are abstract and overridden by `BasicWarranty` and `ExtendedWarranty`; `generateWarrantyCertificate()` (`Warranty.java:123`) is written once on the base class and uses those polymorphic facts.
 
 ### V-01
 
@@ -109,3 +118,5 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Products — Correct.** A change of storage format is confined to `ProductRepository`; `ProductService` and the model are protected from it.
 
 - **Promotions — Violation (V-01).** The vocabulary of product categories (`"VIDEOGAME"`, `"CONSOLE"`) and its mapping to classes is hard-coded inside `CategoryDiscount`, so the discount is not protected from a new product category. The full analysis is recorded once, under Polymorphism.
+
+- **Warranties — Correct.** A new warranty type is added as a subclass without touching `Warranty` or the existing subclasses.
