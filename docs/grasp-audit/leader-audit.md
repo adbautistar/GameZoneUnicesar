@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Sales (Taller 1) and promotion changes (Requerimiento 2) | `Sale` (including `applied promotion` fields and the receipt breakdown; excluding `canBeReturned`, owned by Developer 1) |
 | Sales (Taller 1) | `SaleRepository` |
 | Sales (Taller 1) and integrations (Requerimientos 1, 2, 4) | `SaleService`, including product-or-accessory resolution, promotion application and warranty assignment in `registerSale` |
+| User interface (Taller 1 and Requerimientos 1-4) | `ConsoleMenu`, including every module submenu |
 
 ## Information Expert
 
@@ -64,7 +65,20 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 **Verdict:** Pending — audit in progress.
 
-_No module audited yet contributes to this pattern._
+- **ConsoleMenu — Mixed.** Every submenu delegates the operation to a service, except the sale registration (V-10).
+
+### V-10
+
+| Field | Content |
+|---|---|
+| ID | V-10 |
+| Pattern | Controller |
+| Module | User interface and Warranties integration (Requerimiento 4) |
+| Evidence | `ConsoleMenu.registerSale`, `ConsoleMenu.java:325-343`: the menu resolves each id with `productService.findById`, decides with `instanceof Console` which items get the extended-warranty question, and prints "Garantia basica asignada automaticamente" for the consoles it found itself, without asking the service which warranties were assigned. |
+| Explanation | The UI should collect input and delegate; here it applies a business rule (warranty eligibility) and reports a result it inferred instead of receiving it from the service layer. |
+| Consequence | The eligibility rule exists in two layers and can drift; the message can disagree with what the service actually did. |
+| Proposed solution | Ask the service layer which items are eligible (a method on the sale registration use case) and use that answer both for the questions and for the messages. |
+| Other role's code involved | No. |
 
 ## Low Coupling
 
@@ -130,6 +144,19 @@ _No module audited yet contributes to this pattern._
 | Proposed solution | Extract the registration use case into its own class (a use-case controller such as `SaleRegistrationService`), leaving `SaleService` with storage and queries. |
 | Other role's code involved | No. |
 
+### V-11
+
+| Field | Content |
+|---|---|
+| ID | V-11 |
+| Pattern | High Cohesion |
+| Module | User interface (Taller 1 and Requerimientos 1-4) |
+| Evidence | `ConsoleMenu.java`, 863 lines: main loop plus `showProductMenu` (`:118`), `showPersonMenu` (`:205`), `showSaleMenu` (`:276`), `showAccessoryMenu` (`:387`), `showPromotionMenu` (`:542`), `showReturnMenu` (`:669`), `showMonthlyBalance` (`:769`), `showWarrantyMenu` (`:782`) and every operation of every module. |
+| Explanation | One class owns the user interface of seven modules and depends on seven services; each new module made it larger. |
+| Consequence | Hard to navigate and review; any change to one module's screens touches the class every other module uses. |
+| Proposed solution | Keep the main loop in `ConsoleMenu` and move each module's submenu into its own class in `com.gamezone.ui`. |
+| Other role's code involved | No. |
+
 ## Polymorphism
 
 **Verdict:** Pending — audit in progress.
@@ -171,6 +198,8 @@ _No module audited yet contributes to this pattern._
 ## Indirection
 
 **Verdict:** Pending — audit in progress.
+
+- **ConsoleMenu — Correct.** The menu reaches persistence only through services; it never imports a repository.
 
 ### V-07
 
