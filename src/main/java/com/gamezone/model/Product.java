@@ -127,4 +127,15 @@ public abstract class Product {
      * @return {@code true} if this product belongs to the given category
      */
     public abstract boolean belongsToCategory(String category);
+
+    /**
+     * Indicates whether this product automatically receives a warranty when
+     * it is sold. Products are not eligible by default; subclasses that carry
+     * a manufacturer warranty override this method.
+     *
+     * @return {@code true} if a warranty must be assigned when this product is sold
+     */
+    public boolean isWarrantyEligible() {
+        return false;
+    }
 }

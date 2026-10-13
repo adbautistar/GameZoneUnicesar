@@ -110,4 +110,14 @@ public class Console extends Product {
     public boolean belongsToCategory(String category) {
         return CATEGORY.equals(category);
     }
+
+    /**
+     * Indicates that consoles automatically receive a warranty when sold.
+     *
+     * @return always {@code true}
+     */
+    @Override
+    public boolean isWarrantyEligible() {
+        return true;
+    }
 }
