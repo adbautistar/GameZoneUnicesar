@@ -27,13 +27,17 @@ class WarrantyServiceTest {
 
     @Mock
     private WarrantyRepository repository;
+    @Mock
+    private SaleService saleService;
+    @Mock
+    private ItemCatalog itemCatalog;
 
     private WarrantyService service;
 
     @BeforeEach
     void setUp() {
         when(repository.loadAll()).thenReturn(new ArrayList<>());
-        service = new WarrantyService(repository);
+        service = new WarrantyService(repository, saleService, itemCatalog);
     }
 
     @Test

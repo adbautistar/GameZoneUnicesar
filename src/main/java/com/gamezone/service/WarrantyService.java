@@ -37,25 +37,12 @@ public class WarrantyService {
     public WarrantyService(WarrantyRepository repository, SaleService saleService, ItemCatalog itemCatalog) {
         this.repository = repository;
         this.warranties = new ArrayList<>();
-        for (WarrantyRecord record : repository.loadRecords()) {
+        for (WarrantyRecord record : repository.loadAll()) {
             Warranty warranty = resolve(record, saleService, itemCatalog);
             if (warranty != null) {
                 warranties.add(warranty);
             }
         }
-    }
-
-    /**
-     * Creates a new service whose repository resolves references itself.
-     *
-     * @param repository the repository used to persist and load warranties
-     * @deprecated transitional constructor kept only until {@code Main} is
-     *             rewired; use {@link #WarrantyService(WarrantyRepository, SaleService, ItemCatalog)}
-     */
-    @Deprecated
-    public WarrantyService(WarrantyRepository repository) {
-        this.repository = repository;
-        this.warranties = new ArrayList<>(repository.loadAll());
     }
 
     private static Warranty resolve(WarrantyRecord record, SaleService saleService, ItemCatalog itemCatalog) {

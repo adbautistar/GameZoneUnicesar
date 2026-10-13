@@ -1,13 +1,7 @@
 package com.gamezone.persistence;
 
-import com.gamezone.model.BasicWarranty;
 import com.gamezone.model.ExtendedWarranty;
-import com.gamezone.model.Product;
-import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.service.AccessoryService;
-import com.gamezone.service.ProductService;
-import com.gamezone.service.SaleService;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -34,9 +28,6 @@ public class WarrantyRepository {
     private static final String EXTENDED_TYPE = "EXTENDED";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
-    private final SaleService saleService;
-    private final ProductService productService;
-    private final AccessoryService accessoryService;
     private final String filePath;
 
     /**
@@ -53,36 +44,14 @@ public class WarrantyRepository {
      * @param filePath the CSV file path to read from and write to
      */
     public WarrantyRepository(String filePath) {
-        this(null, null, null, filePath);
-    }
-
-    /**
-     * Creates a repository that can still resolve references itself.
-     *
-     * @deprecated transitional constructor kept only until {@code Main} is
-     *             rewired; use {@link #WarrantyRepository()}
-     */
-    @Deprecated
-    public WarrantyRepository(SaleService saleService, ProductService productService,
-                               AccessoryService accessoryService) {
-        this(saleService, productService, accessoryService, DEFAULT_FILE_PATH);
-    }
-
-    /**
-     * Creates a repository that can still resolve references itself.
-     *
-     * @deprecated transitional constructor kept only until the tests are
-     *             adapted; use {@link #WarrantyRepository(String)}
-     */
-    @Deprecated
-    public WarrantyRepository(SaleService saleService, ProductService productService,
-                               AccessoryService accessoryService, String filePath) {
-        this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
         this.filePath = filePath;
     }
 
+    /**
+     * Overwrites the CSV file with the given list of warranties.
+     *
+     * @param warranties the complete list of warranties to persist
+     */
     public void saveAll(List<Warranty> warranties) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Warranty warranty : warranties) {
@@ -111,7 +80,7 @@ public class WarrantyRepository {
      *
      * @return the stored warranty records, or an empty list if the file does not exist
      */
-    public List<WarrantyRecord> loadRecords() {
+    public List<WarrantyRecord> loadAll() {
         List<WarrantyRecord> records = new ArrayList<>();
         Path path = Path.of(filePath);
         if (!Files.exists(path)) {
@@ -133,72 +102,5 @@ public class WarrantyRepository {
             throw new RuntimeException("Failed to load warranties from " + filePath, e);
         }
         return records;
-    }
-
-    /**
-     * Reads the CSV file and resolves every warranty through the services.
-     *
-     * @return the resolved warranties
-     * @deprecated transitional method kept only until the tests are adapted;
-     *             use {@link #loadRecords()}
-     */
-    @Deprecated
-    public List<Warranty> loadAll() {
-        List<Warranty> warranties = new ArrayList<>();
-        Path path = Path.of(filePath);
-        if (!Files.exists(path)) {
-            return warranties;
-        }
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                Warranty warranty = fromCsvLine(line);
-                if (warranty != null) {
-                    warranties.add(warranty);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load warranties from " + filePath, e);
-        }
-        return warranties;
-    }
-
-    private Warranty fromCsvLine(String line) {
-        String[] fields = line.split(",", -1);
-        String type = fields[0];
-        String id = fields[1];
-        String productId = fields[2];
-        String saleId = fields[3];
-        LocalDate startDate = LocalDate.parse(fields[4], DATE_FORMATTER);
-        // fields[5] holds the persisted endDate; the constructor always re-derives
-        // it from startDate and the subclass's fixed duration, so it is not read
-        // here (matches the same recompute-on-load pattern used by SaleRepository).
-
-        Product product = productService.findById(productId);
-        if (product == null) {
-            product = accessoryService.findById(productId);
-        }
-        if (product == null) {
-            System.err.println("Failed to resolve product or accessory " + productId
-                + " for warranty " + id + "; skipping.");
-            return null;
-        }
-
-        Sale sale = saleService.findById(saleId);
-        if (sale == null) {
-            System.err.println("Failed to resolve sale " + saleId + " for warranty " + id + "; skipping.");
-            return null;
-        }
-
-        if (BASIC_TYPE.equals(type)) {
-            return new BasicWarranty(id, product, sale, startDate);
-        }
-        if (EXTENDED_TYPE.equals(type)) {
-            return new ExtendedWarranty(id, product, sale, startDate);
-        }
-        throw new IllegalArgumentException("Unknown warranty type in CSV: " + type);
     }
 }

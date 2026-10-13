@@ -37,28 +37,12 @@ public class ReturnService {
         this.saleService = saleService;
         this.itemCatalog = itemCatalog;
         this.returns = new ArrayList<>();
-        for (ReturnRecord record : repository.loadRecords()) {
+        for (ReturnRecord record : repository.loadAll()) {
             Return returnItem = resolve(record);
             if (returnItem != null) {
                 returns.add(returnItem);
             }
         }
-    }
-
-    /**
-     * Creates a new service from the separate product and accessory services.
-     *
-     * @param repository       the repository used to persist and load returns
-     * @param saleService      the service used to find the original sales
-     * @param productService   the service that owns products
-     * @param accessoryService the service that owns accessories
-     * @deprecated transitional constructor kept only until {@code Main} is
-     *             rewired; use {@link #ReturnService(ReturnRepository, SaleService, ItemCatalog)}
-     */
-    @Deprecated
-    public ReturnService(ReturnRepository repository, SaleService saleService, ProductService productService,
-                          AccessoryService accessoryService) {
-        this(repository, saleService, new ItemCatalog(productService, accessoryService));
     }
 
     /**

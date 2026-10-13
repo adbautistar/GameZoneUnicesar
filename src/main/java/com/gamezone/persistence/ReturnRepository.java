@@ -2,10 +2,6 @@ package com.gamezone.persistence;
 
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
-import com.gamezone.model.Sale;
-import com.gamezone.service.AccessoryService;
-import com.gamezone.service.ProductService;
-import com.gamezone.service.SaleService;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -29,9 +25,6 @@ public class ReturnRepository {
 
     private static final String DEFAULT_FILE_PATH = "data/returns.csv";
 
-    private final SaleService saleService;
-    private final ProductService productService;
-    private final AccessoryService accessoryService;
     private final String filePath;
 
     /**
@@ -48,36 +41,14 @@ public class ReturnRepository {
      * @param filePath the CSV file path to read from and write to
      */
     public ReturnRepository(String filePath) {
-        this(null, null, null, filePath);
-    }
-
-    /**
-     * Creates a repository that can still resolve references itself.
-     *
-     * @deprecated transitional constructor kept only until {@code Main} is
-     *             rewired; use {@link #ReturnRepository()}
-     */
-    @Deprecated
-    public ReturnRepository(SaleService saleService, ProductService productService,
-                             AccessoryService accessoryService) {
-        this(saleService, productService, accessoryService, DEFAULT_FILE_PATH);
-    }
-
-    /**
-     * Creates a repository that can still resolve references itself.
-     *
-     * @deprecated transitional constructor kept only until the tests are
-     *             adapted; use {@link #ReturnRepository(String)}
-     */
-    @Deprecated
-    public ReturnRepository(SaleService saleService, ProductService productService,
-                             AccessoryService accessoryService, String filePath) {
-        this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
         this.filePath = filePath;
     }
 
+    /**
+     * Overwrites the CSV file with the given list of returns.
+     *
+     * @param returns the complete list of returns to persist
+     */
     public void saveAll(List<Return> returns) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Return returnItem : returns) {
@@ -113,7 +84,7 @@ public class ReturnRepository {
      *
      * @return the stored return records, or an empty list if the file does not exist
      */
-    public List<ReturnRecord> loadRecords() {
+    public List<ReturnRecord> loadAll() {
         List<ReturnRecord> records = new ArrayList<>();
         Path path = Path.of(filePath);
         if (!Files.exists(path)) {
@@ -137,67 +108,5 @@ public class ReturnRepository {
         String[] fields = line.split(",", -1);
         List<String> productIds = fields[3].isEmpty() ? List.of() : Arrays.asList(fields[3].split("\\|"));
         return new ReturnRecord(fields[0], LocalDate.parse(fields[1]), fields[2], productIds, fields[4]);
-    }
-
-    /**
-     * Reads the CSV file and resolves every return through the services.
-     *
-     * @return the resolved returns
-     * @deprecated transitional method kept only until the tests are adapted;
-     *             use {@link #loadRecords()}
-     */
-    @Deprecated
-    public List<Return> loadAll() {
-        List<Return> returns = new ArrayList<>();
-        Path path = Path.of(filePath);
-        if (!Files.exists(path)) {
-            return returns;
-        }
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                Return returnItem = fromCsvLine(line);
-                if (returnItem != null) {
-                    returns.add(returnItem);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load returns from " + filePath, e);
-        }
-        return returns;
-    }
-
-    private Return fromCsvLine(String line) {
-        String[] fields = line.split(",", -1);
-        String id = fields[0];
-        LocalDate date = LocalDate.parse(fields[1]);
-        String saleId = fields[2];
-        String[] productIds = fields[3].isEmpty() ? new String[0] : fields[3].split("\\|");
-        String reason = fields[4];
-
-        Sale sale = saleService.findById(saleId);
-        if (sale == null) {
-            System.err.println("Failed to resolve sale " + saleId + " for return " + id + "; skipping.");
-            return null;
-        }
-
-        List<Product> returnedProducts = new ArrayList<>();
-        for (String productId : productIds) {
-            Product product = productService.findById(productId);
-            if (product == null) {
-                product = accessoryService.findById(productId);
-            }
-            if (product == null) {
-                System.err.println("Failed to resolve product or accessory " + productId
-                    + " for return " + id + "; skipping item.");
-                continue;
-            }
-            returnedProducts.add(product);
-        }
-
-        return new Return(id, date, sale, returnedProducts, reason);
     }
 }
