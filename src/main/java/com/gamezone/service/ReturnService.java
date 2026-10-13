@@ -3,6 +3,7 @@ package com.gamezone.service;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
+import com.gamezone.persistence.ReturnRecord;
 import com.gamezone.persistence.ReturnRepository;
 
 import java.time.LocalDate;
@@ -23,17 +24,25 @@ public class ReturnService {
 
     /**
      * Creates a new service backed by the given repository, loading the
-     * current returns into memory.
+     * current returns into memory. Stored references are resolved here: a
+     * return whose sale no longer exists is skipped, and a product that no
+     * longer exists is left out of its return.
      *
      * @param repository  the repository used to persist and load returns
      * @param saleService the service used to find the original sales
-     * @param itemCatalog the catalog used to restore the stock of returned items
+     * @param itemCatalog the catalog used to resolve returned items and restore their stock
      */
     public ReturnService(ReturnRepository repository, SaleService saleService, ItemCatalog itemCatalog) {
         this.repository = repository;
         this.saleService = saleService;
         this.itemCatalog = itemCatalog;
-        this.returns = new ArrayList<>(repository.loadAll());
+        this.returns = new ArrayList<>();
+        for (ReturnRecord record : repository.loadRecords()) {
+            Return returnItem = resolve(record);
+            if (returnItem != null) {
+                returns.add(returnItem);
+            }
+        }
     }
 
     /**
@@ -94,6 +103,26 @@ public class ReturnService {
         repository.saveAll(returns);
 
         return newReturn;
+    }
+
+    private Return resolve(ReturnRecord record) {
+        Sale sale = saleService.findById(record.getSaleId());
+        if (sale == null) {
+            System.err.println("Failed to resolve sale " + record.getSaleId() + " for return " + record.getId()
+                + "; skipping.");
+            return null;
+        }
+        List<Product> returnedProducts = new ArrayList<>();
+        for (String productId : record.getProductIds()) {
+            Product product = itemCatalog.findItem(productId);
+            if (product == null) {
+                System.err.println("Failed to resolve product or accessory " + productId
+                    + " for return " + record.getId() + "; skipping item.");
+                continue;
+            }
+            returnedProducts.add(product);
+        }
+        return new Return(record.getId(), record.getDate(), sale, returnedProducts, record.getReason());
     }
 
     public List<Return> viewAllReturns() {

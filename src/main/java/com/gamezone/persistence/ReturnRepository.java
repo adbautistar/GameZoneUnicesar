@@ -16,8 +16,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Handles file-based persistence of returns as CSV records in
+ * {@code data/returns.csv}. Returns are saved with their sale and products as
+ * ids and loaded back as {@link ReturnRecord}s; resolving those ids into
+ * domain objects is the responsibility of the service layer.
+ */
 public class ReturnRepository {
 
     private static final String DEFAULT_FILE_PATH = "data/returns.csv";
@@ -27,15 +34,42 @@ public class ReturnRepository {
     private final AccessoryService accessoryService;
     private final String filePath;
 
+    /**
+     * Creates a new repository backed by the default {@code data/returns.csv} file.
+     */
+    public ReturnRepository() {
+        this(DEFAULT_FILE_PATH);
+    }
+
+    /**
+     * Creates a new repository backed by the given file path. Used by tests
+     * to isolate file operations from the real {@code data/returns.csv}.
+     *
+     * @param filePath the CSV file path to read from and write to
+     */
+    public ReturnRepository(String filePath) {
+        this(null, null, null, filePath);
+    }
+
+    /**
+     * Creates a repository that can still resolve references itself.
+     *
+     * @deprecated transitional constructor kept only until {@code Main} is
+     *             rewired; use {@link #ReturnRepository()}
+     */
+    @Deprecated
     public ReturnRepository(SaleService saleService, ProductService productService,
                              AccessoryService accessoryService) {
         this(saleService, productService, accessoryService, DEFAULT_FILE_PATH);
     }
 
     /**
-     * Creates a new repository backed by the given file path. Used by tests
-     * to isolate file operations from the real {@code data/returns.csv}.
+     * Creates a repository that can still resolve references itself.
+     *
+     * @deprecated transitional constructor kept only until the tests are
+     *             adapted; use {@link #ReturnRepository(String)}
      */
+    @Deprecated
     public ReturnRepository(SaleService saleService, ProductService productService,
                              AccessoryService accessoryService, String filePath) {
         this.saleService = saleService;
@@ -73,6 +107,46 @@ public class ReturnRepository {
             String.valueOf(returnItem.getRefundAmount()));
     }
 
+    /**
+     * Reads the CSV file and returns one record per stored return, keeping the
+     * sale and products as ids.
+     *
+     * @return the stored return records, or an empty list if the file does not exist
+     */
+    public List<ReturnRecord> loadRecords() {
+        List<ReturnRecord> records = new ArrayList<>();
+        Path path = Path.of(filePath);
+        if (!Files.exists(path)) {
+            return records;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                }
+                records.add(toRecord(line));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load returns from " + filePath, e);
+        }
+        return records;
+    }
+
+    private ReturnRecord toRecord(String line) {
+        String[] fields = line.split(",", -1);
+        List<String> productIds = fields[3].isEmpty() ? List.of() : Arrays.asList(fields[3].split("\\|"));
+        return new ReturnRecord(fields[0], LocalDate.parse(fields[1]), fields[2], productIds, fields[4]);
+    }
+
+    /**
+     * Reads the CSV file and resolves every return through the services.
+     *
+     * @return the resolved returns
+     * @deprecated transitional method kept only until the tests are adapted;
+     *             use {@link #loadRecords()}
+     */
+    @Deprecated
     public List<Return> loadAll() {
         List<Return> returns = new ArrayList<>();
         Path path = Path.of(filePath);

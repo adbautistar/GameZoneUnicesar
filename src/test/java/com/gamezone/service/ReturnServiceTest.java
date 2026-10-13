@@ -41,7 +41,7 @@ class ReturnServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(repository.loadAll()).thenReturn(new ArrayList<>());
+        when(repository.loadRecords()).thenReturn(new ArrayList<>());
         service = new ReturnService(repository, saleService, productService, accessoryService);
     }
 
