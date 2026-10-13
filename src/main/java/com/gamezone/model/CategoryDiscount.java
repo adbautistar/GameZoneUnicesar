@@ -66,7 +66,8 @@ public class CategoryDiscount extends Promotion {
 
     /**
      * Calculates the discount as a percentage of the total price of only the
-     * products in the sale that match the target category.
+     * products in the sale that belong to the target category. Each product
+     * decides whether it belongs to the category.
      *
      * @param sale the sale to evaluate
      * @return the discount amount, in currency, or 0.0 if no product matches
@@ -75,9 +76,7 @@ public class CategoryDiscount extends Promotion {
     public double calculateDiscount(Sale sale) {
         double matchingTotal = 0.0;
         for (Product product : sale.getProducts()) {
-            if ("VIDEOGAME".equals(targetCategory) && product instanceof VideoGame) {
-                matchingTotal += product.getPrice();
-            } else if ("CONSOLE".equals(targetCategory) && product instanceof Console) {
+            if (product.belongsToCategory(targetCategory)) {
                 matchingTotal += product.getPrice();
             }
         }

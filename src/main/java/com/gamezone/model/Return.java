@@ -146,4 +146,36 @@ public class Return {
         receipt.append("=================================");
         return receipt.toString();
     }
+
+    /**
+     * Checks whether this return belongs to the customer with the given id,
+     * that is, whether that customer made the original sale.
+     *
+     * @param customerId the id of the customer
+     * @return {@code true} if the original sale was made by that customer
+     */
+    public boolean belongsToCustomer(String customerId) {
+        return originalSale.getCustomer().getId().equals(customerId);
+    }
+
+    /**
+     * Checks whether this return refers to the sale with the given id.
+     *
+     * @param saleId the id of the sale
+     * @return {@code true} if the original sale has that id
+     */
+    public boolean belongsToSale(String saleId) {
+        return originalSale.getId().equals(saleId);
+    }
+
+    /**
+     * Checks whether this return was registered in the given month and year.
+     *
+     * @param month the month, from 1 to 12
+     * @param year  the year
+     * @return {@code true} if this return's date falls in that month and year
+     */
+    public boolean wasRegisteredIn(int month, int year) {
+        return date.getMonthValue() == month && date.getYear() == year;
+    }
 }

@@ -133,4 +133,16 @@ public abstract class Warranty {
         certificate.append("====================================");
         return certificate.toString();
     }
+
+    /**
+     * Checks whether this warranty covers the given product within the given
+     * sale.
+     *
+     * @param productId the id of the product
+     * @param saleId    the id of the sale
+     * @return {@code true} if this warranty is for that product in that sale
+     */
+    public boolean covers(String productId, String saleId) {
+        return product.getId().equals(productId) && sale.getId().equals(saleId);
+    }
 }

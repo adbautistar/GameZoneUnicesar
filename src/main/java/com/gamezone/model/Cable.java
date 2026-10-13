@@ -77,4 +77,14 @@ public class Cable extends Accessory {
             "[%s] %s - Length: %.1fm, Connector: %s, Price: %.2f, Compatible consoles: %s",
             getId(), getTitle(), lengthInMeters, connectorType, getPrice(), getCompatibleConsoleIds());
     }
+
+    /**
+     * Returns the type of this accessory.
+     *
+     * @return always "CABLE"
+     */
+    @Override
+    public String getAccessoryType() {
+        return "CABLE";
+    }
 }

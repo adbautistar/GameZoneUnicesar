@@ -6,6 +6,9 @@ package com.gamezone.model;
  */
 public class VideoGame extends Product {
 
+    /** Category name used by category-based promotions. */
+    private static final String CATEGORY = "VIDEOGAME";
+
     private String platform;
     private String genre;
     private String ageRating;
@@ -94,5 +97,17 @@ public class VideoGame extends Product {
         return String.format(
             "[%s] %s - Platform: %s, Genre: %s, Age Rating: %s, Price: %.2f, Stock: %d",
             getId(), getTitle(), platform, genre, ageRating, getPrice(), getStock());
+    }
+
+    /**
+     * Checks whether this video game belongs to the given category. Video
+     * games belong only to the "VIDEOGAME" category.
+     *
+     * @param category the category name to check
+     * @return {@code true} if the category is "VIDEOGAME"
+     */
+    @Override
+    public boolean belongsToCategory(String category) {
+        return CATEGORY.equals(category);
     }
 }
