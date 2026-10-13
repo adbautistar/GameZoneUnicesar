@@ -23,7 +23,7 @@ public class WarrantyService {
     }
 
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {
-        String id = "WAR-" + System.currentTimeMillis();
+        String id = IdGenerator.next("WAR");
         BasicWarranty warranty = new BasicWarranty(id, product, sale, startDate);
         warranties.add(warranty);
         repository.saveAll(warranties);
@@ -31,7 +31,7 @@ public class WarrantyService {
     }
 
     public ExtendedWarranty assignExtendedWarranty(Product product, Sale sale, LocalDate startDate) {
-        String id = "WAR-" + System.currentTimeMillis();
+        String id = IdGenerator.next("WAR");
         ExtendedWarranty warranty = new ExtendedWarranty(id, product, sale, startDate);
         warranties.add(warranty);
         repository.saveAll(warranties);

@@ -52,7 +52,7 @@ public class ReturnService {
             returnedProducts.add(matched);
         }
 
-        String returnId = "RET-" + System.currentTimeMillis();
+        String returnId = IdGenerator.next("RET");
         Return newReturn = new Return(returnId, LocalDate.now(), sale, returnedProducts, reason);
 
         for (Product product : returnedProducts) {
