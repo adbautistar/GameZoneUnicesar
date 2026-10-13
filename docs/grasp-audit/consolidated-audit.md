@@ -56,3 +56,47 @@ Totals: 35 production classes — Developer 1: 17, Developer 2: 13, Technical Le
 | Protected Variations | Violation | Violation | Violation | **Violation** |
 
 Creator is the only pattern applied correctly across the whole system: every entity is created by the service that records it or by the repository that holds its data.
+
+## Definitive violations
+
+| ID | Pattern | Evidence (summary) | Origin | Correction owner |
+|---|---|---|---|---|
+| V-01 | Polymorphism / Protected Variations | `CategoryDiscount.calculateDiscount` maps category strings to `VideoGame`/`Console` with `instanceof` | developer1-audit V-01 | Developer 1 |
+| V-02 | Polymorphism / Protected Variations | `AccessoryService.listAccessoriesByType` maps type strings to subclasses with `instanceof` | developer2-audit V-01 | Boundary: Developer 1 + Developer 2 |
+| V-03 | Low Coupling | `ReturnRepository` depends on `SaleService`, `ProductService`, `AccessoryService` | developer2-audit V-02 | Developer 2 (`Main` wiring: Technical Lead) |
+| V-04 | Low Coupling | `WarrantyRepository` depends on `SaleService`, `ProductService`, `AccessoryService` | developer2-audit V-06 | Developer 2 (`Main` wiring: Technical Lead) |
+| V-05 | Indirection / Polymorphism | Product-or-accessory lookup and `instanceof Accessory` stock dispatch repeated in `ReturnRepository`, `WarrantyRepository`, `ReturnService`, `SaleService`, `SaleRepository` | developer2-audit V-03, V-08; leader-audit V-06 (accessory part), V-07 | Boundary: Developer 2 + Technical Lead |
+| V-06 | Information Expert | `ReturnService.registerReturn` searches the sale's products itself | developer2-audit V-04 | Boundary: Developer 1 + Developer 2 |
+| V-07 | Information Expert | `ReturnService` views and monthly balance navigate getter chains on `Return` and `Sale` | developer2-audit V-05 | Boundary: Developer 1 + Developer 2 |
+| V-08 | Information Expert | `WarrantyService.findWarrantyByProduct` navigates the warranty's associations | developer2-audit V-07 | Boundary: Developer 1 + Developer 2 |
+| V-09 | Pure Fabrication | `RET-`/`WAR-`/`SALE-` + `System.currentTimeMillis()` written inline in three services | developer2-audit V-09; leader-audit V-08 | Boundary: Developer 2 + Technical Lead |
+| V-10 | Information Expert | `SaleService.registerSale` and `SaleRepository.fromCsvLine` adjust the sale total through setters | leader-audit V-03 | Technical Lead |
+| V-11 | Low Coupling / High Cohesion | `SaleRepository` depends on three services and rebuilds purchase history while parsing | leader-audit V-01, V-02 | Technical Lead |
+| V-12 | High Cohesion / Low Coupling / Protected Variations | `SaleService.registerSale` does the whole use case; `SaleService` ↔ `WarrantyService` cycle wired by setter with a silent `null` guard | leader-audit V-04, V-05 | Technical Lead |
+| V-13 | Polymorphism / Protected Variations | `instanceof Console` decides warranty eligibility in `SaleService` and `ConsoleMenu` | leader-audit V-06 (console part) | Boundary: Developer 1 + Technical Lead |
+| V-14 | Controller | `ConsoleMenu.registerSale` applies the eligibility rule and infers the warranty messages | leader-audit V-10 | Technical Lead |
+| V-15 | High Cohesion | `ConsoleMenu` (863 lines) holds the UI of every module | leader-audit V-11 | Technical Lead |
+| V-16 | Information Expert | `SaleService.viewSalesByCustomer/BySeller` navigate getter chains on `Sale` | leader-audit V-09 | Technical Lead |
+
+The full evidence, explanation and consequence of each violation are in the individual report named in the "Origin" column.
+
+### Agreed solution per violation
+
+| ID | Agreed solution | Pattern applied |
+|---|---|---|
+| V-01 | `Product.belongsToCategory(String)` implemented by each subclass; `CategoryDiscount` delegates to it | Polymorphism, Protected Variations |
+| V-02 | `Accessory.getAccessoryType()` implemented by each subclass (Developer 1); `AccessoryService` filters with it (Developer 2) | Polymorphism, Protected Variations |
+| V-03 | `ReturnRepository` persists and loads references only (`ReturnRecord`); `ReturnService` resolves them | Low Coupling |
+| V-04 | `WarrantyRepository` persists and loads references only (`WarrantyRecord`); `WarrantyService` resolves them | Low Coupling |
+| V-05 | `ItemCatalog` in the service layer (`findItem`, `decreaseStock`, `restoreStock`) created by Developer 2 and used by every client | Indirection, Protected Variations |
+| V-06 | `Sale.findProduct(String)` (Developer 1, return-related model work per the Requerimiento 3 precedent); used by `ReturnService` | Information Expert |
+| V-07 | `Return.belongsToCustomer`, `Return.belongsToSale`, `Return.wasRegisteredIn`, `Sale.wasMadeIn` (Developer 1); used by `ReturnService` | Information Expert |
+| V-08 | `Warranty.covers(productId, saleId)` (Developer 1); used by `WarrantyService` | Information Expert |
+| V-09 | `IdGenerator.next(prefix)` created by Developer 2 and adopted by the Technical Lead; same id format | Pure Fabrication |
+| V-10 | `Sale.applyPromotion(name, discount)` and `Sale.addCharge(amount)` | Information Expert |
+| V-11 | `SaleRepository` persists and loads references only (`SaleRecord`); `SaleService` resolves them and rebuilds purchase history | Low Coupling, High Cohesion |
+| V-12 | `SaleRegistrationService` (use-case controller) owns the registration; `SaleService` keeps storage and queries; setter injection removed | Controller, High Cohesion, Low Coupling |
+| V-13 | `Product.isWarrantyEligible()` overridden by `Console` (Developer 1); used by the sale registration (Technical Lead) | Polymorphism, Protected Variations |
+| V-14 | The sale registration use case answers which items are eligible; `ConsoleMenu` only asks and prints | Controller |
+| V-15 | One submenu class per module in `com.gamezone.ui`; `ConsoleMenu` keeps the main loop | High Cohesion |
+| V-16 | `Sale.wasMadeBy(customerId)`, `Sale.wasHandledBy(sellerId)` | Information Expert |
