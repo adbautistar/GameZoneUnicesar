@@ -18,7 +18,14 @@ Minimum evidence accepted in the consolidation for each verdict:
 
 ## Q2. Boundary findings
 
-*Answer pending (Technical Lead).*
+*Written by the Technical Lead.*
+
+Seven of the sixteen consolidated violations are boundary findings (V-02, V-05, V-06, V-07, V-08, V-09, V-13). They appeared in two ways:
+
+- **The same problem seen from both sides.** Developer 2 reported the "find a product, otherwise an accessory" lookup and the `instanceof Accessory` stock dispatch in the return and warranty code; the Technical Lead reported the same lookup and dispatch in the sale code. In the consolidation they became one violation, **V-05**, because the correction is one design move (an intermediary for sellable items) even though it touches both roles' classes. The same happened with identifier generation (**V-09**).
+- **A violation in one role's code whose fix needs another role's class.** Developer 2's `ReturnService` searches the products of a sale and navigates `getOriginalSale().getCustomer().getId()`; the experts that should answer are `Sale` and `Return`. The violation is Developer 2's (**V-06**, **V-07**), but the new query methods live in model classes, so Developer 1 writes them and Developer 2 uses them.
+
+Each boundary finding was registered once, with every origin listed, and its correction was split by owner in the "Boundary findings" table of `consolidated-audit.md`. The rule applied is the one in the statement: whoever is responsible for the code that changes makes that change. The one place where this forces a cross-role commit is `Main`, which belongs to the Technical Lead but must be rewired when Developer 2 changes the repository and service constructors (V-03, V-04); the Technical Lead makes that commit inside Developer 2's task group.
 
 ## Q3. Fragments that break more than one pattern
 
@@ -43,4 +50,16 @@ The evidence shown at the end is the baseline and final results of both checks, 
 
 ## Q5. Order of the corrections and coordination
 
-*Answer pending (Technical Lead).*
+*Written by the Technical Lead.*
+
+The order follows the dependencies between corrections, from the classes other corrections need to the classes that use them:
+
+1. **Developer 1 — model first.** The polymorphic and query methods (`belongsToCategory`, `isWarrantyEligible`, `getAccessoryType`, `Sale.findProduct`, `Sale.wasMadeIn`, the `Return` queries, `Warranty.covers`) are purely additive and nothing else compiles against them yet, so they can go first without breaking anything. V-01 is also corrected here because it only involves Developer 1's code.
+2. **Developer 2 — fabrications and repositories.** `IdGenerator` and `ItemCatalog` are created, the accessory filter and the return and warranty services start using the model methods from step 1, and the return and warranty repositories stop depending on services.
+3. **Technical Lead — sales and UI last.** The sale code adopts `ItemCatalog` and `IdGenerator` from step 2 and the eligibility method from step 1; the registration use case is extracted, which also removes the circular dependency; the UI is split last because it only moves code that already calls the final service API.
+
+Coordination rules on the shared branch `feature/grasp-refactor`:
+
+- Only one role works on the branch at a time, and each task group ends with `mvn clean verify` green and its Pull Request merged before the next one starts.
+- Every commit must compile. When a change in one role's class breaks another role's class (Developer 2's constructors and the Technical Lead's `Main`), the change is made in three steps: Developer 2 adds the new constructors and marks the old ones `@Deprecated`; the Technical Lead rewires `Main`; Developer 2 removes the deprecated code.
+- Test adaptations forced by a signature change are made by the author of that change, in the same commit, without touching any assertion about behavior.
