@@ -19,10 +19,12 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository`, `ReturnService` (including `generateMonthlyBalance`) |
 | Warranties (Requerimiento 4) | `WarrantyRepository`, `WarrantyService` |
+| GRASP correction (Requerimiento 7) | `IdGenerator`, `ItemCatalog`, `ReturnRecord`, `WarrantyRecord`, reference resolution in `ReturnService` and `WarrantyService` |
+| Exceptions and validation (Requerimiento 6) | Not present in the reference repository — nothing to audit |
 
 ## Single Responsibility Principle (SRP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01.
 
 - **Persons — Correct.** `PersonRepository` only handles the two CSV files; `PersonService` only registers and looks up people; `Customer` and `Seller` only hold their data.
 
@@ -31,6 +33,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Promotions — Correct.** `PromotionService` holds registration, validation of dates and percentages, and selection of the best promotion — all promotion rules.
 
 - **Warranties — Correct.** `WarrantyService` assigns, resolves and queries warranties; `WarrantyRepository` handles the file.
+
+- **GRASP additions — Correct.** `IdGenerator` only generates ids; `ItemCatalog` only finds items and moves their stock; the record classes only carry stored values.
 
 ### V-01
 
@@ -47,7 +51,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Open/Closed Principle (OCP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-02, V-03.
 
 - **Persons — Correct.** `PersonService` has no type switch; customers and sellers are handled through their own methods.
 
@@ -70,22 +74,92 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Proposed solution | Let one abstraction know every kind and how to build it (a `WarrantyKind` in the model, exposed by `Warranty.getKind()`); the repository writes `getKind()` and the service builds through the kind. |
 | Other role's code involved | Yes — the warranty hierarchy is Developer 1's code. |
 
+### V-03
+
+| Field | Content |
+|---|---|
+| ID | V-03 |
+| Principle | OCP |
+| Module | GRASP correction (Requerimiento 7) |
+| Evidence | `ItemCatalog.decreaseStock` and `restoreStock` (`ItemCatalog.java:53`, `:67`): `if (item instanceof Accessory) { accessoryService... } else { productService... }`; `ItemCatalog` stores `ProductService` and `AccessoryService` as concrete fields. |
+| Explanation | The catalog chooses where an item's stock lives by checking its concrete type. This was kept on purpose as a GRASP trade-off, but OCP asks that a new kind of sellable item be added without modifying existing classes. |
+| Consequence | A third catalog (for example, merchandise) requires editing `ItemCatalog` in three places. |
+| Proposed solution | Introduce an `ItemSource` abstraction (find an item, decrease and restore its stock) implemented by each catalog service; `ItemCatalog` receives its sources and asks the one that owns the item. |
+| Other role's code involved | Yes — `ProductService` (Developer 1) must implement `ItemSource`. |
+
 ## Liskov Substitution Principle (LSP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — no subclass or substitution in scope changes the expected behavior.
 
 - **Persons — Correct.** `Customer` and `Seller` keep every behavior of `Person` (`getFullName`, getters and setters) unchanged.
 
 - **Warranties — Correct.** Both services and repositories in scope have no subclasses; the warranties they build are used only through the `Warranty` contract.
 
+- **GRASP additions — Correct.** No hierarchy was introduced.
+
 ## Interface Segregation Principle (ISP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-04, V-05.
 
 - **Persons — Not applicable as a client.** `PersonService` depends only on `PersonRepository` and uses all of it. (How other roles use `PersonService` is audited in their own code.)
 
+### V-04
+
+| Field | Content |
+|---|---|
+| ID | V-04 |
+| Principle | ISP |
+| Module | Returns and Warranties (Requerimientos 3, 4, 7) |
+| Evidence | `ReturnService` field `SaleService saleService` (`ReturnService.java:21`) uses only `findById` and `viewAllSales`; `WarrantyService(WarrantyRepository, SaleService, ItemCatalog)` uses only `saleService.findById` (`WarrantyService.java:55`). |
+| Explanation | Both clients depend on the whole `SaleService` — recording sales and three history queries included — although they only read sales. |
+| Consequence | Any change to `SaleService`'s writing or query API affects these clients; they cannot be built over a simpler source of sales. |
+| Proposed solution | Introduce a read-only `SaleLookup` (`findById`, `viewAllSales`) and make both clients depend on it. |
+| Other role's code involved | Yes — `SaleService` (Technical Lead) must implement `SaleLookup`. |
+
+### V-05
+
+| Field | Content |
+|---|---|
+| ID | V-05 |
+| Principle | ISP |
+| Module | Warranties (Requerimientos 4, 7) |
+| Evidence | `WarrantyService` receives the whole `ItemCatalog` but only calls `findItem` (`WarrantyService.java:49`). |
+| Explanation | The client depends on `decreaseStock` and `restoreStock`, which it never uses. |
+| Consequence | Changes in stock handling affect a client that only needs lookups. |
+| Proposed solution | Introduce `ItemLookup` (`findItem`) implemented by `ItemCatalog`, and depend on it. |
+| Other role's code involved | No for the fix in `WarrantyService`; the same problem exists in the Technical Lead's `SaleService` (reported for consolidation). |
+
 ## Dependency Inversion Principle (DIP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-06.
 
-_No module audited yet contributes to this pattern._
+- **Accepted, not counted: static `IdGenerator.next`.** Services call a static utility instead of an abstraction. It is stateless, no alternative implementation is anticipated and no test needs to substitute it, so the coupling is accepted.
+
+### V-06
+
+| Field | Content |
+|---|---|
+| ID | V-06 |
+| Principle | DIP |
+| Module | Persons, Accessories, Promotions, Returns, Warranties |
+| Evidence | `PersonService`, `AccessoryService`, `PromotionService`, `ReturnService` and `WarrantyService` hold `private final <Concrete>Repository repository` and take the concrete repository in their constructors (`PersonService.java:17`, `AccessoryService.java:15`, `PromotionService.java:17`, `ReturnService.java:20`, `WarrantyService.java:24`). |
+| Explanation | Business services (high level) depend on concrete CSV repositories (low level) instead of on abstractions of their storage. |
+| Consequence | Changing storage requires changing every service; services cannot be built over another storage. |
+| Proposed solution | One store abstraction per repository (`PersonStore`, `AccessoryStore`, `PromotionStore`, `ReturnStore`, `WarrantyStore`) in the persistence package, implemented by the repositories; services depend on them. |
+| Other role's code involved | No. |
+
+## Summary of verdicts
+
+| Principle | Verdict | Violations |
+|---|---|---|
+| Single Responsibility Principle (SRP) | Violation | V-01 |
+| Open/Closed Principle (OCP) | Violation | V-02, V-03 |
+| Liskov Substitution Principle (LSP) | Correct | — |
+| Interface Segregation Principle (ISP) | Violation | V-04, V-05 |
+| Dependency Inversion Principle (DIP) | Violation | V-06 |
+
+## Notes
+
+- **Examined and accepted (not counted):** type switches in `AccessoryRepository` and `PromotionRepository` and the register-per-type APIs (OCP); the static `IdGenerator` (DIP). Justifications in the corresponding sections.
+- **Relation with GRASP:** V-02 was introduced by the GRASP correction (resolution moved from `WarrantyRepository` to `WarrantyService`, leaving the type tags in both); V-03 is the `instanceof` that the GRASP correction kept as a documented trade-off.
+- **Reported to the Technical Lead:** V-04 needs `SaleService` to implement the new interface; V-05 has a counterpart in `SaleService`; V-01 needs the menu and `Main` to call the new service.
