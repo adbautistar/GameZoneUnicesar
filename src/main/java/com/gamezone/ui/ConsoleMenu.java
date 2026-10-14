@@ -4,6 +4,7 @@ import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
+import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleRegistrationService;
 import com.gamezone.service.SaleService;
@@ -37,19 +38,21 @@ public class ConsoleMenu {
      * @param accessoryService the service used for accessory operations
      * @param promotionService the service used for promotion operations
      * @param returnService    the service used for return operations
+     * @param monthlyBalanceService the service used to compute the monthly balance
      * @param warrantyService  the service used for warranty operations
      */
     public ConsoleMenu(ProductService productService, PersonService personService, SaleService saleService,
                         SaleRegistrationService saleRegistrationService,
                         AccessoryService accessoryService, PromotionService promotionService,
-                        ReturnService returnService, WarrantyService warrantyService) {
+                        ReturnService returnService, MonthlyBalanceService monthlyBalanceService,
+                        WarrantyService warrantyService) {
         this.scanner = new Scanner(System.in);
         this.productMenu = new ProductMenu(scanner, productService);
         this.personMenu = new PersonMenu(scanner, personService);
         this.saleMenu = new SaleMenu(scanner, saleService, saleRegistrationService);
         this.accessoryMenu = new AccessoryMenu(scanner, accessoryService);
         this.promotionMenu = new PromotionMenu(scanner, promotionService);
-        this.returnMenu = new ReturnMenu(scanner, returnService, saleService);
+        this.returnMenu = new ReturnMenu(scanner, returnService, saleService, monthlyBalanceService);
         this.warrantyMenu = new WarrantyMenu(scanner, warrantyService);
     }
 

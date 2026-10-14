@@ -9,6 +9,7 @@ import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.ItemCatalog;
+import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
@@ -48,6 +49,7 @@ public class Main {
 
             ReturnRepository returnRepository = new ReturnRepository();
             ReturnService returnService = new ReturnService(returnRepository, saleService, itemCatalog);
+            MonthlyBalanceService monthlyBalanceService = new MonthlyBalanceService(saleService, returnService);
 
             WarrantyRepository warrantyRepository = new WarrantyRepository();
             WarrantyService warrantyService = new WarrantyService(warrantyRepository, saleService, itemCatalog);
@@ -56,7 +58,8 @@ public class Main {
                 itemCatalog, promotionService, warrantyService);
 
             ConsoleMenu consoleMenu = new ConsoleMenu(productService, personService, saleService,
-                saleRegistrationService, accessoryService, promotionService, returnService, warrantyService);
+                saleRegistrationService, accessoryService, promotionService, returnService, monthlyBalanceService,
+                warrantyService);
             consoleMenu.start();
         } catch (RuntimeException e) {
             System.err.println("Error fatal: " + e.getMessage());
