@@ -6,7 +6,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
 import com.gamezone.persistence.WarrantyRecord;
-import com.gamezone.persistence.WarrantyRepository;
+import com.gamezone.persistence.WarrantyStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class WarrantyService {
     private static final String BASIC_TYPE = "BASIC";
     private static final String EXTENDED_TYPE = "EXTENDED";
 
-    private final WarrantyRepository repository;
+    private final WarrantyStore repository;
     private final List<Warranty> warranties;
 
     /**
@@ -29,12 +29,12 @@ public class WarrantyService {
      * current warranties into memory. Stored references are resolved here:
      * a warranty whose product or sale no longer exists is skipped.
      *
-     * @param repository  the repository used to persist and load warranties
+     * @param repository  the store used to persist and load warranties
      * @param saleService the service used to resolve the sale of each warranty
      * @param itemCatalog the catalog used to resolve the covered product
      * @throws IllegalArgumentException if a stored warranty has an unknown type
      */
-    public WarrantyService(WarrantyRepository repository, SaleService saleService, ItemCatalog itemCatalog) {
+    public WarrantyService(WarrantyStore repository, SaleService saleService, ItemCatalog itemCatalog) {
         this.repository = repository;
         this.warranties = new ArrayList<>();
         for (WarrantyRecord record : repository.loadAll()) {

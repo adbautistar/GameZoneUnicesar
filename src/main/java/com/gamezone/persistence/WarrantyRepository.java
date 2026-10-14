@@ -21,7 +21,7 @@ import java.util.List;
  * sale as ids and loaded back as {@link WarrantyRecord}s; resolving those ids
  * into domain objects is the responsibility of the service layer.
  */
-public class WarrantyRepository {
+public class WarrantyRepository implements WarrantyStore {
 
     private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
     private static final String BASIC_TYPE = "BASIC";
@@ -52,6 +52,7 @@ public class WarrantyRepository {
      *
      * @param warranties the complete list of warranties to persist
      */
+    @Override
     public void saveAll(List<Warranty> warranties) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Warranty warranty : warranties) {
@@ -80,6 +81,7 @@ public class WarrantyRepository {
      *
      * @return the stored warranty records, or an empty list if the file does not exist
      */
+    @Override
     public List<WarrantyRecord> loadAll() {
         List<WarrantyRecord> records = new ArrayList<>();
         Path path = Path.of(filePath);
