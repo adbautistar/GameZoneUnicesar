@@ -260,3 +260,22 @@ si
 
 **Solution obtained and decision taken:**
 Used a three-step transition: add path-only constructors and a `loadRecords()` method returning `ReturnRecord`/`WarrantyRecord` while keeping the old API as `@Deprecated`; let the Technical Lead rewire `Main` in one commit inside this task group; then remove the deprecated API and rename `loadRecords()` to `loadAll()`, adapting the tests only in how objects are built. Reference resolution moved into `ReturnService` and `WarrantyService` with the same skip messages, and two new tests cover it. `ItemCatalog` keeps the single remaining `instanceof Accessory` on purpose, as the one class that knows which catalog owns an item. The full suite went from 88 to 90 green tests, and the scripted menu run still matches the baseline line by line.
+
+## Requirement 8 — Phase 1: Audit
+
+### Entry 16
+
+**Date:** 2026-10-14
+**Tool used:** Claude Code
+
+**Reason for use:**
+Understand how the Interface Segregation Principle applies in a codebase that has no Java interfaces at all, before auditing how Developer 2's services depend on other services.
+
+**Problem faced:**
+No class in the system declares an interface, so a literal reading of ISP ("no client should be forced to depend on methods it does not use") seemed not to apply. Yet `ReturnService` and `WarrantyService` receive the whole `SaleService` and `ItemCatalog` and call only one or two of their methods. The AI policy of Requerimiento 8 does not allow asking the AI to identify the violations.
+
+**Prompt used:**
+aprobado
+
+**Solution obtained and decision taken:**
+Asked only whether a concrete class used as a dependency counts as the "interface" a client sees. Developer 2 then recorded the two dependencies as ISP violations (V-04 on `SaleService`, V-05 on `ItemCatalog`), kept the DIP violations of the five services on their concrete repositories as a separate finding (V-06), and recorded two OCP violations that are directly related to the GRASP correction: the warranty type tags now split between repository and service (V-02) and the type check that `ItemCatalog` kept on purpose (V-03). The type switches inside the repositories and the static `IdGenerator` were examined and accepted with their justification.

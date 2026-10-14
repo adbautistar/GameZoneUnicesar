@@ -39,7 +39,14 @@ Fragments that break more than one principle (for example, `SaleRegistrationServ
 
 ## Q4. Non-regression strategy
 
-*Answer pending (Developer 2).*
+*Written by Developer 2.*
+
+The strategy is the one that already proved itself in Requerimiento 7, re-baselined on the code we are about to change. For the same inputs, every menu operation must print the same text and leave the same content in `data/`.
+
+1. **Automated suite** — `mvn clean verify` (JUnit 5, AssertJ, Mockito; JaCoCo 70% line-coverage check on `com.gamezone.service`). Every baseline test must still exist and pass. Most SOLID corrections only change the *type* a constructor receives (an interface instead of a concrete class), so existing tests keep compiling unchanged: a mocked concrete repository is also an implementation of the new abstraction. When a correction moves a behavior to a new collaborator (the monthly balance, the stock dispatch of `ItemCatalog`), the tests of that behavior move with it and keep asserting the same results, and a new test covers the new class with real objects.
+2. **Scripted run of the whole menu** — the same fixture data and input script as in Requerimiento 7: every registration, listing and query of every module, sales with promotions and warranties, returns (valid and rejected), the monthly balance and the warranty queries. Millisecond identifiers and dates are normalized and the output, together with the final `data/*.csv` files, is compared line by line with the baseline taken on `develop` before the first correction.
+
+Both checks run before the first correction, at the end of each role's task group and at the end of the phase. The evidence is recorded in `docs/solid-refactor-log.md`: build result and test count, and an empty diff (same SHA-256) between baseline and final outputs. Out-of-scope defects from Requerimiento 7 are part of the expected output.
 
 ## Q5. Order of the corrections and coordination
 
