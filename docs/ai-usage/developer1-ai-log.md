@@ -245,3 +245,22 @@ aprobado
 
 **Solution obtained and decision taken:**
 Used the AI only to discuss when a single, localized type switch is an acceptable cost. Developer 1 decided to accept the repository switch with an explicit justification (a new type changes the persisted format anyway, and the knowledge sits in one class) and to record two real violations: the receipt and certificate layouts inside `Return` and `Warranty` (SRP) and `ProductService` depending on the concrete repository (DIP). LSP was confirmed correct for every hierarchy after checking each override against its base contract.
+
+## Requirement 8 — Phase 2: Correction
+
+### Entry 15
+
+**Date:** 2026-10-14
+**Tool used:** Claude Code
+
+**Reason for use:**
+Choose how to separate the receipt and certificate layouts from `Return` and `Warranty` without removing methods that earlier requirements define as part of the domain API.
+
+**Problem faced:**
+SRP asks that the domain classes stop changing for presentation reasons, but `generateReturnReceipt()` and `generateWarrantyCertificate()` are required by Requerimientos 3 and 4 and are covered by existing tests. Removing them would change the public API that the menus and the tests use.
+
+**Prompt used:**
+aprobado
+
+**Solution obtained and decision taken:**
+Moved each layout verbatim into its own class (`ReturnReceipt`, `WarrantyCertificate`) that reads the domain object through its getters, and kept the original methods as one-line delegations, so the text and the API are unchanged while the layout has its own reason to change. `ProductService` now depends on a `ProductStore` interface placed in the persistence package, keeping the layer rule. `WarrantyKind` was added before Developer 2 needs it, so every commit compiles. The first receipt commit only added the class because the edit to `Return` failed silently; the delegation was completed in the next commit. All 93 tests stayed green and the scripted menu run matched the baseline line by line.
