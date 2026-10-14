@@ -12,7 +12,7 @@ import java.util.Scanner;
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
-public class AccessoryMenu {
+public class AccessoryMenu implements MenuOption {
 
     private final Scanner scanner;
     private final AccessoryService accessoryService;
@@ -184,5 +184,23 @@ public class AccessoryMenu {
         for (Accessory accessory : accessories) {
             System.out.println(accessory.getDescription());
         }
+    }
+
+    /**
+     * Returns the label of this submenu in the main menu.
+     *
+     * @return "Gestion de accesorios"
+     */
+    @Override
+    public String getLabel() {
+        return "Gestion de accesorios";
+    }
+
+    /**
+     * Shows this submenu until the user goes back to the main menu.
+     */
+    @Override
+    public void run() {
+        show();
     }
 }

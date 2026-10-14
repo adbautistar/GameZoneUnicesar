@@ -16,7 +16,7 @@ import java.util.Scanner;
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
-public class ReturnMenu {
+public class ReturnMenu implements MenuOption {
 
     private final Scanner scanner;
     private final ReturnService returnService;
@@ -156,5 +156,23 @@ public class ReturnMenu {
         } catch (RuntimeException e) {
             System.out.println("Error al consultar el balance: " + e.getMessage());
         }
+    }
+
+    /**
+     * Returns the label of this submenu in the main menu.
+     *
+     * @return "Gestion de devoluciones"
+     */
+    @Override
+    public String getLabel() {
+        return "Gestion de devoluciones";
+    }
+
+    /**
+     * Shows this submenu until the user goes back to the main menu.
+     */
+    @Override
+    public void run() {
+        show();
     }
 }
