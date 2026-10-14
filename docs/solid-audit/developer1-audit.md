@@ -19,10 +19,12 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 | Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
+| GRASP correction (Requerimiento 7) | `Product.belongsToCategory`, `Product.isWarrantyEligible`, `Accessory.getAccessoryType`, `Sale.findProduct`, `Sale.wasMadeIn`, `Return.belongsToCustomer/belongsToSale/wasRegisteredIn`, `Warranty.covers` |
+| Exceptions and validation (Requerimiento 6) | Not present in the reference repository — nothing to audit |
 
 ## Single Responsibility Principle (SRP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01.
 
 - **Products — Correct.** `Product` and its subclasses hold product data and their description; `ProductRepository` only reads and writes `data/products.csv`; `ProductService` only applies inventory rules.
 
@@ -33,6 +35,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Returns — Violation (V-01).** `Return` computes its refund (business) and also lays out the Spanish receipt (presentation).
 
 - **Warranties — Violation (V-01).** `Warranty` holds the coverage rules and also lays out the Spanish certificate.
+
+- **GRASP additions — Correct.** Each added method answers one question with the class's own data (`belongsToCategory`, `findProduct`, `wasMadeIn`, `covers`, the `Return` queries).
 
 ### V-01
 
@@ -49,7 +53,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Open/Closed Principle (OCP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — the hierarchies are extended by adding subclasses; the repository type switch was examined and accepted (see notes).
 
 - **Products — Correct for the hierarchy, accepted for the repository.** A new product type is a new subclass of `Product`, implementing `getDescription` and `belongsToCategory`, with no change to existing classes. `ProductRepository.toCsvLine/fromCsvLine` branch on the type and would change for a new type. This is **accepted, not counted**: a new product type necessarily brings new CSV columns, so the format changes anyway; the knowledge sits in one class whose single purpose is that format; and the GRASP audit judged it a correct Pure Fabrication.
 
@@ -61,7 +65,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Liskov Substitution Principle (LSP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — every subclass can replace its base class without changing the expected behavior.
 
 - **Products — Correct.** `VideoGame` and `Console` implement `getDescription` and `belongsToCategory` without narrowing preconditions or throwing; `Console.isWarrantyEligible` only changes a value the base declares as overridable.
 
@@ -73,15 +77,19 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Warranties — Correct.** `BasicWarranty` and `ExtendedWarranty` return a positive duration, a type label and a non-negative cost; `generateWarrantyCertificate` and `isActive` behave the same for both.
 
+- **GRASP additions — Correct.** The overrides added in Requerimiento 7 (`belongsToCategory`, `isWarrantyEligible`, `getAccessoryType`) keep the base contracts.
+
 ## Interface Segregation Principle (ISP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Not applicable — Developer 1's classes only depend on their own repository; no client in scope depends on a wide interface.
 
 - **Products — Not applicable.** `ProductService` depends only on `ProductRepository`, and uses all of its methods.
 
+- **Exceptions and validation — Not applicable.** Not present in the reference repository.
+
 ## Dependency Inversion Principle (DIP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-02.
 
 - **Products — Violation (V-02).** See the full analysis below.
 
@@ -97,3 +105,19 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Consequence | Changing the storage (another file format, a database) requires changing `ProductService`; the service cannot be built over another storage without a subclass of the CSV repository. |
 | Proposed solution | Introduce a `ProductStore` abstraction (`saveAll`, `loadAll`) implemented by `ProductRepository`, and make `ProductService` depend on it. The interface lives in the persistence package so that the Taller 1 layer rule (`service → persistence`) still holds. |
 | Other role's code involved | No. |
+
+## Summary of verdicts
+
+| Pattern | Verdict | Violations |
+|---|---|---|
+| Single Responsibility Principle (SRP) | Violation | V-01 |
+| Open/Closed Principle (OCP) | Correct | — |
+| Liskov Substitution Principle (LSP) | Correct | — |
+| Interface Segregation Principle (ISP) | Not applicable | — |
+| Dependency Inversion Principle (DIP) | Violation | V-02 |
+
+## Notes
+
+- **Examined and accepted (not counted):** the type switch in `ProductRepository.toCsvLine/fromCsvLine` under OCP (see the OCP section). This is the same fragment the GRASP audit judged correct as a Pure Fabrication.
+- **Relation with GRASP:** the GRASP correction already removed an OCP problem in Developer 1's code — `CategoryDiscount` no longer maps category strings to classes (Requerimiento 7, V-01).
+- No problem originating in another role's code was detected in this scope.
