@@ -50,4 +50,14 @@ public class ExtendedWarranty extends Warranty {
     public double getAdditionalCost() {
         return getProduct().getPrice() * 0.10;
     }
+
+    /**
+     * Returns the kind of this warranty.
+     *
+     * @return {@link WarrantyKind#EXTENDED}
+     */
+    @Override
+    public WarrantyKind getKind() {
+        return WarrantyKind.EXTENDED;
+    }
 }

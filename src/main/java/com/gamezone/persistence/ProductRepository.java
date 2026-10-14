@@ -19,7 +19,7 @@ import java.util.List;
  * in {@code data/products.csv}, using a discriminator column to distinguish
  * between video games and consoles.
  */
-public class ProductRepository {
+public class ProductRepository implements ProductStore {
 
     private static final String DEFAULT_FILE_PATH = "data/products.csv";
     private static final String VIDEOGAME_TYPE = "VIDEOGAME";
@@ -49,6 +49,7 @@ public class ProductRepository {
      *
      * @param products the complete list of products to persist
      */
+    @Override
     public void saveAll(List<Product> products) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Product product : products) {
@@ -67,6 +68,7 @@ public class ProductRepository {
      * @return the list of products found in the file, or an empty list if
      *         the file does not exist
      */
+    @Override
     public List<Product> loadAll() {
         List<Product> products = new ArrayList<>();
         Path path = Path.of(filePath);

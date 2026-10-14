@@ -49,4 +49,14 @@ public class BasicWarranty extends Warranty {
     public double getAdditionalCost() {
         return 0.0;
     }
+
+    /**
+     * Returns the kind of this warranty.
+     *
+     * @return {@link WarrantyKind#BASIC}
+     */
+    @Override
+    public WarrantyKind getKind() {
+        return WarrantyKind.BASIC;
+    }
 }

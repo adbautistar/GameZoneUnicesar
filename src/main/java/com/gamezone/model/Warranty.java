@@ -116,22 +116,13 @@ public abstract class Warranty {
     /**
      * Builds a human-readable certificate for this warranty, in Spanish,
      * including the warranty id, type, covered product title, originating
-     * sale id, start and end dates, and additional cost.
+     * sale id, start and end dates, and additional cost. The layout is
+     * defined by {@link WarrantyCertificate}.
      *
      * @return the formatted certificate text
      */
     public String generateWarrantyCertificate() {
-        StringBuilder certificate = new StringBuilder();
-        certificate.append("===== Certificado de Garantia =====\n");
-        certificate.append("ID Garantia: ").append(id).append("\n");
-        certificate.append("Tipo: ").append(getWarrantyType()).append("\n");
-        certificate.append("Producto: ").append(product.getTitle()).append("\n");
-        certificate.append("Venta: ").append(sale.getId()).append("\n");
-        certificate.append("Fecha de inicio: ").append(startDate).append("\n");
-        certificate.append("Fecha de fin: ").append(endDate).append("\n");
-        certificate.append("Costo adicional: $").append(String.format("%.2f", getAdditionalCost())).append("\n");
-        certificate.append("====================================");
-        return certificate.toString();
+        return new WarrantyCertificate(this).render();
     }
 
     /**
@@ -145,4 +136,12 @@ public abstract class Warranty {
     public boolean covers(String productId, String saleId) {
         return product.getId().equals(productId) && sale.getId().equals(saleId);
     }
+
+    /**
+     * Returns the kind of this warranty, which identifies it when it is stored
+     * and knows how to rebuild it.
+     *
+     * @return the warranty kind
+     */
+    public abstract WarrantyKind getKind();
 }
