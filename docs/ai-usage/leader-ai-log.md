@@ -345,3 +345,22 @@ si
 
 **Solution obtained and decision taken:**
 Extracted `SaleRegistrationService` as a use-case controller that keeps the exact order of the original steps (validate, resolve, check stock, create, promotion, warranties, stock, record), leaving `SaleService` with loading, `recordSale` and queries; with registration outside `SaleService`, the service graph has no cycle and the setter and its silent `null` guard were removed. `Sale` now applies promotions and surcharges to its own total, and `SaleRepository` loads `SaleRecord`s that `SaleService` resolves, keeping out-of-scope defect OOS-01 on purpose. `ConsoleMenu` was split into seven submenu classes by moving methods verbatim and sharing one `Scanner`. After every step, `mvn clean verify` stayed green (93 tests at the end) and the normalized scripted run of every menu operation matched the baseline exactly.
+
+## Requirement 8 — Phase 1: Audit
+
+### Entry 21
+
+**Date:** 2026-10-14
+**Tool used:** Claude Code
+
+**Reason for use:**
+Decide who creates each new abstraction when an ISP or DIP violation sits in one role's client code but the fix needs another role's class to implement an interface.
+
+**Problem faced:**
+Seven of the thirteen consolidated violations cross role boundaries, and for ISP and DIP the natural owner of the abstraction is debatable: the client that needs it or the supplier that implements it. Choosing badly would either let one role edit another role's classes or leave the abstraction in the wrong layer.
+
+**Prompt used:**
+aprobado
+
+**Solution obtained and decision taken:**
+The AI was used only to discuss the consolidation criteria (the Requerimiento 8 policy forbids using it to find violations). The Technical Lead applied two rules: the role whose code holds the violation creates the abstraction (and, for DIP, the high-level module owns it, which is why `SaleRegistrationService` defines `PromotionSelector` and `WarrantyAssigner`); the owner of the implementing class adds the `implements` clause in a coordination commit. The store interfaces were placed in the persistence package to keep the Taller 1 layer rule. LSP was confirmed correct across the system, and four kinds of fragments were recorded as examined and accepted, with their reasons.
