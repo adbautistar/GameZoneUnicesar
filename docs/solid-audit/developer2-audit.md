@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 |---|---|
 | Persons (Taller 1) | `Person`, `Customer`, `Seller`, `PersonRepository`, `PersonService` |
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
+| Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -25,6 +26,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Accessories — Correct.** `AccessoryRepository` handles the CSV file; `AccessoryService` handles accessory rules.
 
+- **Promotions — Correct.** `PromotionService` holds registration, validation of dates and percentages, and selection of the best promotion — all promotion rules.
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** Pending — audit in progress.
@@ -32,6 +35,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Persons — Correct.** `PersonService` has no type switch; customers and sellers are handled through their own methods.
 
 - **Accessories — Accepted, not counted.** `AccessoryRepository` branches on the accessory type to write and read the file, and `AccessoryService` has one register method per type. A new accessory type necessarily brings new CSV columns and new input fields, so both change anyway; the knowledge is localized in one class each. `listAccessoriesByType` became type-agnostic in the GRASP correction (V-02 of Requerimiento 7).
+
+- **Promotions — Correct for selection, accepted for registration.** `findBestPromotionFor` works for any `Promotion` subclass. The type switch in `PromotionRepository` and the one-register-method-per-type API are accepted for the same reason as accessories.
 
 ## Liskov Substitution Principle (LSP)
 
