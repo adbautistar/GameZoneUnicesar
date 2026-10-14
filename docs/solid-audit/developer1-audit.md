@@ -18,6 +18,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
+| Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -30,6 +31,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Promotions — Correct.** Each promotion holds its parameters and its discount calculation; `Promotion.isActive` only uses its dates.
 
 - **Returns — Violation (V-01).** `Return` computes its refund (business) and also lays out the Spanish receipt (presentation).
+
+- **Warranties — Violation (V-01).** `Warranty` holds the coverage rules and also lays out the Spanish certificate.
 
 ### V-01
 
@@ -54,6 +57,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Promotions — Correct.** New promotion strategies are added as subclasses of `Promotion`; `CategoryDiscount` no longer needs to change for a new product category since the GRASP correction (V-01 of Requerimiento 7).
 
+- **Warranties — Correct for the hierarchy.** A new warranty type is a new subclass implementing duration, type and cost. (Its persistence tag is handled outside Developer 1's code; not audited here.)
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** Pending — audit in progress.
@@ -66,6 +71,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Returns — Not applicable.** `Return` has no subclasses or base class besides `Object`.
 
+- **Warranties — Correct.** `BasicWarranty` and `ExtendedWarranty` return a positive duration, a type label and a non-negative cost; `generateWarrantyCertificate` and `isActive` behave the same for both.
+
 ## Interface Segregation Principle (ISP)
 
 **Verdict:** Pending — audit in progress.
@@ -77,3 +84,16 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 **Verdict:** Pending — audit in progress.
 
 - **Products — Violation (V-02).** See the full analysis below.
+
+### V-02
+
+| Field | Content |
+|---|---|
+| ID | V-02 |
+| Principle | DIP |
+| Module | Products (Taller 1) |
+| Evidence | `ProductService` field `private final ProductRepository repository` and constructor `ProductService(ProductRepository repository)` (`ProductService.java:18`, `:27`). |
+| Explanation | The inventory rules (high-level policy) depend on the concrete CSV repository (low-level detail) instead of on an abstraction of "where products are stored". |
+| Consequence | Changing the storage (another file format, a database) requires changing `ProductService`; the service cannot be built over another storage without a subclass of the CSV repository. |
+| Proposed solution | Introduce a `ProductStore` abstraction (`saveAll`, `loadAll`) implemented by `ProductRepository`, and make `ProductService` depend on it. The interface lives in the persistence package so that the Taller 1 layer rule (`service → persistence`) still holds. |
+| Other role's code involved | No. |
