@@ -52,12 +52,13 @@ class ReturnServiceTest {
         VideoGame product = TestDataFactory.sampleVideoGame("VG001");
         Sale sale = sale(product, LocalDate.now());
         when(saleService.findById("SALE001")).thenReturn(sale);
+        when(productService.findItem("VG001")).thenReturn(product);
 
         Return result = service.registerReturn("SALE001", List.of("VG001"), "Defective");
 
         assertThat(result).isNotNull();
         assertThat(result.getReturnedProducts()).containsExactly(product);
-        verify(productService).restoreStock("VG001", 1);
+        verify(productService).restoreStock("VG001");
         verify(repository).saveAll(anyList());
     }
 
@@ -101,10 +102,11 @@ class ReturnServiceTest {
         Accessory accessory = TestDataFactory.sampleController("ACC001");
         Sale sale = sale(accessory, LocalDate.now());
         when(saleService.findById("SALE001")).thenReturn(sale);
+        when(accessoryService.findItem("ACC001")).thenReturn(accessory);
 
         service.registerReturn("SALE001", List.of("ACC001"), "Defective");
 
-        verify(accessoryService).updateStock("ACC001", 1);
+        verify(accessoryService).restoreStock("ACC001");
     }
 
     @Test
@@ -140,7 +142,7 @@ class ReturnServiceTest {
         Sale sale = sale(product, LocalDate.now());
         when(saleService.findById("SALE001")).thenReturn(sale);
         when(saleService.findById("GONE")).thenReturn(null);
-        when(productService.findById("VG001")).thenReturn(product);
+        when(productService.findItem("VG001")).thenReturn(product);
         when(repository.loadAll()).thenReturn(List.of(
             new ReturnRecord("RET001", LocalDate.now(), "SALE001", List.of("VG001"), "Defective"),
             new ReturnRecord("RET002", LocalDate.now(), "GONE", List.of("VG001"), "Late")));
