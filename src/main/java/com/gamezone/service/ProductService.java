@@ -3,7 +3,7 @@ package com.gamezone.service;
 import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
-import com.gamezone.persistence.ProductRepository;
+import com.gamezone.persistence.ProductStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,20 +11,20 @@ import java.util.List;
 
 /**
  * Provides the business operations available for managing the product
- * inventory, backed by a {@link ProductRepository}.
+ * inventory, backed by a {@link ProductStore}.
  */
 public class ProductService {
 
-    private final ProductRepository repository;
+    private final ProductStore repository;
     private final List<Product> products;
 
     /**
      * Creates a new service backed by the given repository, loading the
      * current inventory into memory.
      *
-     * @param repository the repository used to persist and load products
+     * @param repository the store used to persist and load products
      */
-    public ProductService(ProductRepository repository) {
+    public ProductService(ProductStore repository) {
         this.repository = repository;
         this.products = new ArrayList<>(repository.loadAll());
     }
