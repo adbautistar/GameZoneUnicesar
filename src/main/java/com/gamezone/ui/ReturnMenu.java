@@ -3,7 +3,6 @@ package com.gamezone.ui;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
-import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 
@@ -12,7 +11,7 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Console submenu for returns and the monthly balance query, extracted from
+ * Console submenu for returns, extracted from
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
@@ -21,7 +20,6 @@ public class ReturnMenu implements MenuOption {
     private final Scanner scanner;
     private final ReturnService returnService;
     private final SaleService saleService;
-    private final MonthlyBalanceService monthlyBalanceService;
 
     /**
      * Creates the submenu.
@@ -29,14 +27,11 @@ public class ReturnMenu implements MenuOption {
      * @param scanner the scanner shared with the main menu, reading from standard input
      * @param returnService the service used for return operations
      * @param saleService the service used for sale queries
-     * @param monthlyBalanceService the service used to compute the monthly balance
      */
-    public ReturnMenu(Scanner scanner, ReturnService returnService, SaleService saleService,
-                      MonthlyBalanceService monthlyBalanceService) {
+    public ReturnMenu(Scanner scanner, ReturnService returnService, SaleService saleService) {
         this.scanner = scanner;
         this.returnService = returnService;
         this.saleService = saleService;
-        this.monthlyBalanceService = monthlyBalanceService;
     }
 
     /**
@@ -142,21 +137,6 @@ public class ReturnMenu implements MenuOption {
         }
     }
 
-    /**
-     * Asks for a month and a year and prints the balance of sales minus refunds for that period.
-     */
-    public void showMonthlyBalance() {
-        try {
-            System.out.print("Mes (1-12): ");
-            int month = Integer.parseInt(scanner.nextLine().trim());
-            System.out.print("Anio (yyyy): ");
-            int year = Integer.parseInt(scanner.nextLine().trim());
-            double balance = monthlyBalanceService.generateMonthlyBalance(month, year);
-            System.out.println("Balance del mes " + month + "/" + year + ": $" + String.format("%.2f", balance));
-        } catch (RuntimeException e) {
-            System.out.println("Error al consultar el balance: " + e.getMessage());
-        }
-    }
 
     /**
      * Returns the label of this submenu in the main menu.

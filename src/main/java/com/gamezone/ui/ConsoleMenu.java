@@ -26,6 +26,7 @@ public class ConsoleMenu {
     private final AccessoryMenu accessoryMenu;
     private final PromotionMenu promotionMenu;
     private final ReturnMenu returnMenu;
+    private final MonthlyBalanceMenu monthlyBalanceMenu;
     private final WarrantyMenu warrantyMenu;
 
     /**
@@ -52,7 +53,8 @@ public class ConsoleMenu {
         this.saleMenu = new SaleMenu(scanner, saleService, saleRegistrationService);
         this.accessoryMenu = new AccessoryMenu(scanner, accessoryService);
         this.promotionMenu = new PromotionMenu(scanner, promotionService);
-        this.returnMenu = new ReturnMenu(scanner, returnService, saleService, monthlyBalanceService);
+        this.returnMenu = new ReturnMenu(scanner, returnService, saleService);
+        this.monthlyBalanceMenu = new MonthlyBalanceMenu(scanner, monthlyBalanceService);
         this.warrantyMenu = new WarrantyMenu(scanner, warrantyService);
     }
 
@@ -95,7 +97,7 @@ public class ConsoleMenu {
                     returnMenu.show();
                     break;
                 case "7":
-                    returnMenu.showMonthlyBalance();
+                    monthlyBalanceMenu.run();
                     break;
                 case "8":
                     warrantyMenu.show();
