@@ -2,7 +2,7 @@
 
 This document consolidates the version control activity of the project: the branching strategy, every branch created, every Pull Request merged, commits grouped by simulated team member and by phase, the full commit log, branch protection rules, and release tags. It is generated from the actual state of the repository (`git log`, `git tag`, and the GitHub API via `gh`), not reconstructed from memory.
 
-**Snapshot:** commit `b694e0c` on `feature/grasp-refactor`, taken during Phase 15 just before the Technical Lead's GRASP correction PR and the `v1.5.0` release PR were opened. Those two PRs and the `v1.5.0` tag are listed in the Phase 15 notes below.
+**Snapshot:** commit `eb9bb95` on `feature/solid-refactor`, taken during Phase 16 just before the Technical Lead's SOLID correction PR and the `v1.6.0` release PR were opened. Those two PRs and the `v1.6.0` tag are listed in the Phase 16 notes below.
 
 ## Branching Strategy
 
@@ -16,7 +16,7 @@ Three patterns were used over the life of the project:
 
 - **Baseline (Phases 5-7):** one feature branch per role, each with its own PR.
 - **Extended modules (Phases 10-13):** one shared feature branch per module; the three roles commit to it in sequential task groups and a single PR closes the module.
-- **Requerimiento 7 (Phase 15):** one shared feature branch per part (audit, correction) with **three PRs per branch, one per role** (Developer 1, Developer 2, then the Technical Lead); the branch is deleted after the third PR.
+- **Requerimientos 7 and 8 (Phases 15-16):** one shared feature branch per part (audit, correction) with **three PRs per branch, one per role** (Developer 1, Developer 2, then the Technical Lead); the branch is deleted after the third PR.
 
 Both `main` and `develop` have branch protection enabled on GitHub:
 
@@ -52,9 +52,9 @@ The required approving review count is 0 because this is a single-user reference
 | `feature/warranty-module` | Phase 13 — Warranty module (three task groups) | `develop` | `develop` (PR #20) | Deleted |
 | `feature/test-suite` | Phase 14 — automated test suite | `develop` | `develop` (PR #22) | Deleted |
 | `feature/grasp-audit` | Phase 15, part 1 — GRASP audit (Requerimiento 7) | `develop` | `develop` (PR #24, PR #25, PR #26) | Deleted |
-| `feature/grasp-refactor` | Phase 15, part 2 — GRASP correction (Requerimiento 7) | `develop` | `develop` (PR #27, PR #28, PR #29) | Active (Phase 15, final PR pending) |
-| `feature/solid-audit` |  | `develop` | `develop` (PR #31, PR #32, PR #33) | Deleted |
-| `feature/solid-refactor` |  | `develop` | `develop` (PR #34, PR #35) | Deleted |
+| `feature/grasp-refactor` | Phase 15, part 2 — GRASP correction (Requerimiento 7) | `develop` | `develop` (PR #27, PR #28, PR #29) | Deleted |
+| `feature/solid-audit` | Phase 16, part 1 — SOLID audit (Requerimiento 8) | `develop` | `develop` (PR #31, PR #32, PR #33) | Deleted |
+| `feature/solid-refactor` | Phase 16, part 2 — SOLID correction (Requerimiento 8) | `develop` | `develop` (PR #34, PR #35) | Active (Phase 16, final PR pending) |
 
 `develop` was merged into `main` 9 times through release Pull Requests (#8, #10, #12, #15, #17, #19, #21, #23, #30), one per tag.
 
@@ -104,16 +104,16 @@ All Pull Requests were self-approved and merged with a regular merge (not squash
 
 ## Commits by Team Member
 
-Counts of every commit reachable from the snapshot commit `b694e0c` (`git shortlog -sn HEAD`).
+Counts of every commit reachable from the snapshot commit `eb9bb95` (`git shortlog -sn HEAD`).
 
 | Simulated identity | Git author | Commits | Role |
 |---|---|---|---|
-| Technical Lead | `alfredo Bautista <adbautista@unicesar.edu.co>` | 134 | Setup, Sale module, UI, Main, integration, documentation |
+| Technical Lead | `alfredo Bautista <adbautista@unicesar.edu.co>` | 135 | Setup, Sale module, UI, Main, integration, documentation |
 | Developer 2 | `Dev2 Simulated <dev2@gamezone-ref.local>` | 88 | Person module; repositories and services of Requerimientos 1-4 |
 | Developer 1 | `Dev1 Simulated <dev1@gamezone-ref.local>` | 76 | Product module; model work of Requerimientos 1-4 |
 | Technical Lead (merge commits) | `adbautistar` (GitHub account, via PR merge) | 26 | Pull Request merges |
 
-**Total commits: 324.**
+**Total commits: 325.**
 
 Note on the two Technical Lead rows: commits authored with the local git identity are regular commits made with `git commit`. Merge commits are attributed to the GitHub account `adbautistar`, because `gh pr merge` creates them through the GitHub REST API with the authenticated account's identity. Both represent the same person (Alfredo David Bautista Romero) simulating the Technical Lead role. Dev1 and Dev2 commits use the `--author` flag with a distinct simulated identity, per the commit attribution strategy in [CLAUDE.md](../CLAUDE.md).
 
@@ -127,20 +127,21 @@ Note on the two Technical Lead rows: commits authored with the local git identit
 | Phase 12 — Returns | `v1.2.0..v1.3.0` | 6 | 6 | 7 | 2 | 21 |
 | Phase 13 — Warranties | `v1.3.0..v1.4.0` | 6 | 6 | 6 | 2 | 20 |
 | Phase 14 — Test suite | `v1.4.0..v1.4.1` | 6 | 8 | 8 | 2 | 24 |
-| Phase 15 — GRASP audit and correction (so far) | `v1.4.1..HEAD` | 34 | 44 | 65 | 11 | 154 |
+| Phase 15 — GRASP audit and correction | `v1.4.1..v1.5.0` | 17 | 19 | 36 | 7 | 79 |
+| Phase 16 — SOLID audit and correction (so far) | `v1.5.0..HEAD` | 17 | 25 | 30 | 5 | 77 |
 
-Minimums: Taller 1 — 12 commits per role, 36 in total, 6 PRs. Phases 10-13 — 6 commits per task group (18 per phase). Phase 15 — 6 commits per role in each part, and 3 PRs per part.
+Minimums: Taller 1 — 12 commits per role, 36 in total, 6 PRs. Phases 10-13 — 6 commits per task group (18 per phase). Phases 15 and 16 — 6 commits per role in each part, and 3 PRs per part.
 
-Phase 15 detail:
+Phase 16 detail:
 
 | Part | Developer 1 | Developer 2 | Technical Lead | PRs |
 |---|---|---|---|---|
-| Part 1 — audit (`feature/grasp-audit`) | 8 | 9 | 10 | #24, #25, #26 |
-| Part 2 — correction (`feature/grasp-refactor`, up to this snapshot) | 26 | 35 | 55 (including setup and the `Main` coordination commit) | #27, #28, and the Technical Lead's PR that contains this document |
+| Part 1 — audit (`feature/solid-audit`) | 9 | 8 | 10 | #31, #32, #33 |
+| Part 2 — correction (`feature/solid-refactor`, up to this snapshot) | 8 | 17 | 20 (including setup and coordination commits) | #34, #35, and the Technical Lead's PR that contains this document |
 
 ## Full Commit Log
 
-Chronological, oldest first, every commit reachable from `b694e0c` (`git log --reverse --pretty="%h %ad %an: %s" --date=short`).
+Chronological, oldest first, every commit reachable from `eb9bb95` (`git log --reverse --pretty="%h %ad %an: %s" --date=short`).
 
 | Hash | Date | Author | Message |
 |---|---|---|---|
@@ -468,6 +469,7 @@ Chronological, oldest first, every commit reachable from `b694e0c` (`git log --r
 | `4693865` | 2026-10-14 | alfredo Bautista | docs(refactor): add after class diagram for SOLID correction |
 | `45d9650` | 2026-10-14 | alfredo Bautista | docs: update class and layer diagrams after SOLID correction |
 | `b694e0c` | 2026-10-14 | alfredo Bautista | docs: describe SOLID audit and correction in README |
+| `eb9bb95` | 2026-10-14 | alfredo Bautista | docs: update CLAUDE.md and version control log for Phase 16 |
 
 ## Tags / Releases
 
@@ -484,18 +486,18 @@ Annotated tags mark each increment released to `main`:
 | `v1.4.0` | 2026-09-11 | `99e772d` | Warranty module release |
 | `v1.4.1` | 2026-09-12 | `05cd326` | Test suite patch release |
 | `v1.5.0` | 2026-10-13 | `e6e4d67` | GRASP audit and correction |
-| `v1.5.0` | — | — | Planned at the end of Phase 15: GRASP audit and correction |
+| `v1.6.0` | — | — | Planned at the end of Phase 16: SOLID audit and correction |
 
 ## Quantitative Summary
 
 | Metric | Required | Actual (this snapshot) |
 |---|---|---|
-| Total commits | ≥ 36 (Taller 1) | 324 |
+| Total commits | ≥ 36 (Taller 1) | 325 |
 | Commits — Developer 1 | ≥ 12 (Taller 1) | 76 |
 | Commits — Developer 2 | ≥ 12 (Taller 1) | 88 |
-| Commits — Technical Lead (incl. merges) | ≥ 12 (Taller 1) | 160 |
+| Commits — Technical Lead (incl. merges) | ≥ 12 (Taller 1) | 161 |
 | Merged Pull Requests | ≥ 6 (Taller 1) | 35 |
-| Feature branches remaining | 0 at the end of each phase | 1 (`feature/grasp-refactor`, deleted when its last PR merges) |
+| Feature branches remaining | 0 at the end of each phase | 1 (`feature/solid-refactor`, deleted when its last PR merges) |
 | Release tags | — | `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.3.0`, `v1.4.0`, `v1.4.1`, `v1.5.0` |
 
 *Regenerate this document whenever new commits, branches, PRs or tags are added, so it stays a source of truth rather than a stale snapshot.*
