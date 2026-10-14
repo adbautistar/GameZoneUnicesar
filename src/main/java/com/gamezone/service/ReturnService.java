@@ -4,7 +4,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
 import com.gamezone.persistence.ReturnRecord;
-import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.ReturnStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class ReturnService {
 
-    private final ReturnRepository repository;
+    private final ReturnStore repository;
     private final SaleService saleService;
     private final ItemCatalog itemCatalog;
     private final List<Return> returns;
@@ -28,11 +28,11 @@ public class ReturnService {
      * return whose sale no longer exists is skipped, and a product that no
      * longer exists is left out of its return.
      *
-     * @param repository  the repository used to persist and load returns
+     * @param repository  the store used to persist and load returns
      * @param saleService the service used to find the original sales
      * @param itemCatalog the catalog used to resolve returned items and restore their stock
      */
-    public ReturnService(ReturnRepository repository, SaleService saleService, ItemCatalog itemCatalog) {
+    public ReturnService(ReturnStore repository, SaleService saleService, ItemCatalog itemCatalog) {
         this.repository = repository;
         this.saleService = saleService;
         this.itemCatalog = itemCatalog;
