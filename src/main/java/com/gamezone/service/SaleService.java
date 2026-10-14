@@ -19,7 +19,7 @@ import java.util.List;
 public class SaleService implements SaleLookup {
 
     private final SaleStore repository;
-    private final PersonService personService;
+    private final PersonLookup personLookup;
     private final ItemCatalog itemCatalog;
     private final List<Sale> sales;
 
@@ -29,14 +29,14 @@ public class SaleService implements SaleLookup {
      * here, and every loaded sale is added to its customer's purchase history.
      *
      * @param repository    the store used to persist and load sales
-     * @param personService the service used to resolve customers and sellers
+     * @param personLookup the lookup used to resolve customers and sellers
      * @param itemCatalog   the catalog used to resolve sold items
      * @throws RuntimeException if a stored sale references a customer, seller
      *                          or item that no longer exists
      */
-    public SaleService(SaleStore repository, PersonService personService, ItemCatalog itemCatalog) {
+    public SaleService(SaleStore repository, PersonLookup personLookup, ItemCatalog itemCatalog) {
         this.repository = repository;
-        this.personService = personService;
+        this.personLookup = personLookup;
         this.itemCatalog = itemCatalog;
         this.sales = new ArrayList<>();
         for (SaleRecord record : repository.loadAll()) {
@@ -45,8 +45,8 @@ public class SaleService implements SaleLookup {
     }
 
     private Sale resolve(SaleRecord record) {
-        Customer customer = personService.findCustomerById(record.getCustomerId());
-        Seller seller = personService.findSellerById(record.getSellerId());
+        Customer customer = personLookup.findCustomerById(record.getCustomerId());
+        Seller seller = personLookup.findSellerById(record.getSellerId());
         if (customer == null || seller == null) {
             throw new RuntimeException("Failed to resolve customer or seller for sale " + record.getId());
         }

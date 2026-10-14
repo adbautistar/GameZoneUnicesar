@@ -22,7 +22,7 @@ import java.util.Map;
 public class SaleRegistrationService {
 
     private final SaleService saleService;
-    private final PersonService personService;
+    private final PersonLookup personLookup;
     private final ItemCatalog itemCatalog;
     private final PromotionService promotionService;
     private final WarrantyService warrantyService;
@@ -31,15 +31,15 @@ public class SaleRegistrationService {
      * Creates a new sale registration use case.
      *
      * @param saleService      the service that records and stores sales
-     * @param personService    the service used to resolve customers and sellers
+     * @param personLookup    the lookup used to resolve customers and sellers
      * @param itemCatalog      the catalog used to resolve sold items and update their stock
      * @param promotionService the service used to find the best active promotion
      * @param warrantyService  the service used to assign warranties
      */
-    public SaleRegistrationService(SaleService saleService, PersonService personService, ItemCatalog itemCatalog,
+    public SaleRegistrationService(SaleService saleService, PersonLookup personLookup, ItemCatalog itemCatalog,
                                     PromotionService promotionService, WarrantyService warrantyService) {
         this.saleService = saleService;
-        this.personService = personService;
+        this.personLookup = personLookup;
         this.itemCatalog = itemCatalog;
         this.promotionService = promotionService;
         this.warrantyService = warrantyService;
@@ -69,11 +69,11 @@ public class SaleRegistrationService {
             throw new IllegalArgumentException("La venta debe contener al menos un producto.");
         }
 
-        Customer customer = personService.findCustomerById(customerId);
+        Customer customer = personLookup.findCustomerById(customerId);
         if (customer == null) {
             throw new IllegalArgumentException("Cliente no encontrado: " + customerId);
         }
-        Seller seller = personService.findSellerById(sellerId);
+        Seller seller = personLookup.findSellerById(sellerId);
         if (seller == null) {
             throw new IllegalArgumentException("Vendedor no encontrado: " + sellerId);
         }
