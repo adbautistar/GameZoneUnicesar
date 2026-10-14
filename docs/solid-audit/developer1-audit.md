@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (except `restoreStock`, Technical Lead) |
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
+| Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -27,6 +28,21 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Accessories — Correct.** Each subclass adds only its attributes, its description and its type.
 
 - **Promotions — Correct.** Each promotion holds its parameters and its discount calculation; `Promotion.isActive` only uses its dates.
+
+- **Returns — Violation (V-01).** `Return` computes its refund (business) and also lays out the Spanish receipt (presentation).
+
+### V-01
+
+| Field | Content |
+|---|---|
+| ID | V-01 |
+| Principle | SRP |
+| Module | Returns (Requerimiento 3) and Warranties (Requerimiento 4) |
+| Evidence | `Return.generateReturnReceipt()` (`Return.java:133`) and `Warranty.generateWarrantyCertificate()` (`Warranty.java:123`) build the user-facing Spanish text: borders (`=====`), labels (`Motivo:`, `Fecha de fin:`), money format (`%.2f`). |
+| Explanation | Each class has two reasons to change: its business rules (refund, coverage) and the layout of what the user reads. Presentation is a different responsibility from the domain rule. |
+| Consequence | A change in the receipt layout (for example, a new label or another currency format) forces a change in the domain classes and puts their business tests at risk. |
+| Proposed solution | Move each layout into its own class (`ReturnReceipt`, `WarrantyCertificate`) that reads the domain object through its getters; keep `generateReturnReceipt()` and `generateWarrantyCertificate()` as thin delegations, because Requerimientos 3 and 4 define them as part of the domain API. |
+| Other role's code involved | No. |
 
 ## Open/Closed Principle (OCP)
 
@@ -47,6 +63,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Accessories — Correct.** `Accessory.belongsToCategory` always answers `false`, which is a valid answer under the base contract ("does this product belong to the category?"); `isCompatibleWith` keeps the base behavior of every `Product` method.
 
 - **Promotions — Correct.** All three subclasses return a non-negative discount for any sale and never throw, as `PromotionService.findBestPromotionFor` expects from any `Promotion`.
+
+- **Returns — Not applicable.** `Return` has no subclasses or base class besides `Object`.
 
 ## Interface Segregation Principle (ISP)
 
