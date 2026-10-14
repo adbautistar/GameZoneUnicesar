@@ -14,6 +14,7 @@ import com.gamezone.persistence.SaleRepository;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.ItemCatalog;
+import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
@@ -50,6 +51,7 @@ class EndToEndScenariosTest {
     private SaleService saleService;
     private SaleRegistrationService saleRegistrationService;
     private ReturnService returnService;
+    private MonthlyBalanceService monthlyBalanceService;
     private WarrantyService warrantyService;
 
     private Customer customer;
@@ -77,6 +79,7 @@ class EndToEndScenariosTest {
 
         ReturnRepository returnRepository = new ReturnRepository(tempDir.resolve("returns.csv").toString());
         returnService = new ReturnService(returnRepository, saleService, itemCatalog);
+        monthlyBalanceService = new MonthlyBalanceService(saleService, returnService);
 
         WarrantyRepository warrantyRepository = new WarrantyRepository(tempDir.resolve("warranties.csv").toString());
         warrantyService = new WarrantyService(warrantyRepository, saleService, itemCatalog);
@@ -152,7 +155,7 @@ class EndToEndScenariosTest {
         Return returnItem = returnService.registerReturn(sale.getId(), List.of("VG001"), "Defective");
 
         LocalDate today = LocalDate.now();
-        double balance = returnService.generateMonthlyBalance(today.getMonthValue(), today.getYear());
+        double balance = monthlyBalanceService.generateMonthlyBalance(today.getMonthValue(), today.getYear());
 
         assertThat(balance).isEqualTo(sale.getTotalAmount() - returnItem.getRefundAmount());
     }

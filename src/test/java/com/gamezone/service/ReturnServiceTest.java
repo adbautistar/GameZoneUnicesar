@@ -110,32 +110,6 @@ class ReturnServiceTest {
     }
 
     @Test
-    @DisplayName("generateMonthlyBalance computes sales minus returns for the given month")
-    void generateMonthlyBalanceComputesDifference() {
-        LocalDate today = LocalDate.now();
-        VideoGame soldProduct = TestDataFactory.sampleVideoGame("VG001");
-        Sale sale = sale(soldProduct, today);
-        when(saleService.viewAllSales()).thenReturn(List.of(sale));
-        when(saleService.findById("SALE001")).thenReturn(sale);
-
-        Return returnItem = service.registerReturn("SALE001", List.of("VG001"), "Defective");
-
-        double balance = service.generateMonthlyBalance(today.getMonthValue(), today.getYear());
-
-        assertThat(balance).isEqualTo(sale.getTotalAmount() - returnItem.getRefundAmount());
-    }
-
-    @Test
-    @DisplayName("generateMonthlyBalance returns 0.0 for a month with no sales or returns")
-    void generateMonthlyBalanceEmptyMonthReturnsZero() {
-        when(saleService.viewAllSales()).thenReturn(List.of());
-
-        double balance = service.generateMonthlyBalance(1, 2000);
-
-        assertThat(balance).isEqualTo(0.0);
-    }
-
-    @Test
     @DisplayName("constructor resolves stored records and skips returns whose sale no longer exists")
     void constructorResolvesStoredRecords() {
         VideoGame product = TestDataFactory.sampleVideoGame("VG001");

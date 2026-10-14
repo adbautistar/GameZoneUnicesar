@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Provides the business operations for registering and querying product
- * returns, and the monthly balance of sales minus refunds.
+ * returns.
  */
 public class ReturnService {
 
@@ -143,31 +143,5 @@ public class ReturnService {
             }
         }
         return result;
-    }
-
-    /**
-     * Computes the balance of the given month: the total of the sales made in
-     * that month minus the refunds of the returns registered in that month.
-     *
-     * @param month the month, from 1 to 12
-     * @param year  the year
-     * @return total sales minus total refunds for that month
-     */
-    public double generateMonthlyBalance(int month, int year) {
-        double totalSales = 0.0;
-        for (Sale sale : saleLookup.viewAllSales()) {
-            if (sale.wasMadeIn(month, year)) {
-                totalSales += sale.getTotalAmount();
-            }
-        }
-
-        double totalReturns = 0.0;
-        for (Return returnItem : returns) {
-            if (returnItem.wasRegisteredIn(month, year)) {
-                totalReturns += returnItem.getRefundAmount();
-            }
-        }
-
-        return totalSales - totalReturns;
     }
 }
