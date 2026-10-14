@@ -21,3 +21,7 @@ Defined before the first correction, as answered in `docs/solid-analysis.md` (Q4
 
 | Class | Change | Violation ID | Principle applied | Commit / PR | Owner |
 |---|---|---|---|---|---|
+| `ProductStore` (new), `ProductRepository`, `ProductService` | New store abstraction (`saveAll`, `loadAll`) in the persistence package; `ProductRepository` implements it; `ProductService` depends on it. Tests unchanged (a mocked `ProductRepository` is a `ProductStore`) | V-10 | DIP | `2c35c84` / PR #34 | Developer 1 |
+| `ReturnReceipt` (new), `Return` | Receipt layout moved verbatim into `ReturnReceipt.render()`; `generateReturnReceipt()` delegates (kept as domain API of Requerimiento 3). Done in two commits because the first one only added the class | V-01 | SRP | `88b44c4`, `81b6435` / PR #34 | Developer 1 |
+| `WarrantyCertificate` (new), `Warranty` | Certificate layout moved verbatim into `WarrantyCertificate.render()`; `generateWarrantyCertificate()` delegates | V-01 | SRP | `069eefa` / PR #34 | Developer 1 |
+| `WarrantyKind` (new), `Warranty`, `BasicWarranty`, `ExtendedWarranty` | Enum listing the warranty kinds, each able to build its warranty; abstract `Warranty.getKind()` implemented by both subclasses. Additive — Developer 2 uses it next | V-05 (model part) | OCP | `7a37100` / PR #34 | Developer 1 |
