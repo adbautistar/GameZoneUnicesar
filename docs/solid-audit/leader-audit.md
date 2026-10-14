@@ -15,10 +15,13 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Module (requirement) | Classes and methods audited |
 |---|---|
 | Sales (Taller 1), promotion changes (Requerimiento 2), GRASP additions | `Sale` (except `canBeReturned`, `findProduct`, `wasMadeIn`, owned by Developer 1) |
+| Sales persistence (Taller 1, Requerimiento 7) | `SaleRepository`, `SaleRecord` |
 
 ## Single Responsibility Principle (SRP)
 
 **Verdict:** Pending — audit in progress.
+
+- **SaleRepository and SaleRecord — Correct.** The repository only reads and writes `data/sales.csv`; the record only carries stored values.
 
 ### V-01
 
@@ -38,6 +41,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 **Verdict:** Pending — audit in progress.
 
 - **Sale — Correct.** Promotions and surcharges reach the total through `applyPromotion` and `addCharge`, which work for any promotion or warranty type.
+
+- **SaleRepository — Correct.** It has no type switch; sale items are stored as ids.
 
 ## Liskov Substitution Principle (LSP)
 
