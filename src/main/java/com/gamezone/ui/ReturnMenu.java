@@ -3,6 +3,7 @@ package com.gamezone.ui;
 import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
+import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 
@@ -20,18 +21,22 @@ public class ReturnMenu {
     private final Scanner scanner;
     private final ReturnService returnService;
     private final SaleService saleService;
+    private final MonthlyBalanceService monthlyBalanceService;
 
     /**
      * Creates the submenu.
      *
      * @param scanner the scanner shared with the main menu, reading from standard input
-     * @param returnService the service used for return operations and the monthly balance
+     * @param returnService the service used for return operations
      * @param saleService the service used for sale queries
+     * @param monthlyBalanceService the service used to compute the monthly balance
      */
-    public ReturnMenu(Scanner scanner, ReturnService returnService, SaleService saleService) {
+    public ReturnMenu(Scanner scanner, ReturnService returnService, SaleService saleService,
+                      MonthlyBalanceService monthlyBalanceService) {
         this.scanner = scanner;
         this.returnService = returnService;
         this.saleService = saleService;
+        this.monthlyBalanceService = monthlyBalanceService;
     }
 
     /**
@@ -146,7 +151,7 @@ public class ReturnMenu {
             int month = Integer.parseInt(scanner.nextLine().trim());
             System.out.print("Anio (yyyy): ");
             int year = Integer.parseInt(scanner.nextLine().trim());
-            double balance = returnService.generateMonthlyBalance(month, year);
+            double balance = monthlyBalanceService.generateMonthlyBalance(month, year);
             System.out.println("Balance del mes " + month + "/" + year + ": $" + String.format("%.2f", balance));
         } catch (RuntimeException e) {
             System.out.println("Error al consultar el balance: " + e.getMessage());

@@ -5,8 +5,9 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.model.WarrantyKind;
 import com.gamezone.persistence.WarrantyRecord;
-import com.gamezone.persistence.WarrantyRepository;
+import com.gamezone.persistence.WarrantyStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -18,10 +19,7 @@ import java.util.List;
  */
 public class WarrantyService {
 
-    private static final String BASIC_TYPE = "BASIC";
-    private static final String EXTENDED_TYPE = "EXTENDED";
-
-    private final WarrantyRepository repository;
+    private final WarrantyStore repository;
     private final List<Warranty> warranties;
 
     /**
@@ -29,42 +27,45 @@ public class WarrantyService {
      * current warranties into memory. Stored references are resolved here:
      * a warranty whose product or sale no longer exists is skipped.
      *
-     * @param repository  the repository used to persist and load warranties
-     * @param saleService the service used to resolve the sale of each warranty
-     * @param itemCatalog the catalog used to resolve the covered product
+     * @param repository  the store used to persist and load warranties
+     * @param saleLookup  the read-only view used to resolve the sale of each warranty
+     * @param itemLookup  the lookup used to resolve the covered product
      * @throws IllegalArgumentException if a stored warranty has an unknown type
      */
-    public WarrantyService(WarrantyRepository repository, SaleService saleService, ItemCatalog itemCatalog) {
+    public WarrantyService(WarrantyStore repository, SaleLookup saleLookup, ItemLookup itemLookup) {
         this.repository = repository;
         this.warranties = new ArrayList<>();
         for (WarrantyRecord record : repository.loadAll()) {
-            Warranty warranty = resolve(record, saleService, itemCatalog);
+            Warranty warranty = resolve(record, saleLookup, itemLookup);
             if (warranty != null) {
                 warranties.add(warranty);
             }
         }
     }
 
-    private static Warranty resolve(WarrantyRecord record, SaleService saleService, ItemCatalog itemCatalog) {
-        Product product = itemCatalog.findItem(record.getProductId());
+    private static Warranty resolve(WarrantyRecord record, SaleLookup saleLookup, ItemLookup itemLookup) {
+        Product product = itemLookup.findItem(record.getProductId());
         if (product == null) {
             System.err.println("Failed to resolve product or accessory " + record.getProductId()
                 + " for warranty " + record.getId() + "; skipping.");
             return null;
         }
-        Sale sale = saleService.findById(record.getSaleId());
+        Sale sale = saleLookup.findById(record.getSaleId());
         if (sale == null) {
             System.err.println("Failed to resolve sale " + record.getSaleId() + " for warranty " + record.getId()
                 + "; skipping.");
             return null;
         }
-        if (BASIC_TYPE.equals(record.getType())) {
-            return new BasicWarranty(record.getId(), product, sale, record.getStartDate());
+        return kindOf(record.getType()).create(record.getId(), product, sale, record.getStartDate());
+    }
+
+    private static WarrantyKind kindOf(String tag) {
+        for (WarrantyKind kind : WarrantyKind.values()) {
+            if (kind.name().equals(tag)) {
+                return kind;
+            }
         }
-        if (EXTENDED_TYPE.equals(record.getType())) {
-            return new ExtendedWarranty(record.getId(), product, sale, record.getStartDate());
-        }
-        throw new IllegalArgumentException("Unknown warranty type in CSV: " + record.getType());
+        throw new IllegalArgumentException("Unknown warranty type in CSV: " + tag);
     }
 
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {

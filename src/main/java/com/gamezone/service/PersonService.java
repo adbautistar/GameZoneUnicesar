@@ -2,7 +2,7 @@ package com.gamezone.service;
 
 import com.gamezone.model.Customer;
 import com.gamezone.model.Seller;
-import com.gamezone.persistence.PersonRepository;
+import com.gamezone.persistence.PersonStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,11 +10,11 @@ import java.util.List;
 
 /**
  * Provides the business operations available for managing customers and
- * sellers, backed by a {@link PersonRepository}.
+ * sellers, backed by a {@link PersonStore}.
  */
 public class PersonService {
 
-    private final PersonRepository repository;
+    private final PersonStore repository;
     private final List<Customer> customers;
     private final List<Seller> sellers;
 
@@ -22,9 +22,9 @@ public class PersonService {
      * Creates a new service backed by the given repository, loading the
      * current customers and sellers into memory.
      *
-     * @param repository the repository used to persist and load people
+     * @param repository the store used to persist and load people
      */
-    public PersonService(PersonRepository repository) {
+    public PersonService(PersonStore repository) {
         this.repository = repository;
         this.customers = new ArrayList<>(repository.loadAllCustomers());
         this.sellers = new ArrayList<>(repository.loadAllSellers());

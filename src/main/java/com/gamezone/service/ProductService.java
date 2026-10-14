@@ -13,7 +13,7 @@ import java.util.List;
  * Provides the business operations available for managing the product
  * inventory, backed by a {@link ProductStore}.
  */
-public class ProductService {
+public class ProductService implements ItemSource {
 
     private final ProductStore repository;
     private final List<Product> products;
@@ -121,5 +121,36 @@ public class ProductService {
         }
         product.updateStock(quantity);
         repository.saveAll(products);
+    }
+
+    /**
+     * Finds a product by id, as an item source.
+     *
+     * @param id the product id
+     * @return the matching product, or {@code null} if none is found
+     */
+    @Override
+    public Product findItem(String id) {
+        return findById(id);
+    }
+
+    /**
+     * Decreases by one the stock of the given product and persists the change.
+     *
+     * @param id the id of the sold product
+     */
+    @Override
+    public void decreaseStock(String id) {
+        updateStock(id, -1);
+    }
+
+    /**
+     * Restores by one the stock of the given product and persists the change.
+     *
+     * @param id the id of the returned product
+     */
+    @Override
+    public void restoreStock(String id) {
+        restoreStock(id, 1);
     }
 }

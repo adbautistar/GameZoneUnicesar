@@ -21,7 +21,7 @@ import java.util.List;
  * ids and loaded back as {@link ReturnRecord}s; resolving those ids into
  * domain objects is the responsibility of the service layer.
  */
-public class ReturnRepository {
+public class ReturnRepository implements ReturnStore {
 
     private static final String DEFAULT_FILE_PATH = "data/returns.csv";
 
@@ -49,6 +49,7 @@ public class ReturnRepository {
      *
      * @param returns the complete list of returns to persist
      */
+    @Override
     public void saveAll(List<Return> returns) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Return returnItem : returns) {
@@ -84,6 +85,7 @@ public class ReturnRepository {
      *
      * @return the stored return records, or an empty list if the file does not exist
      */
+    @Override
     public List<ReturnRecord> loadAll() {
         List<ReturnRecord> records = new ArrayList<>();
         Path path = Path.of(filePath);
