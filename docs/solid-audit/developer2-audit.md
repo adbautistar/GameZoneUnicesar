@@ -18,6 +18,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository`, `ReturnService` (including `generateMonthlyBalance`) |
+| Warranties (Requerimiento 4) | `WarrantyRepository`, `WarrantyService` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -28,6 +29,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Accessories — Correct.** `AccessoryRepository` handles the CSV file; `AccessoryService` handles accessory rules.
 
 - **Promotions — Correct.** `PromotionService` holds registration, validation of dates and percentages, and selection of the best promotion — all promotion rules.
+
+- **Warranties — Correct.** `WarrantyService` assigns, resolves and queries warranties; `WarrantyRepository` handles the file.
 
 ### V-01
 
@@ -54,11 +57,26 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Returns — Correct.** Return registration does not depend on the type of the returned items since the GRASP correction (it delegates stock to `ItemCatalog`).
 
+### V-02
+
+| Field | Content |
+|---|---|
+| ID | V-02 |
+| Principle | OCP |
+| Module | Warranties (Requerimiento 4), changed in the GRASP correction |
+| Evidence | `WarrantyRepository.toCsvLine` (`WarrantyRepository.java:67`): `warranty instanceof ExtendedWarranty ? EXTENDED_TYPE : BASIC_TYPE`; `WarrantyService.resolve` (`WarrantyService.java:61-66`): `if (BASIC_TYPE.equals(record.getType())) ... if (EXTENDED_TYPE.equals(record.getType()))`; the constants `"BASIC"`/`"EXTENDED"` are declared in both classes. |
+| Explanation | The set of warranty kinds is known in two classes. Since the GRASP correction moved the resolution into the service, the repository writes the tag and the service reads it. |
+| Consequence | A new warranty kind requires modifying both `WarrantyRepository` and `WarrantyService` and keeping their constants in sync; forgetting one corrupts the file or fails on load. |
+| Proposed solution | Let one abstraction know every kind and how to build it (a `WarrantyKind` in the model, exposed by `Warranty.getKind()`); the repository writes `getKind()` and the service builds through the kind. |
+| Other role's code involved | Yes — the warranty hierarchy is Developer 1's code. |
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** Pending — audit in progress.
 
 - **Persons — Correct.** `Customer` and `Seller` keep every behavior of `Person` (`getFullName`, getters and setters) unchanged.
+
+- **Warranties — Correct.** Both services and repositories in scope have no subclasses; the warranties they build are used only through the `Warranty` contract.
 
 ## Interface Segregation Principle (ISP)
 
