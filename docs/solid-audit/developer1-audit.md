@@ -15,6 +15,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Module (requirement) | Classes and methods audited |
 |---|---|
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (except `restoreStock`, Technical Lead) |
+| Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -22,17 +23,23 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Products — Correct.** `Product` and its subclasses hold product data and their description; `ProductRepository` only reads and writes `data/products.csv`; `ProductService` only applies inventory rules.
 
+- **Accessories — Correct.** Each subclass adds only its attributes, its description and its type.
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** Pending — audit in progress.
 
 - **Products — Correct for the hierarchy, accepted for the repository.** A new product type is a new subclass of `Product`, implementing `getDescription` and `belongsToCategory`, with no change to existing classes. `ProductRepository.toCsvLine/fromCsvLine` branch on the type and would change for a new type. This is **accepted, not counted**: a new product type necessarily brings new CSV columns, so the format changes anyway; the knowledge sits in one class whose single purpose is that format; and the GRASP audit judged it a correct Pure Fabrication.
 
+- **Accessories — Correct.** A new accessory is a new subclass implementing `getDescription` and `getAccessoryType`.
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** Pending — audit in progress.
 
 - **Products — Correct.** `VideoGame` and `Console` implement `getDescription` and `belongsToCategory` without narrowing preconditions or throwing; `Console.isWarrantyEligible` only changes a value the base declares as overridable.
+
+- **Accessories — Correct.** `Accessory.belongsToCategory` always answers `false`, which is a valid answer under the base contract ("does this product belong to the category?"); `isCompatibleWith` keeps the base behavior of every `Product` method.
 
 ## Interface Segregation Principle (ISP)
 
