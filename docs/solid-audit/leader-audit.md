@@ -18,16 +18,19 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Sales persistence (Taller 1, Requerimiento 7) | `SaleRepository`, `SaleRecord` |
 | Sales services (Taller 1, Requerimientos 1, 2, 4, 7) | `SaleService`, `SaleRegistrationService` |
 | User interface (Taller 1, Requerimientos 1-4, 7) | `ConsoleMenu`, `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `PromotionMenu`, `ReturnMenu`, `WarrantyMenu` |
+| Entry point (Taller 1) and returns integration (Requerimiento 3) | `Main`, `ProductService.restoreStock` |
 
 ## Single Responsibility Principle (SRP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-01.
 
 - **SaleRepository and SaleRecord — Correct.** The repository only reads and writes `data/sales.csv`; the record only carries stored values.
 
 - **SaleService and SaleRegistrationService — Correct.** Since the GRASP correction (V-12 of Requerimiento 7), `SaleService` keeps the sales history (load, record, queries) and `SaleRegistrationService` owns the registration use case. Each has one reason to change. This is a SOLID problem the GRASP correction had already solved.
 
 - **Submenus — Correct.** Each submenu handles the screens of one module; `ConsoleMenu` only shows the main menu and delegates (split in the GRASP correction, V-15).
+
+- **Main and ProductService.restoreStock — Correct.** `Main` only composes the application; `restoreStock` only adds stock back.
 
 ### V-01
 
@@ -44,13 +47,15 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Open/Closed Principle (OCP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-06.
 
 - **Sale — Correct.** Promotions and surcharges reach the total through `applyPromotion` and `addCharge`, which work for any promotion or warranty type.
 
 - **SaleRepository — Correct.** It has no type switch; sale items are stored as ids.
 
 - **SaleRegistrationService — Correct.** Warranty eligibility is asked to each product (`isWarrantyEligible`) and the stock to `ItemCatalog`, so new product types do not modify the use case.
+
+- **Main — Correct.** Adding a module adds wiring lines; no existing class needs to change because of `Main`.
 
 ### V-06
 
@@ -67,7 +72,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Liskov Substitution Principle (LSP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Correct — no class in scope extends another domain class or breaks a contract it implements.
 
 - **Sale — Not applicable.** `Sale` has no subclasses.
 
@@ -77,7 +82,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Interface Segregation Principle (ISP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-02, V-03.
 
 ### V-02
 
@@ -107,9 +112,11 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Dependency Inversion Principle (DIP)
 
-**Verdict:** Pending — audit in progress.
+**Verdict:** Violation — see V-04, V-05.
 
 - **Submenus — Correct.** UI classes depending on services is the allowed direction (details depend on policies); the services are the policies here.
+
+- **Main — Correct.** As the composition root, `Main` is the one place allowed to know every concrete class.
 
 ### V-04
 
@@ -136,3 +143,19 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Consequence | Any change in the promotion or warranty services (registration, listings, persistence) can affect sale registration; the use case cannot be reused with another promotion or warranty policy. |
 | Proposed solution | Define, as part of the use case, the abstractions it needs — `PromotionSelector` (`findBestPromotionFor`) and `WarrantyAssigner` (`assignBasicWarranty`, `assignExtendedWarranty`) — and let the services implement them. |
 | Other role's code involved | Yes — `PromotionService` and `WarrantyService` (Developer 2) must implement them. |
+
+## Summary of verdicts
+
+| Principle | Verdict | Violations |
+|---|---|---|
+| Single Responsibility Principle (SRP) | Violation | V-01 |
+| Open/Closed Principle (OCP) | Violation | V-06 |
+| Liskov Substitution Principle (LSP) | Correct | — |
+| Interface Segregation Principle (ISP) | Violation | V-02, V-03, V-05 |
+| Dependency Inversion Principle (DIP) | Violation | V-04, V-05, V-06 |
+
+## Notes
+
+- **Relation with GRASP:** the SRP of `SaleService` and `ConsoleMenu` was already solved by the GRASP correction (V-12, V-15). V-06 is the next step of the same split: the menu was divided into classes, but the main menu still knows each of them.
+- **Reported for consolidation:** V-02 needs `PersonService` (Developer 2) to implement `PersonLookup`; V-03 overlaps with Developer 2's V-05; V-05 needs the promotion and warranty services (Developer 2) to implement the new abstractions.
+- No new functional defect was found; OOS-01..03 from Requerimiento 7 remain out of scope.
