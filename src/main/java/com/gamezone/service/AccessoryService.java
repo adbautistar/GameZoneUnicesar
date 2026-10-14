@@ -4,7 +4,7 @@ import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
-import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.AccessoryStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,10 +12,10 @@ import java.util.List;
 
 public class AccessoryService {
 
-    private final AccessoryRepository repository;
+    private final AccessoryStore repository;
     private final List<Accessory> accessories;
 
-    public AccessoryService(AccessoryRepository repository) {
+    public AccessoryService(AccessoryStore repository) {
         this.repository = repository;
         this.accessories = new ArrayList<>(repository.loadAll());
     }
