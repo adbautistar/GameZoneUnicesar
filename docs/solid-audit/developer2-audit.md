@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Persons (Taller 1) | `Person`, `Customer`, `Seller`, `PersonRepository`, `PersonService` |
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
+| Returns (Requerimiento 3) | `ReturnRepository`, `ReturnService` (including `generateMonthlyBalance`) |
 
 ## Single Responsibility Principle (SRP)
 
@@ -28,6 +29,19 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Promotions — Correct.** `PromotionService` holds registration, validation of dates and percentages, and selection of the best promotion — all promotion rules.
 
+### V-01
+
+| Field | Content |
+|---|---|
+| ID | V-01 |
+| Principle | SRP |
+| Module | Returns (Requerimiento 3) |
+| Evidence | `ReturnService.generateMonthlyBalance(int, int)` (`ReturnService.java:156`) sums every sale of the month through `saleService.viewAllSales()` and subtracts the refunds, inside the class that registers and queries returns. |
+| Explanation | Return handling and financial reporting are different responsibilities with different reasons to change (return rules versus how the business wants its balance computed). |
+| Consequence | A change in the balance (for example, excluding a kind of sale) forces a change in `ReturnService`; the service depends on the whole sales history only for the report. |
+| Proposed solution | Extract the report into `MonthlyBalanceService`, which reads sales and returns; `ReturnService` keeps registration and queries. |
+| Other role's code involved | Yes — `ReturnMenu` and `Main` (Technical Lead) must call the new service. |
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** Pending — audit in progress.
@@ -37,6 +51,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Accessories — Accepted, not counted.** `AccessoryRepository` branches on the accessory type to write and read the file, and `AccessoryService` has one register method per type. A new accessory type necessarily brings new CSV columns and new input fields, so both change anyway; the knowledge is localized in one class each. `listAccessoriesByType` became type-agnostic in the GRASP correction (V-02 of Requerimiento 7).
 
 - **Promotions — Correct for selection, accepted for registration.** `findBestPromotionFor` works for any `Promotion` subclass. The type switch in `PromotionRepository` and the one-register-method-per-type API are accepted for the same reason as accessories.
+
+- **Returns — Correct.** Return registration does not depend on the type of the returned items since the GRASP correction (it delegates stock to `ItemCatalog`).
 
 ## Liskov Substitution Principle (LSP)
 
