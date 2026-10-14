@@ -86,3 +86,30 @@ The full evidence, explanation and consequence of each violation are in the indi
 | V-13 | `PromotionSelector` and `WarrantyAssigner`, owned by the use case, implemented by `PromotionService` and `WarrantyService` | DIP, ISP |
 
 Placement of the new abstractions: the store interfaces live in `com.gamezone.persistence`, next to the repositories that implement them, so that the Taller 1 layer rule (`service → persistence`, never the reverse) still holds; every other interface lives in `com.gamezone.service` or `com.gamezone.ui`, next to the clients that need it.
+
+## Boundary findings
+
+| ID | How the correction is split |
+|---|---|
+| V-03 | Developer 2 creates `MonthlyBalanceService`; the Technical Lead (owner of `ReturnMenu` and `Main`) switches the menu and the wiring in a coordination commit inside Developer 2's task group; Developer 2 then removes the method from `ReturnService` and moves its tests. |
+| V-04 | Developer 2 creates `ItemSource` and implements it in `AccessoryService`; Developer 1 implements it in `ProductService` (coordination commit inside Developer 2's task group); Developer 2 then rewrites `ItemCatalog`. |
+| V-05 | Developer 1 adds `WarrantyKind` and `Warranty.getKind()` (additive); Developer 2 then changes the repository and the service. |
+| V-07 | Developer 2 creates `SaleLookup`; the Technical Lead adds `implements SaleLookup` to `SaleService` (coordination commit); Developer 2 changes the two clients. |
+| V-08 | The Technical Lead creates `PersonLookup`; Developer 2 adds `implements PersonLookup` to `PersonService` (coordination commit inside the Technical Lead's group); the Technical Lead changes the two clients. |
+| V-09 | Reported by both sides. Developer 2 creates `ItemLookup` (it is an abstraction of Developer 2's `ItemCatalog`) and changes `WarrantyService`; the Technical Lead changes `SaleService`. |
+| V-13 | The Technical Lead creates `PromotionSelector` and `WarrantyAssigner`, owned by the use case that needs them; Developer 2 implements them in the services (coordination commit). |
+
+**Correction order** (see `solid-analysis.md`, Q5): Developer 1 first, then Developer 2, then the Technical Lead, with the coordination commits listed above placed so that every commit compiles.
+
+## Fragments examined and accepted (not counted)
+
+| Fragment | Principle | Reason |
+|---|---|---|
+| Type switches in `ProductRepository`, `AccessoryRepository`, `PromotionRepository` (`toCsvLine`/`fromCsvLine`) | OCP | A new subtype necessarily changes the persisted format; the knowledge sits in the single class whose purpose is that format; judged a correct Pure Fabrication in the GRASP audit. |
+| One register method per type in `AccessoryService` and `PromotionService` | OCP | Each new type brings its own input fields, so the API necessarily grows. |
+| Static `IdGenerator.next` | DIP | Stateless utility; no alternative implementation anticipated; no test needs to substitute it. |
+| `generateReceipt()`, `generateReturnReceipt()`, `generateWarrantyCertificate()` kept on the domain classes after V-01/V-02 | SRP | They are part of the API required by Taller 1 and Requerimientos 3-4; they become one-line delegations, and the layout lives in its own class. |
+
+## Out-of-scope findings
+
+No new functional defect was found. The three defects recorded in Requerimiento 7 (OOS-01 surcharge lost on reload, OOS-02 receipt subtotal, OOS-03 possible duplicate warranty id) remain out of scope and must be preserved by the correction.
