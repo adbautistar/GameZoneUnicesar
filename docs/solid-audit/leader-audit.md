@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Sales (Taller 1), promotion changes (Requerimiento 2), GRASP additions | `Sale` (except `canBeReturned`, `findProduct`, `wasMadeIn`, owned by Developer 1) |
 | Sales persistence (Taller 1, Requerimiento 7) | `SaleRepository`, `SaleRecord` |
 | Sales services (Taller 1, Requerimientos 1, 2, 4, 7) | `SaleService`, `SaleRegistrationService` |
+| User interface (Taller 1, Requerimientos 1-4, 7) | `ConsoleMenu`, `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `PromotionMenu`, `ReturnMenu`, `WarrantyMenu` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -25,6 +26,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **SaleRepository and SaleRecord — Correct.** The repository only reads and writes `data/sales.csv`; the record only carries stored values.
 
 - **SaleService and SaleRegistrationService — Correct.** Since the GRASP correction (V-12 of Requerimiento 7), `SaleService` keeps the sales history (load, record, queries) and `SaleRegistrationService` owns the registration use case. Each has one reason to change. This is a SOLID problem the GRASP correction had already solved.
+
+- **Submenus — Correct.** Each submenu handles the screens of one module; `ConsoleMenu` only shows the main menu and delegates (split in the GRASP correction, V-15).
 
 ### V-01
 
@@ -49,6 +52,19 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **SaleRegistrationService — Correct.** Warranty eligibility is asked to each product (`isWarrantyEligible`) and the stock to `ItemCatalog`, so new product types do not modify the use case.
 
+### V-06
+
+| Field | Content |
+|---|---|
+| ID | V-06 |
+| Principle | OCP (also DIP) |
+| Module | User interface (Taller 1, Requerimientos 1-4, 7) |
+| Evidence | `ConsoleMenu.start` prints eight fixed labels and dispatches with `switch (option)` (`ConsoleMenu.java:75`) to eight hard-wired calls on concrete submenu classes created in its constructor. |
+| Explanation | Adding a module (or reordering the menu) requires modifying `ConsoleMenu`; the main menu depends on every concrete submenu. |
+| Consequence | Every new requirement that adds a menu option edits the same class and its constructor. |
+| Proposed solution | Introduce a `MenuOption` abstraction (label + action) implemented by each submenu and by a monthly-balance option; `ConsoleMenu` numbers and dispatches the options it receives; `Main` composes the list. |
+| Other role's code involved | No. |
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** Pending — audit in progress.
@@ -56,6 +72,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Sale — Not applicable.** `Sale` has no subclasses.
 
 - **Sales services — Not applicable.** No inheritance in scope.
+
+- **User interface — Not applicable.** The menu classes do not extend each other.
 
 ## Interface Segregation Principle (ISP)
 
@@ -90,6 +108,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 ## Dependency Inversion Principle (DIP)
 
 **Verdict:** Pending — audit in progress.
+
+- **Submenus — Correct.** UI classes depending on services is the allowed direction (details depend on policies); the services are the policies here.
 
 ### V-04
 
