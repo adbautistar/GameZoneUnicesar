@@ -12,7 +12,7 @@ import com.gamezone.model.Product;
  * <p>This is the only class that knows which catalog owns an item, so the
  * lookup order and the stock dispatch are written once.</p>
  */
-public class ItemCatalog {
+public class ItemCatalog implements ItemLookup {
 
     private final ProductService productService;
     private final AccessoryService accessoryService;
@@ -35,6 +35,7 @@ public class ItemCatalog {
      * @param id the item id
      * @return the matching product or accessory, or {@code null} if none exists
      */
+    @Override
     public Product findItem(String id) {
         Product item = productService.findById(id);
         if (item == null) {

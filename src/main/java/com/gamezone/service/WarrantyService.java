@@ -31,22 +31,22 @@ public class WarrantyService {
      *
      * @param repository  the store used to persist and load warranties
      * @param saleService the service used to resolve the sale of each warranty
-     * @param itemCatalog the catalog used to resolve the covered product
+     * @param itemLookup  the lookup used to resolve the covered product
      * @throws IllegalArgumentException if a stored warranty has an unknown type
      */
-    public WarrantyService(WarrantyStore repository, SaleService saleService, ItemCatalog itemCatalog) {
+    public WarrantyService(WarrantyStore repository, SaleService saleService, ItemLookup itemLookup) {
         this.repository = repository;
         this.warranties = new ArrayList<>();
         for (WarrantyRecord record : repository.loadAll()) {
-            Warranty warranty = resolve(record, saleService, itemCatalog);
+            Warranty warranty = resolve(record, saleService, itemLookup);
             if (warranty != null) {
                 warranties.add(warranty);
             }
         }
     }
 
-    private static Warranty resolve(WarrantyRecord record, SaleService saleService, ItemCatalog itemCatalog) {
-        Product product = itemCatalog.findItem(record.getProductId());
+    private static Warranty resolve(WarrantyRecord record, SaleService saleService, ItemLookup itemLookup) {
+        Product product = itemLookup.findItem(record.getProductId());
         if (product == null) {
             System.err.println("Failed to resolve product or accessory " + record.getProductId()
                 + " for warranty " + record.getId() + "; skipping.");
