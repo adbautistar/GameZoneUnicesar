@@ -108,7 +108,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Summary of verdicts
 
-| Pattern | Verdict | Violations |
+| Principle | Verdict | Violations |
 |---|---|---|
 | Single Responsibility Principle (SRP) | Violation | V-01 |
 | Open/Closed Principle (OCP) | Correct | — |
