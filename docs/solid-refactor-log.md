@@ -37,3 +37,39 @@ Defined before the first correction, as answered in `docs/solid-analysis.md` (Q4
 | `MonthlyBalanceService` (new) | Monthly balance (same computation) over `SaleLookup` and `ReturnService.viewAllReturns()` | V-03 | SRP | `9336a26` / PR #35 | Developer 2 |
 | `ReturnMenu`, `ConsoleMenu`, `Main` | **Coordination commit:** the menu asks `MonthlyBalanceService` for the balance; wiring updated | V-03 | SRP | `c836dda` / PR #35 | Technical Lead |
 | `ReturnService`, `ReturnServiceTest`, `MonthlyBalanceServiceTest` (new), `EndToEndScenariosTest` | `generateMonthlyBalance` removed from `ReturnService`; its two tests moved verbatim to `MonthlyBalanceServiceTest`; end-to-end scenario 5 asks `MonthlyBalanceService` | V-03 | SRP | `9937ff4` / PR #35 | Developer 2 |
+| `SaleReceipt` (new), `Sale` | Receipt layout (with the promotion breakdown, OOS-02 preserved) moved verbatim into `SaleReceipt.render()`; `generateReceipt()` delegates (Taller 1 API) | V-02 | SRP | `15326b2` / PR #36 | Technical Lead |
+| `SaleStore` (new), `SaleRepository`, `SaleService` | Store abstraction implemented by `SaleRepository`; `SaleService` depends on it | V-12 | DIP | `d40fc1c` / PR #36 | Technical Lead |
+| `PersonLookup` (new) | Lookup of customers and sellers by id | V-08 | ISP | `cfe279a` / PR #36 | Technical Lead |
+| `PersonService` | **Coordination commit:** implements `PersonLookup` | V-08 | ISP | `b286423` / PR #36 | Developer 2 |
+| `SaleService`, `SaleRegistrationService` | Depend on `PersonLookup` instead of the whole `PersonService` | V-08 | ISP | `58f1b91` / PR #36 | Technical Lead |
+| `SaleService` | Depends on `ItemLookup` instead of the whole `ItemCatalog` | V-09 (Technical Lead part) | ISP | `ed8c23c` / PR #36 | Technical Lead |
+| `PromotionSelector`, `WarrantyAssigner` (new) | Abstractions owned by the sale registration use case | V-13 | DIP, ISP | `8aa330d` / PR #36 | Technical Lead |
+| `PromotionService`, `WarrantyService` | **Coordination commit:** implement `PromotionSelector` and `WarrantyAssigner` | V-13 | DIP | `a041ac7` / PR #36 | Developer 2 |
+| `SaleRegistrationService` | Depends on `PromotionSelector` and `WarrantyAssigner` instead of the concrete services | V-13 | DIP, ISP | `86d217b` / PR #36 | Technical Lead |
+| `MenuOption` (new), the seven submenus | Main-menu option abstraction (`getLabel`, `run`); every submenu implements it (`run()` shows the submenu) | V-06 | OCP, DIP | `cf4c18e` / PR #36 | Technical Lead |
+| `MonthlyBalanceMenu` (new), `ReturnMenu`, `ConsoleMenu` | The monthly-balance option moved verbatim out of `ReturnMenu` into its own `MenuOption` | V-06 | OCP, SRP | `46fdb3a` / PR #36 | Technical Lead |
+| `ConsoleMenu`, `Main` | `ConsoleMenu(Scanner, List<MenuOption>)` numbers the options by position and runs the chosen one (same labels, same "0. Salir" and "Opcion invalida."); `Main` creates the `Scanner` and composes the list in the original order. `ConsoleMenu` no longer knows any submenu (109 → 64 lines) | V-06 | OCP, DIP | `7d7d33f` / PR #36 | Technical Lead |
+
+## Coordination and trade-off notes
+
+- **Coordination commits (6):** whenever a new abstraction had to be implemented by another role's class, that class's owner added the `implements` clause inside the group that needed it — `16a9fdf` (Developer 1, `ProductService implements ItemSource`), `80b200a` (Technical Lead, `SaleService implements SaleLookup`), `c836dda` (Technical Lead, menu and `Main` call `MonthlyBalanceService`), `b286423` (Developer 2, `PersonService implements PersonLookup`), `a041ac7` (Developer 2, `PromotionService`/`WarrantyService` implement the use-case abstractions). Every commit of the phase compiles.
+- **Store interfaces live in the persistence package.** Classic DIP places the abstraction with the high-level module; here that would make the persistence layer depend on the service layer, which Taller 1 forbids. The interfaces sit next to their implementations and the services depend on them, so the arrow still points `service → persistence`.
+- **Receipt methods kept as delegations.** `generateReceipt()`, `generateReturnReceipt()` and `generateWarrantyCertificate()` are required APIs; the layout has its own class and reason to change.
+- **`SaleRegistrationService` still depends on `SaleService` and `ItemCatalog` concretely** for its two write operations (`recordSale`, `decreaseStock`). Both are the single owners of those writes and no alternative is anticipated; the read-only and policy dependencies are abstractions.
+- **Repository type switches unchanged** (accepted in the consolidated audit). The warranty repository no longer has one: it writes `warranty.getKind()`.
+- **Out-of-scope defects preserved:** OOS-01..03 behave exactly as in the baseline.
+
+## Final results (end of Phase 2)
+
+| Check | Baseline | Final |
+|---|---|---|
+| `mvn clean verify` | BUILD SUCCESS, 93 tests | BUILD SUCCESS, **96 tests**, 0 failures, 0 errors; JaCoCo check passed. All 93 baseline tests kept: the two monthly-balance tests moved verbatim to `MonthlyBalanceServiceTest`; two `ReturnServiceTest` stock tests now verify `restoreStock(id)` on the owning `ItemSource` (same behavior); 3 new `ItemCatalogTest` tests |
+| Line coverage `com.gamezone.service` | 83.2% | 85.0% (347/408) |
+| Scripted menu run | 1,051 normalized lines, SHA-256 `d404c06d889e6046` | 1,051 normalized lines, SHA-256 `d404c06d889e6046` — **diff empty** |
+| Interfaces in the system | 0 | 14 (7 stores, 4 lookups/sources, 2 use-case policies, 1 menu option) |
+| Services depending on a concrete repository | 7 | 0 |
+| `instanceof` outside repository serialization | 2 (`ItemCatalog`) + 1 (`WarrantyRepository` tag) | 0 |
+| `ConsoleMenu` | 109 lines, `switch` over 8 concrete submenus | 64 lines, no submenu known |
+| Production classes and interfaces | 48 | 68 |
+
+Intermediate runs of the scripted check (all with an empty diff): end of the Developer 1 group, after `1e26194`, `7978e6f`, `c836dda`, `9937ff4`, `86d217b`, `46fdb3a` and `7d7d33f`. `mvn clean compile` was run before every code commit and `mvn clean verify` at the end of each group.
