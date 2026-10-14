@@ -22,7 +22,17 @@ Minimum evidence accepted in the consolidation: for a violation, class, method a
 
 ## Q2. Boundary findings
 
-*Answer pending (Technical Lead).*
+*Written by the Technical Lead.*
+
+Seven of the thirteen consolidated violations are boundary findings (V-03, V-04, V-05, V-07, V-08, V-09, V-13). Almost all of them have the same shape, which is specific to ISP and DIP: **the violation is in the client, but the correction needs the supplier to implement a new abstraction.**
+
+- **V-07:** Developer 2's `ReturnService` and `WarrantyService` depend on the whole `SaleService` just to read sales. The violation is Developer 2's, so Developer 2 creates `SaleLookup` and changes both clients; but `SaleService` is the Technical Lead's class, so the Technical Lead adds `implements SaleLookup`.
+- **V-08** is the mirror case: the Technical Lead's sales services depend on the whole `PersonService`; the Technical Lead creates `PersonLookup` and Developer 2 makes `PersonService` implement it.
+- **V-13:** following DIP, the abstractions belong to the high-level module that needs them, so the Technical Lead's `SaleRegistrationService` defines `PromotionSelector` and `WarrantyAssigner`, and Developer 2's services implement them.
+- **V-09** was reported from both sides (`WarrantyService` by Developer 2, `SaleService` by the Technical Lead) and merged into one violation with one interface, `ItemLookup`, created by the owner of `ItemCatalog`.
+- **V-04 and V-05** go the other way: the violation is in Developer 2's code but the fix needs Developer 1's classes (`ProductService` implements `ItemSource`; the warranty hierarchy gains `WarrantyKind`).
+
+Each boundary finding is registered once in `consolidated-audit.md` with every origin and the split of the correction. The rule is the one in the statement: whoever is responsible for the code that changes makes that change, so one-line `implements` clauses in another role's class are committed by that class's owner, as coordination commits inside the group that needs them.
 
 ## Q3. Relation with the GRASP audit (Requerimiento 7)
 
@@ -50,4 +60,16 @@ Both checks run before the first correction, at the end of each role's task grou
 
 ## Q5. Order of the corrections and coordination
 
-*Answer pending (Technical Lead).*
+*Written by the Technical Lead.*
+
+The order is Developer 1, then Developer 2, then the Technical Lead, as in Requerimiento 7, because it follows the dependencies:
+
+1. **Developer 1:** its corrections are self-contained or additive (`ProductStore`, the receipt and certificate layouts, `WarrantyKind`), and Developer 2 needs `WarrantyKind` before changing the warranty repository and service.
+2. **Developer 2:** the store interfaces of its five services, then the abstractions that other roles' classes must implement (`ItemLookup`, `ItemSource`, `SaleLookup`), then `MonthlyBalanceService`.
+3. **Technical Lead:** the sales services can only depend on `PersonLookup`, `ItemLookup`, `PromotionSelector` and `WarrantyAssigner` once those exist and are implemented, and the menu change (V-06) goes last because it needs `MonthlyBalanceService` and touches `Main`.
+
+Coordination rules on the shared branch `feature/solid-refactor`:
+
+- One role works on the branch at a time; each group ends with `mvn clean verify` green, an empty diff of the scripted run, and its Pull Request merged.
+- Every commit must compile. A new abstraction is always introduced in three steps: create the interface (additive); the owner of the implementing class adds `implements` (coordination commit, which compiles because the class already has the methods); the client switches to the interface.
+- When a behavior moves to a new class (the monthly balance), the old method is kept until the menu calls the new class, and only then removed, so no intermediate commit breaks `ReturnMenu` or `Main`.
