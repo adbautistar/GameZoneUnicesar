@@ -11,11 +11,11 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Console submenu for returns and the monthly balance query, extracted from
+ * Console submenu for returns, extracted from
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
-public class ReturnMenu {
+public class ReturnMenu implements MenuOption {
 
     private final Scanner scanner;
     private final ReturnService returnService;
@@ -25,7 +25,7 @@ public class ReturnMenu {
      * Creates the submenu.
      *
      * @param scanner the scanner shared with the main menu, reading from standard input
-     * @param returnService the service used for return operations and the monthly balance
+     * @param returnService the service used for return operations
      * @param saleService the service used for sale queries
      */
     public ReturnMenu(Scanner scanner, ReturnService returnService, SaleService saleService) {
@@ -138,18 +138,20 @@ public class ReturnMenu {
     }
 
     /**
-     * Asks for a month and a year and prints the balance of sales minus refunds for that period.
+     * Returns the label of this submenu in the main menu.
+     *
+     * @return "Gestion de devoluciones"
      */
-    public void showMonthlyBalance() {
-        try {
-            System.out.print("Mes (1-12): ");
-            int month = Integer.parseInt(scanner.nextLine().trim());
-            System.out.print("Anio (yyyy): ");
-            int year = Integer.parseInt(scanner.nextLine().trim());
-            double balance = returnService.generateMonthlyBalance(month, year);
-            System.out.println("Balance del mes " + month + "/" + year + ": $" + String.format("%.2f", balance));
-        } catch (RuntimeException e) {
-            System.out.println("Error al consultar el balance: " + e.getMessage());
-        }
+    @Override
+    public String getLabel() {
+        return "Gestion de devoluciones";
+    }
+
+    /**
+     * Shows this submenu until the user goes back to the main menu.
+     */
+    @Override
+    public void run() {
+        show();
     }
 }

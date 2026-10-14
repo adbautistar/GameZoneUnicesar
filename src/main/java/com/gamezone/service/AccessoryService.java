@@ -4,18 +4,18 @@ import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
-import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.AccessoryStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class AccessoryService {
+public class AccessoryService implements ItemSource {
 
-    private final AccessoryRepository repository;
+    private final AccessoryStore repository;
     private final List<Accessory> accessories;
 
-    public AccessoryService(AccessoryRepository repository) {
+    public AccessoryService(AccessoryStore repository) {
         this.repository = repository;
         this.accessories = new ArrayList<>(repository.loadAll());
     }
@@ -80,5 +80,36 @@ public class AccessoryService {
             accessory.updateStock(quantity);
             repository.saveAll(accessories);
         }
+    }
+
+    /**
+     * Finds an accessory by id, as an item source.
+     *
+     * @param id the accessory id
+     * @return the matching accessory, or {@code null} if none is found
+     */
+    @Override
+    public Accessory findItem(String id) {
+        return findById(id);
+    }
+
+    /**
+     * Decreases by one the stock of the given accessory and persists the change.
+     *
+     * @param id the id of the sold accessory
+     */
+    @Override
+    public void decreaseStock(String id) {
+        updateStock(id, -1);
+    }
+
+    /**
+     * Restores by one the stock of the given accessory and persists the change.
+     *
+     * @param id the id of the returned accessory
+     */
+    @Override
+    public void restoreStock(String id) {
+        updateStock(id, 1);
     }
 }

@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PromotionRepository {
+public class PromotionRepository implements PromotionStore {
 
     private static final String DEFAULT_FILE_PATH = "data/promotions.csv";
     private static final String PERCENTAGE_TYPE = "PERCENTAGE";
@@ -44,6 +44,7 @@ public class PromotionRepository {
         this.filePath = filePath;
     }
 
+    @Override
     public void saveAll(List<Promotion> promotions) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Promotion promotion : promotions) {
@@ -90,6 +91,7 @@ public class PromotionRepository {
         throw new IllegalArgumentException("Unsupported promotion type: " + promotion.getClass());
     }
 
+    @Override
     public List<Promotion> loadAll() {
         List<Promotion> promotions = new ArrayList<>();
         Path path = Path.of(filePath);

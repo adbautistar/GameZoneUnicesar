@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class AccessoryRepository {
+public class AccessoryRepository implements AccessoryStore {
 
     private static final String DEFAULT_FILE_PATH = "data/accessories.csv";
     private static final String CONTROLLER_TYPE = "CONTROLLER";
@@ -42,6 +42,7 @@ public class AccessoryRepository {
         this.filePath = filePath;
     }
 
+    @Override
     public void saveAll(List<Accessory> accessories) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Accessory accessory : accessories) {
@@ -90,6 +91,7 @@ public class AccessoryRepository {
         throw new IllegalArgumentException("Unsupported accessory type: " + accessory.getClass());
     }
 
+    @Override
     public List<Accessory> loadAll() {
         List<Accessory> accessories = new ArrayList<>();
         Path path = Path.of(filePath);

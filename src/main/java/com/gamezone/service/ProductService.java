@@ -3,7 +3,7 @@ package com.gamezone.service;
 import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
-import com.gamezone.persistence.ProductRepository;
+import com.gamezone.persistence.ProductStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,20 +11,20 @@ import java.util.List;
 
 /**
  * Provides the business operations available for managing the product
- * inventory, backed by a {@link ProductRepository}.
+ * inventory, backed by a {@link ProductStore}.
  */
-public class ProductService {
+public class ProductService implements ItemSource {
 
-    private final ProductRepository repository;
+    private final ProductStore repository;
     private final List<Product> products;
 
     /**
      * Creates a new service backed by the given repository, loading the
      * current inventory into memory.
      *
-     * @param repository the repository used to persist and load products
+     * @param repository the store used to persist and load products
      */
-    public ProductService(ProductRepository repository) {
+    public ProductService(ProductStore repository) {
         this.repository = repository;
         this.products = new ArrayList<>(repository.loadAll());
     }
@@ -121,5 +121,36 @@ public class ProductService {
         }
         product.updateStock(quantity);
         repository.saveAll(products);
+    }
+
+    /**
+     * Finds a product by id, as an item source.
+     *
+     * @param id the product id
+     * @return the matching product, or {@code null} if none is found
+     */
+    @Override
+    public Product findItem(String id) {
+        return findById(id);
+    }
+
+    /**
+     * Decreases by one the stock of the given product and persists the change.
+     *
+     * @param id the id of the sold product
+     */
+    @Override
+    public void decreaseStock(String id) {
+        updateStock(id, -1);
+    }
+
+    /**
+     * Restores by one the stock of the given product and persists the change.
+     *
+     * @param id the id of the returned product
+     */
+    @Override
+    public void restoreStock(String id) {
+        restoreStock(id, 1);
     }
 }

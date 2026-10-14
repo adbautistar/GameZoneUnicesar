@@ -12,7 +12,7 @@ import java.util.Scanner;
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
-public class PersonMenu {
+public class PersonMenu implements MenuOption {
 
     private final Scanner scanner;
     private final PersonService personService;
@@ -100,5 +100,23 @@ public class PersonMenu {
         for (Seller seller : sellers) {
             System.out.println(seller.getId() + " - " + seller.getFullName() + " - " + seller.getShift());
         }
+    }
+
+    /**
+     * Returns the label of this submenu in the main menu.
+     *
+     * @return "Gestion de personas"
+     */
+    @Override
+    public String getLabel() {
+        return "Gestion de personas";
+    }
+
+    /**
+     * Shows this submenu until the user goes back to the main menu.
+     */
+    @Override
+    public void run() {
+        show();
     }
 }

@@ -4,7 +4,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Return;
 import com.gamezone.model.Sale;
 import com.gamezone.persistence.ReturnRecord;
-import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.ReturnStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -13,12 +13,12 @@ import java.util.List;
 
 /**
  * Provides the business operations for registering and querying product
- * returns, and the monthly balance of sales minus refunds.
+ * returns.
  */
 public class ReturnService {
 
-    private final ReturnRepository repository;
-    private final SaleService saleService;
+    private final ReturnStore repository;
+    private final SaleLookup saleLookup;
     private final ItemCatalog itemCatalog;
     private final List<Return> returns;
 
@@ -28,13 +28,13 @@ public class ReturnService {
      * return whose sale no longer exists is skipped, and a product that no
      * longer exists is left out of its return.
      *
-     * @param repository  the repository used to persist and load returns
-     * @param saleService the service used to find the original sales
+     * @param repository  the store used to persist and load returns
+     * @param saleLookup  the read-only view used to find the original sales
      * @param itemCatalog the catalog used to resolve returned items and restore their stock
      */
-    public ReturnService(ReturnRepository repository, SaleService saleService, ItemCatalog itemCatalog) {
+    public ReturnService(ReturnStore repository, SaleLookup saleLookup, ItemCatalog itemCatalog) {
         this.repository = repository;
-        this.saleService = saleService;
+        this.saleLookup = saleLookup;
         this.itemCatalog = itemCatalog;
         this.returns = new ArrayList<>();
         for (ReturnRecord record : repository.loadAll()) {
@@ -59,7 +59,7 @@ public class ReturnService {
      *                                  than 30 days, or does not include a product
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
-        Sale sale = saleService.findById(saleId);
+        Sale sale = saleLookup.findById(saleId);
         if (sale == null) {
             throw new IllegalArgumentException("Venta no encontrada.");
         }
@@ -90,7 +90,7 @@ public class ReturnService {
     }
 
     private Return resolve(ReturnRecord record) {
-        Sale sale = saleService.findById(record.getSaleId());
+        Sale sale = saleLookup.findById(record.getSaleId());
         if (sale == null) {
             System.err.println("Failed to resolve sale " + record.getSaleId() + " for return " + record.getId()
                 + "; skipping.");
@@ -143,31 +143,5 @@ public class ReturnService {
             }
         }
         return result;
-    }
-
-    /**
-     * Computes the balance of the given month: the total of the sales made in
-     * that month minus the refunds of the returns registered in that month.
-     *
-     * @param month the month, from 1 to 12
-     * @param year  the year
-     * @return total sales minus total refunds for that month
-     */
-    public double generateMonthlyBalance(int month, int year) {
-        double totalSales = 0.0;
-        for (Sale sale : saleService.viewAllSales()) {
-            if (sale.wasMadeIn(month, year)) {
-                totalSales += sale.getTotalAmount();
-            }
-        }
-
-        double totalReturns = 0.0;
-        for (Return returnItem : returns) {
-            if (returnItem.wasRegisteredIn(month, year)) {
-                totalReturns += returnItem.getRefundAmount();
-            }
-        }
-
-        return totalSales - totalReturns;
     }
 }

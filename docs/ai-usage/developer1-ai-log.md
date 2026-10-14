@@ -226,3 +226,41 @@ si
 
 **Solution obtained and decision taken:**
 Used `belongsToCategory(String)` instead of `getCategory()`: each subclass answers only for its own category and accessories always answer `false`, so the set of discounted products is identical for any target string. The other additive methods (`isWarrantyEligible`, `getAccessoryType`, `Sale.findProduct`/`wasMadeIn`, the `Return` queries and `Warranty.covers`) were added before their callers exist, so every commit compiles and the Developer 2 and Technical Lead corrections can build on them. `mvn clean verify` kept all 88 tests green and the scripted menu run matched the baseline line by line.
+
+## Requirement 8 — Phase 1: Audit
+
+### Entry 14
+
+**Date:** 2026-10-14
+**Tool used:** Claude Code
+
+**Reason for use:**
+Clarify the difference between a type switch that breaks the Open/Closed Principle and one that can be accepted, before writing the verdicts for the product repository and the hierarchies.
+
+**Problem faced:**
+`ProductRepository` still branches on the product type to write and read the CSV, which looks like the classic OCP warning sign, while the hierarchies themselves are extended only by adding subclasses. The Requerimiento 8 AI policy does not allow asking the AI to find the violations, so the question was limited to the concept.
+
+**Prompt used:**
+aprobado
+
+**Solution obtained and decision taken:**
+Used the AI only to discuss when a single, localized type switch is an acceptable cost. Developer 1 decided to accept the repository switch with an explicit justification (a new type changes the persisted format anyway, and the knowledge sits in one class) and to record two real violations: the receipt and certificate layouts inside `Return` and `Warranty` (SRP) and `ProductService` depending on the concrete repository (DIP). LSP was confirmed correct for every hierarchy after checking each override against its base contract.
+
+## Requirement 8 — Phase 2: Correction
+
+### Entry 15
+
+**Date:** 2026-10-14
+**Tool used:** Claude Code
+
+**Reason for use:**
+Choose how to separate the receipt and certificate layouts from `Return` and `Warranty` without removing methods that earlier requirements define as part of the domain API.
+
+**Problem faced:**
+SRP asks that the domain classes stop changing for presentation reasons, but `generateReturnReceipt()` and `generateWarrantyCertificate()` are required by Requerimientos 3 and 4 and are covered by existing tests. Removing them would change the public API that the menus and the tests use.
+
+**Prompt used:**
+aprobado
+
+**Solution obtained and decision taken:**
+Moved each layout verbatim into its own class (`ReturnReceipt`, `WarrantyCertificate`) that reads the domain object through its getters, and kept the original methods as one-line delegations, so the text and the API are unchanged while the layout has its own reason to change. `ProductService` now depends on a `ProductStore` interface placed in the persistence package, keeping the layer rule. `WarrantyKind` was added before Developer 2 needs it, so every commit compiles. The first receipt commit only added the class because the edit to `Return` failed silently; the delegation was completed in the next commit. All 93 tests stayed green and the scripted menu run matched the baseline line by line.

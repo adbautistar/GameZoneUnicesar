@@ -181,32 +181,12 @@ public class Sale {
     /**
      * Builds a human-readable receipt for this sale, in Spanish, including
      * the sale id, date, customer, seller, purchased products, and total.
+     * The layout is defined by {@link SaleReceipt}.
      *
      * @return the formatted receipt text
      */
     public String generateReceipt() {
-        StringBuilder receipt = new StringBuilder();
-        receipt.append("===== Recibo de Venta =====\n");
-        receipt.append("ID Venta: ").append(id).append("\n");
-        receipt.append("Fecha: ").append(date).append("\n");
-        receipt.append("Cliente: ").append(customer.getFullName()).append("\n");
-        receipt.append("Vendedor: ").append(seller.getFullName()).append("\n");
-        receipt.append("Productos:\n");
-        for (Product product : products) {
-            receipt.append("  - ").append(product.getTitle())
-                   .append(" ($").append(String.format("%.2f", product.getPrice())).append(")\n");
-        }
-        if (appliedPromotionName != null && discountAmount > 0) {
-            double subtotal = totalAmount + discountAmount;
-            receipt.append("Subtotal: $").append(String.format("%.2f", subtotal)).append("\n");
-            receipt.append("Descuento (").append(appliedPromotionName).append("): -$")
-                   .append(String.format("%.2f", discountAmount)).append("\n");
-            receipt.append("Total final: $").append(String.format("%.2f", totalAmount)).append("\n");
-        } else {
-            receipt.append("Total: $").append(String.format("%.2f", totalAmount)).append("\n");
-        }
-        receipt.append("============================");
-        return receipt.toString();
+        return new SaleReceipt(this).render();
     }
 
     /**

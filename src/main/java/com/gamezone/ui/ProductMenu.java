@@ -11,7 +11,7 @@ import java.util.Scanner;
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
-public class ProductMenu {
+public class ProductMenu implements MenuOption {
 
     private final Scanner scanner;
     private final ProductService productService;
@@ -115,5 +115,23 @@ public class ProductMenu {
         for (Product product : products) {
             System.out.println(product.getDescription());
         }
+    }
+
+    /**
+     * Returns the label of this submenu in the main menu.
+     *
+     * @return "Gestion de productos"
+     */
+    @Override
+    public String getLabel() {
+        return "Gestion de productos";
+    }
+
+    /**
+     * Shows this submenu until the user goes back to the main menu.
+     */
+    @Override
+    public void run() {
+        show();
     }
 }

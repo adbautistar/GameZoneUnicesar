@@ -21,7 +21,7 @@ import java.util.List;
  * items as ids and loaded back as {@link SaleRecord}s; resolving those ids
  * into domain objects is the responsibility of the service layer.
  */
-public class SaleRepository {
+public class SaleRepository implements SaleStore {
 
     private static final String DEFAULT_FILE_PATH = "data/sales.csv";
 
@@ -49,6 +49,7 @@ public class SaleRepository {
      *
      * @param sales the complete list of sales to persist
      */
+    @Override
     public void saveAll(List<Sale> sales) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Sale sale : sales) {
@@ -66,6 +67,7 @@ public class SaleRepository {
      *
      * @return the stored sale records, or an empty list if the file does not exist
      */
+    @Override
     public List<SaleRecord> loadAll() {
         List<SaleRecord> records = new ArrayList<>();
         Path path = Path.of(filePath);

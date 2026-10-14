@@ -62,16 +62,26 @@ classDiagram
     Customer "1" o-- "0..*" Sale : purchaseHistory
 
     %% ===== PERSISTENCE LAYER =====
-    class ProductRepository {
+    class ProductStore {
+        <<interface>>
         +saveAll(products List~Product~) void
         +loadAll() List~Product~
     }
-    class PersonRepository {
+    class PersonStore {
+        <<interface>>
         +saveAllCustomers(customers List~Customer~) void
         +loadAllCustomers() List~Customer~
         +saveAllSellers(sellers List~Seller~) void
         +loadAllSellers() List~Seller~
     }
+    class SaleStore {
+        <<interface>>
+        +saveAll(sales List~Sale~) void
+        +loadAll() List~SaleRecord~
+    }
+    class ProductRepository
+    class PersonRepository
+    class SaleRepository
     class SaleRecord {
         -id: String
         -customerId: String
@@ -80,11 +90,10 @@ classDiagram
         -appliedPromotionName: String
         -discountAmount: double
     }
-    class SaleRepository {
-        +saveAll(sales List~Sale~) void
-        +loadAll() List~SaleRecord~
-    }
 
+    ProductStore <|.. ProductRepository
+    PersonStore <|.. PersonRepository
+    SaleStore <|.. SaleRepository
     ProductRepository ..> Product
     PersonRepository ..> Customer
     PersonRepository ..> Seller
@@ -92,8 +101,28 @@ classDiagram
     SaleRepository ..> SaleRecord
 
     %% ===== SERVICE LAYER =====
+    class ItemSource {
+        <<interface>>
+        +findItem(id String) Product
+        +decreaseStock(id String) void
+        +restoreStock(id String) void
+    }
+    class ItemLookup {
+        <<interface>>
+        +findItem(id String) Product
+    }
+    class PersonLookup {
+        <<interface>>
+        +findCustomerById(id String) Customer
+        +findSellerById(id String) Seller
+    }
+    class SaleLookup {
+        <<interface>>
+        +findById(id String) Sale
+        +viewAllSales() List~Sale~
+    }
     class ProductService {
-        -repository: ProductRepository
+        -repository: ProductStore
         +registerVideoGame(...) void
         +registerConsole(...) void
         +listAllProducts() List~Product~
@@ -101,7 +130,7 @@ classDiagram
         +findById(id String) Product
     }
     class PersonService {
-        -repository: PersonRepository
+        -repository: PersonStore
         +registerCustomer(...) void
         +findCustomerById(id String) Customer
         +findSellerById(id String) Seller
@@ -109,16 +138,15 @@ classDiagram
         +listAllSellers() List~Seller~
     }
     class ItemCatalog {
-        -productService: ProductService
-        -accessoryService: AccessoryService
+        -sources: List~ItemSource~
         +findItem(id String) Product
         +decreaseStock(item Product) void
         +restoreStock(item Product) void
     }
     class SaleService {
-        -repository: SaleRepository
-        -personService: PersonService
-        -itemCatalog: ItemCatalog
+        -repository: SaleStore
+        -personLookup: PersonLookup
+        -itemLookup: ItemLookup
         +recordSale(sale Sale) void
         +viewAllSales() List~Sale~
         +viewSalesByCustomer(customerId String) List~Sale~
@@ -127,31 +155,38 @@ classDiagram
     }
     class SaleRegistrationService {
         -saleService: SaleService
-        -personService: PersonService
+        -personLookup: PersonLookup
         -itemCatalog: ItemCatalog
-        -promotionService: PromotionService
-        -warrantyService: WarrantyService
+        -promotionSelector: PromotionSelector
+        -warrantyAssigner: WarrantyAssigner
         +registerSale(customerId, sellerId, productIds, extendedWarrantyIds) Sale
-        +findWarrantyEligibleItems(productIds List~String~) List~Product~
+        +findWarrantyEligibleItems(productIds) List~Product~
     }
 
-    ProductService "1" --> "1" ProductRepository
+    ItemSource <|.. ProductService
+    ItemLookup <|.. ItemCatalog
+    PersonLookup <|.. PersonService
+    SaleLookup <|.. SaleService
+    ProductService "1" --> "1" ProductStore
     ProductService ..> Product
-    PersonService "1" --> "1" PersonRepository
-    ItemCatalog "1" --> "1" ProductService
-    SaleService "1" --> "1" SaleRepository
-    SaleService "1" --> "1" PersonService
-    SaleService "1" --> "1" ItemCatalog
+    PersonService "1" --> "1" PersonStore
+    ItemCatalog "1" --> "1..*" ItemSource
+    SaleService "1" --> "1" SaleStore
+    SaleService "1" --> "1" PersonLookup
+    SaleService "1" --> "1" ItemLookup
     SaleService ..> Sale
     SaleRegistrationService "1" --> "1" SaleService
-    SaleRegistrationService "1" --> "1" PersonService
+    SaleRegistrationService "1" --> "1" PersonLookup
     SaleRegistrationService "1" --> "1" ItemCatalog
 
     %% ===== UI LAYER =====
+    class MenuOption {
+        <<interface>>
+        +getLabel() String
+        +run() void
+    }
     class ConsoleMenu {
-        -productMenu: ProductMenu
-        -personMenu: PersonMenu
-        -saleMenu: SaleMenu
+        -options: List~MenuOption~
         +start() void
     }
     class ProductMenu {
@@ -164,9 +199,10 @@ classDiagram
         +show() void
     }
 
-    ConsoleMenu "1" --> "1" ProductMenu
-    ConsoleMenu "1" --> "1" PersonMenu
-    ConsoleMenu "1" --> "1" SaleMenu
+    ConsoleMenu "1" --> "1..*" MenuOption
+    MenuOption <|.. ProductMenu
+    MenuOption <|.. PersonMenu
+    MenuOption <|.. SaleMenu
     ProductMenu "1" --> "1" ProductService
     PersonMenu "1" --> "1" PersonService
     SaleMenu "1" --> "1" SaleService
@@ -178,6 +214,9 @@ classDiagram
     }
 
     Main ..> ConsoleMenu
+    Main ..> ProductMenu
+    Main ..> PersonMenu
+    Main ..> SaleMenu
     Main ..> ProductRepository
     Main ..> PersonRepository
     Main ..> SaleRepository
@@ -188,6 +227,8 @@ classDiagram
     Main ..> SaleRegistrationService
 ```
 
-**Scope of this diagram:** the classes of Taller 1 (products, people, sales, UI and entry point) as they stand after the GRASP correction of Requerimiento 7 (v1.5.0), including the new classes that replaced parts of them (`SaleRecord`, `ItemCatalog`, `SaleRegistrationService`, and the product, person and sale submenus). `ItemCatalog` also depends on `AccessoryService`, and `SaleRegistrationService` on `PromotionService` and `WarrantyService`; those modules (Requerimientos 1-4) and the other four submenus are shown in [grasp-class-diagram.md](grasp-class-diagram.md).
+**Scope of this diagram:** the classes of Taller 1 (products, people, sales, UI and entry point) as they stand after the GRASP correction of Requerimiento 7 (v1.5.0) and the SOLID correction of Requerimiento 8 (v1.6.0), including the classes and interfaces that replaced parts of them. `ItemCatalog` also receives `AccessoryService` as an `ItemSource`; `SaleRegistrationService` also depends on `PromotionSelector` and `WarrantyAssigner`; `Sale.generateReceipt()` delegates to `SaleReceipt`; the other modules (Requerimientos 1-4) and the other five menu options are shown in [grasp-class-diagram.md](grasp-class-diagram.md) and [solid-class-diagram.md](solid-class-diagram.md).
 
 **No layering exceptions remain.** Until v1.4.1, `SaleRepository` depended on `ProductService` and `PersonService` to resolve references while loading `data/sales.csv`, a reverse dependency that the GRASP audit classified as a Low Coupling violation (V-11). Since v1.5.0 the repository loads `SaleRecord`s that keep only ids, and `SaleService` resolves them, so persistence depends only on the model.
+
+**Where the abstractions live.** The store interfaces (`ProductStore`, `PersonStore`, `SaleStore`, …) sit in the persistence package next to the repositories that implement them, so that services depend on persistence and never the reverse (Taller 1 layer rule). The other interfaces sit next to the clients that need them: `ItemLookup`, `ItemSource`, `PersonLookup`, `SaleLookup`, `PromotionSelector` and `WarrantyAssigner` in the service package, `MenuOption` in the UI package.

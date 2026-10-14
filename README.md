@@ -117,6 +117,27 @@ Change log, non-regression strategy and evidence: [grasp-refactor-log.md](docs/g
 
 **Non-regression evidence:** `mvn clean verify` stays green (88 → 93 tests); a scripted run of every menu operation produces the same normalized output before and after the correction (empty diff).
 
+## SOLID Audit and Correction (Requerimiento 8, v1.6.0)
+
+A second design-only release, on top of the GRASP correction: no menu operation, message or data format changed.
+
+**Audit.** Each role audited, against the five SOLID principles, only the code it wrote (including its GRASP changes); the Technical Lead also consolidated the three reports. Result: Liskov Substitution holds across the whole system; 13 violations of the other four principles, 7 of them on the boundary between two roles' code. The root cause of most of them: the system had no abstractions at all.
+
+- Individual reports: [leader](docs/solid-audit/leader-audit.md), [developer 1](docs/solid-audit/developer1-audit.md), [developer 2](docs/solid-audit/developer2-audit.md)
+- [Consolidated audit](docs/solid-audit/consolidated-audit.md) — coverage, team verdicts, V-01..V-13 with owners, boundary findings, fragments examined and accepted
+- [Orienting questions](docs/solid-analysis.md), including how the SOLID findings relate to the GRASP ones
+
+**Correction.** Main design changes:
+
+- **SRP:** receipts and certificates are laid out by `SaleReceipt`, `ReturnReceipt` and `WarrantyCertificate` (the domain methods delegate); the monthly balance moved to `MonthlyBalanceService`.
+- **OCP:** `ItemCatalog` asks its `ItemSource`s instead of checking types; warranty kinds live only in `WarrantyKind`; `ConsoleMenu` numbers and runs the `MenuOption`s composed in `Main`.
+- **ISP:** read-only clients depend on `SaleLookup`, `PersonLookup` and `ItemLookup` instead of whole services.
+- **DIP:** every service depends on a store interface (`ProductStore`, `SaleStore`, …); sale registration depends on `PromotionSelector` and `WarrantyAssigner`, owned by the use case.
+
+Change log, non-regression evidence and coordination notes: [solid-refactor-log.md](docs/solid-refactor-log.md). Before/after diagrams: [solid-class-diagram.md](docs/solid-class-diagram.md).
+
+**Non-regression evidence:** `mvn clean verify` stays green (93 → 96 tests); the scripted run of every menu operation produces the same normalized output as before the correction (empty diff).
+
 ## Running Tests
 
 The project includes an automated test suite (JUnit 5, AssertJ, Mockito) covering the model, persistence, and service layers, plus end-to-end integration scenarios across all modules.
@@ -174,6 +195,14 @@ GameZoneUnicesar/
     │   ├── developer1-audit.md
     │   ├── developer2-audit.md
     │   └── consolidated-audit.md
+    ├── solid-analysis.md
+    ├── solid-class-diagram.md
+    ├── solid-refactor-log.md
+    ├── solid-audit/
+    │   ├── leader-audit.md
+    │   ├── developer1-audit.md
+    │   ├── developer2-audit.md
+    │   └── consolidated-audit.md
     └── ai-usage/
         ├── leader-ai-log.md
         ├── developer1-ai-log.md
@@ -192,6 +221,7 @@ See [TEAM.md](TEAM.md) for roles, module ownership, and committed activities.
 - [Layers Diagram](docs/layers-diagram.md)
 - [Version Control](docs/version-control.md) — branches, full commit log, commits per team member, and Pull Requests
 - [GRASP Consolidated Audit](docs/grasp-audit/consolidated-audit.md) and [GRASP Refactor Log](docs/grasp-refactor-log.md)
+- [SOLID Consolidated Audit](docs/solid-audit/consolidated-audit.md) and [SOLID Refactor Log](docs/solid-refactor-log.md)
 
 ## AI Usage Logs
 

@@ -1,56 +1,28 @@
 package com.gamezone.ui;
 
-import com.gamezone.service.AccessoryService;
-import com.gamezone.service.PersonService;
-import com.gamezone.service.ProductService;
-import com.gamezone.service.PromotionService;
-import com.gamezone.service.ReturnService;
-import com.gamezone.service.SaleRegistrationService;
-import com.gamezone.service.SaleService;
-import com.gamezone.service.WarrantyService;
-
+import java.util.List;
 import java.util.Scanner;
 
 /**
  * Console-based user interface for GameZone Unicesar. Shows the main menu in
- * Spanish and delegates each module to its own submenu class, which in turn
- * delegates every operation to the service layer.
+ * Spanish, numbering the options it receives in order, and runs the option
+ * the user chooses. It does not know any concrete submenu: a new module is
+ * added by giving it one more {@link MenuOption}.
  */
 public class ConsoleMenu {
 
     private final Scanner scanner;
-    private final ProductMenu productMenu;
-    private final PersonMenu personMenu;
-    private final SaleMenu saleMenu;
-    private final AccessoryMenu accessoryMenu;
-    private final PromotionMenu promotionMenu;
-    private final ReturnMenu returnMenu;
-    private final WarrantyMenu warrantyMenu;
+    private final List<MenuOption> options;
 
     /**
-     * Creates a new console menu backed by the given services.
+     * Creates a new console menu with the given options.
      *
-     * @param productService   the service used for product operations
-     * @param personService    the service used for customer and seller operations
-     * @param saleService      the service used for sale queries
-     * @param saleRegistrationService the use case used to register new sales
-     * @param accessoryService the service used for accessory operations
-     * @param promotionService the service used for promotion operations
-     * @param returnService    the service used for return operations
-     * @param warrantyService  the service used for warranty operations
+     * @param scanner the scanner reading from standard input, shared with the options
+     * @param options the main-menu options, shown as 1, 2, 3, ... in this order
      */
-    public ConsoleMenu(ProductService productService, PersonService personService, SaleService saleService,
-                        SaleRegistrationService saleRegistrationService,
-                        AccessoryService accessoryService, PromotionService promotionService,
-                        ReturnService returnService, WarrantyService warrantyService) {
-        this.scanner = new Scanner(System.in);
-        this.productMenu = new ProductMenu(scanner, productService);
-        this.personMenu = new PersonMenu(scanner, personService);
-        this.saleMenu = new SaleMenu(scanner, saleService, saleRegistrationService);
-        this.accessoryMenu = new AccessoryMenu(scanner, accessoryService);
-        this.promotionMenu = new PromotionMenu(scanner, promotionService);
-        this.returnMenu = new ReturnMenu(scanner, returnService, saleService);
-        this.warrantyMenu = new WarrantyMenu(scanner, warrantyService);
+    public ConsoleMenu(Scanner scanner, List<MenuOption> options) {
+        this.scanner = scanner;
+        this.options = List.copyOf(options);
     }
 
     /**
@@ -61,49 +33,32 @@ public class ConsoleMenu {
         while (running) {
             System.out.println();
             System.out.println("===== GameZone Unicesar =====");
-            System.out.println("1. Gestion de productos");
-            System.out.println("2. Gestion de personas");
-            System.out.println("3. Gestion de ventas");
-            System.out.println("4. Gestion de accesorios");
-            System.out.println("5. Gestion de promociones");
-            System.out.println("6. Gestion de devoluciones");
-            System.out.println("7. Consultar balance mensual");
-            System.out.println("8. Gestion de garantias");
+            for (int i = 0; i < options.size(); i++) {
+                System.out.println((i + 1) + ". " + options.get(i).getLabel());
+            }
             System.out.println("0. Salir");
             System.out.print("Seleccione una opcion: ");
             String option = scanner.nextLine().trim();
-            switch (option) {
-                case "1":
-                    productMenu.show();
-                    break;
-                case "2":
-                    personMenu.show();
-                    break;
-                case "3":
-                    saleMenu.show();
-                    break;
-                case "4":
-                    accessoryMenu.show();
-                    break;
-                case "5":
-                    promotionMenu.show();
-                    break;
-                case "6":
-                    returnMenu.show();
-                    break;
-                case "7":
-                    returnMenu.showMonthlyBalance();
-                    break;
-                case "8":
-                    warrantyMenu.show();
-                    break;
-                case "0":
-                    running = false;
-                    System.out.println("Gracias por usar GameZone Unicesar.");
-                    break;
-                default:
-                    System.out.println("Opcion invalida.");
+            if ("0".equals(option)) {
+                running = false;
+                System.out.println("Gracias por usar GameZone Unicesar.");
+                continue;
+            }
+            MenuOption chosen = find(option);
+            if (chosen == null) {
+                System.out.println("Opcion invalida.");
+            } else {
+                chosen.run();
             }
         }
+    }
+
+    private MenuOption find(String option) {
+        for (int i = 0; i < options.size(); i++) {
+            if (String.valueOf(i + 1).equals(option)) {
+                return options.get(i);
+            }
+        }
+        return null;
     }
 }

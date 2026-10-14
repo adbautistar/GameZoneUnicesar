@@ -5,19 +5,19 @@ import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.PercentageDiscount;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
-import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.PromotionStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PromotionService {
+public class PromotionService implements PromotionSelector {
 
-    private final PromotionRepository repository;
+    private final PromotionStore repository;
     private final List<Promotion> promotions;
 
-    public PromotionService(PromotionRepository repository) {
+    public PromotionService(PromotionStore repository) {
         this.repository = repository;
         this.promotions = new ArrayList<>(repository.loadAll());
     }
@@ -73,6 +73,7 @@ public class PromotionService {
         return active;
     }
 
+    @Override
     public Promotion findBestPromotionFor(Sale sale) {
         Promotion best = null;
         double bestDiscount = 0.0;

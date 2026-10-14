@@ -2,7 +2,7 @@
 
 This document consolidates the version control activity of the project: the branching strategy, every branch created, every Pull Request merged, commits grouped by simulated team member and by phase, the full commit log, branch protection rules, and release tags. It is generated from the actual state of the repository (`git log`, `git tag`, and the GitHub API via `gh`), not reconstructed from memory.
 
-**Snapshot:** commit `9fcd045` on `feature/grasp-refactor`, taken during Phase 15 just before the Technical Lead's GRASP correction PR and the `v1.5.0` release PR were opened. Those two PRs and the `v1.5.0` tag are listed in the Phase 15 notes below.
+**Snapshot:** commit `eb9bb95` on `feature/solid-refactor`, taken during Phase 16 just before the Technical Lead's SOLID correction PR and the `v1.6.0` release PR were opened. Those two PRs and the `v1.6.0` tag are listed in the Phase 16 notes below.
 
 ## Branching Strategy
 
@@ -16,7 +16,7 @@ Three patterns were used over the life of the project:
 
 - **Baseline (Phases 5-7):** one feature branch per role, each with its own PR.
 - **Extended modules (Phases 10-13):** one shared feature branch per module; the three roles commit to it in sequential task groups and a single PR closes the module.
-- **Requerimiento 7 (Phase 15):** one shared feature branch per part (audit, correction) with **three PRs per branch, one per role** (Developer 1, Developer 2, then the Technical Lead); the branch is deleted after the third PR.
+- **Requerimientos 7 and 8 (Phases 15-16):** one shared feature branch per part (audit, correction) with **three PRs per branch, one per role** (Developer 1, Developer 2, then the Technical Lead); the branch is deleted after the third PR.
 
 Both `main` and `develop` have branch protection enabled on GitHub:
 
@@ -30,7 +30,7 @@ The required approving review count is 0 because this is a single-user reference
 
 ## Branches Created
 
-19 branches existed over the life of the project. `main` and `develop` are permanent; every `feature/*` branch was deleted immediately after its last Pull Request was merged, per [CLAUDE.md](../CLAUDE.md) rule 7.
+21 branches existed over the life of the project. `main` and `develop` are permanent; every `feature/*` branch was deleted immediately after its last Pull Request was merged, per [CLAUDE.md](../CLAUDE.md) rule 7.
 
 | Branch | Purpose | Created from | Merged into | Status |
 |---|---|---|---|---|
@@ -52,9 +52,11 @@ The required approving review count is 0 because this is a single-user reference
 | `feature/warranty-module` | Phase 13 — Warranty module (three task groups) | `develop` | `develop` (PR #20) | Deleted |
 | `feature/test-suite` | Phase 14 — automated test suite | `develop` | `develop` (PR #22) | Deleted |
 | `feature/grasp-audit` | Phase 15, part 1 — GRASP audit (Requerimiento 7) | `develop` | `develop` (PR #24, PR #25, PR #26) | Deleted |
-| `feature/grasp-refactor` | Phase 15, part 2 — GRASP correction (Requerimiento 7) | `develop` | `develop` (PR #27, PR #28) | Active (Phase 15, final PR pending) |
+| `feature/grasp-refactor` | Phase 15, part 2 — GRASP correction (Requerimiento 7) | `develop` | `develop` (PR #27, PR #28, PR #29) | Deleted |
+| `feature/solid-audit` | Phase 16, part 1 — SOLID audit (Requerimiento 8) | `develop` | `develop` (PR #31, PR #32, PR #33) | Deleted |
+| `feature/solid-refactor` | Phase 16, part 2 — SOLID correction (Requerimiento 8) | `develop` | `develop` (PR #34, PR #35) | Active (Phase 16, final PR pending) |
 
-`develop` was merged into `main` 8 times through release Pull Requests (#8, #10, #12, #15, #17, #19, #21, #23), one per tag.
+`develop` was merged into `main` 9 times through release Pull Requests (#8, #10, #12, #15, #17, #19, #21, #23, #30), one per tag.
 
 ## Pull Requests
 
@@ -90,21 +92,28 @@ All Pull Requests were self-approved and merged with a regular merge (not squash
 | [#26](https://github.com/adbautistar/GameZoneUnicesar/pull/26) | docs: leader GRASP audit and consolidated audit | `feature/grasp-audit` | `develop` | 2026-10-13 15:38 | adbautistar (self) |
 | [#27](https://github.com/adbautistar/GameZoneUnicesar/pull/27) | refactor: developer1 GRASP corrections | `feature/grasp-refactor` | `develop` | 2026-10-13 15:44 | adbautistar (self) |
 | [#28](https://github.com/adbautistar/GameZoneUnicesar/pull/28) | refactor: developer2 GRASP corrections | `feature/grasp-refactor` | `develop` | 2026-10-13 15:53 | adbautistar (self) |
+| [#29](https://github.com/adbautistar/GameZoneUnicesar/pull/29) | refactor: leader GRASP corrections | `feature/grasp-refactor` | `develop` | 2026-10-13 16:08 | adbautistar (self) |
+| [#30](https://github.com/adbautistar/GameZoneUnicesar/pull/30) | release: v1.5.0 GRASP audit and correction | `develop` | `main` | 2026-10-13 16:09 | adbautistar (self) |
+| [#31](https://github.com/adbautistar/GameZoneUnicesar/pull/31) | docs: developer1 SOLID audit | `feature/solid-audit` | `develop` | 2026-10-14 05:10 | adbautistar (self) |
+| [#32](https://github.com/adbautistar/GameZoneUnicesar/pull/32) | docs: developer2 SOLID audit | `feature/solid-audit` | `develop` | 2026-10-14 05:12 | adbautistar (self) |
+| [#33](https://github.com/adbautistar/GameZoneUnicesar/pull/33) | docs: leader SOLID audit and consolidated audit | `feature/solid-audit` | `develop` | 2026-10-14 05:15 | adbautistar (self) |
+| [#34](https://github.com/adbautistar/GameZoneUnicesar/pull/34) | refactor: developer1 SOLID corrections | `feature/solid-refactor` | `develop` | 2026-10-14 05:19 | adbautistar (self) |
+| [#35](https://github.com/adbautistar/GameZoneUnicesar/pull/35) | refactor: developer2 SOLID corrections | `feature/solid-refactor` | `develop` | 2026-10-14 05:28 | adbautistar (self) |
 
-**Total merged Pull Requests at this snapshot: 28** (minimum required by the taller: 6; Phase 15 requires 3 per part).
+**Total merged Pull Requests at this snapshot: 35** (minimum required by the taller: 6; Phase 15 requires 3 per part).
 
 ## Commits by Team Member
 
-Counts of every commit reachable from the snapshot commit `9fcd045` (`git shortlog -sn HEAD`).
+Counts of every commit reachable from the snapshot commit `eb9bb95` (`git shortlog -sn HEAD`).
 
 | Simulated identity | Git author | Commits | Role |
 |---|---|---|---|
-| Technical Lead | `alfredo Bautista <adbautista@unicesar.edu.co>` | 102 | Setup, Sale module, UI, Main, integration, documentation |
-| Developer 2 | `Dev2 Simulated <dev2@gamezone-ref.local>` | 63 | Person module; repositories and services of Requerimientos 1-4 |
-| Developer 1 | `Dev1 Simulated <dev1@gamezone-ref.local>` | 59 | Product module; model work of Requerimientos 1-4 |
-| Technical Lead (merge commits) | `adbautistar` (GitHub account, via PR merge) | 20 | Pull Request merges |
+| Technical Lead | `alfredo Bautista <adbautista@unicesar.edu.co>` | 135 | Setup, Sale module, UI, Main, integration, documentation |
+| Developer 2 | `Dev2 Simulated <dev2@gamezone-ref.local>` | 88 | Person module; repositories and services of Requerimientos 1-4 |
+| Developer 1 | `Dev1 Simulated <dev1@gamezone-ref.local>` | 76 | Product module; model work of Requerimientos 1-4 |
+| Technical Lead (merge commits) | `adbautistar` (GitHub account, via PR merge) | 26 | Pull Request merges |
 
-**Total commits: 244.**
+**Total commits: 325.**
 
 Note on the two Technical Lead rows: commits authored with the local git identity are regular commits made with `git commit`. Merge commits are attributed to the GitHub account `adbautistar`, because `gh pr merge` creates them through the GitHub REST API with the authenticated account's identity. Both represent the same person (Alfredo David Bautista Romero) simulating the Technical Lead role. Dev1 and Dev2 commits use the `--author` flag with a distinct simulated identity, per the commit attribution strategy in [CLAUDE.md](../CLAUDE.md).
 
@@ -118,20 +127,21 @@ Note on the two Technical Lead rows: commits authored with the local git identit
 | Phase 12 — Returns | `v1.2.0..v1.3.0` | 6 | 6 | 7 | 2 | 21 |
 | Phase 13 — Warranties | `v1.3.0..v1.4.0` | 6 | 6 | 6 | 2 | 20 |
 | Phase 14 — Test suite | `v1.4.0..v1.4.1` | 6 | 8 | 8 | 2 | 24 |
-| Phase 15 — GRASP audit and correction (so far) | `v1.4.1..HEAD` | 17 | 19 | 33 | 5 | 74 |
+| Phase 15 — GRASP audit and correction | `v1.4.1..v1.5.0` | 17 | 19 | 36 | 7 | 79 |
+| Phase 16 — SOLID audit and correction (so far) | `v1.5.0..HEAD` | 17 | 25 | 30 | 5 | 77 |
 
-Minimums: Taller 1 — 12 commits per role, 36 in total, 6 PRs. Phases 10-13 — 6 commits per task group (18 per phase). Phase 15 — 6 commits per role in each part, and 3 PRs per part.
+Minimums: Taller 1 — 12 commits per role, 36 in total, 6 PRs. Phases 10-13 — 6 commits per task group (18 per phase). Phases 15 and 16 — 6 commits per role in each part, and 3 PRs per part.
 
-Phase 15 detail:
+Phase 16 detail:
 
 | Part | Developer 1 | Developer 2 | Technical Lead | PRs |
 |---|---|---|---|---|
-| Part 1 — audit (`feature/grasp-audit`) | 8 | 9 | 10 | #24, #25, #26 |
-| Part 2 — correction (`feature/grasp-refactor`, up to this snapshot) | 9 | 10 | 23 (including setup and the `Main` coordination commit) | #27, #28, and the Technical Lead's PR that contains this document |
+| Part 1 — audit (`feature/solid-audit`) | 9 | 8 | 10 | #31, #32, #33 |
+| Part 2 — correction (`feature/solid-refactor`, up to this snapshot) | 8 | 17 | 20 (including setup and coordination commits) | #34, #35, and the Technical Lead's PR that contains this document |
 
 ## Full Commit Log
 
-Chronological, oldest first, every commit reachable from `9fcd045` (`git log --reverse --pretty="%h %ad %an: %s" --date=short`).
+Chronological, oldest first, every commit reachable from `eb9bb95` (`git log --reverse --pretty="%h %ad %an: %s" --date=short`).
 
 | Hash | Date | Author | Message |
 |---|---|---|---|
@@ -379,6 +389,87 @@ Chronological, oldest first, every commit reachable from `9fcd045` (`git log --r
 | `e23352f` | 2026-10-13 | alfredo Bautista | docs(refactor): add after class diagram for GRASP correction |
 | `1db3bb2` | 2026-10-13 | alfredo Bautista | docs: update class and layer diagrams after GRASP correction |
 | `9fcd045` | 2026-10-13 | alfredo Bautista | docs: describe GRASP audit and correction in README |
+| `a277025` | 2026-10-13 | alfredo Bautista | docs: update CLAUDE.md and version control log for Phase 15 |
+| `981ddd4` | 2026-10-13 | alfredo Bautista | docs(refactor): log AI usage for leader GRASP corrections |
+| `6ef1add` | 2026-10-13 | alfredo Bautista | docs: simplify registerSale signature so the class diagram renders |
+| `dd695ce` | 2026-10-13 | adbautistar | Merge pull request #29 from adbautistar/feature/grasp-refactor |
+| `60fb135` | 2026-10-14 | Dev1 Simulated | docs(audit): add developer1 SOLID audit scope and product module findings |
+| `a8b8402` | 2026-10-14 | Dev1 Simulated | docs(audit): add accessory hierarchy findings to developer1 SOLID audit |
+| `0705210` | 2026-10-14 | Dev1 Simulated | docs(audit): add promotion hierarchy findings to developer1 SOLID audit |
+| `f83d639` | 2026-10-14 | Dev1 Simulated | docs(audit): add Return and canBeReturned findings to developer1 SOLID audit |
+| `5e7eacf` | 2026-10-14 | Dev1 Simulated | docs(audit): add warranty hierarchy findings to developer1 SOLID audit |
+| `b0e6516` | 2026-10-14 | Dev1 Simulated | docs(audit): complete developer1 SOLID audit with GRASP additions and summary |
+| `abc4a46` | 2026-10-14 | Dev1 Simulated | docs(audit): label the summary column of the developer1 SOLID audit as principle |
+| `9c8b711` | 2026-10-14 | Dev1 Simulated | docs(audit): answer SOLID analysis questions 1 and 3 |
+| `6b663be` | 2026-10-14 | Dev1 Simulated | docs(audit): log AI usage for developer1 SOLID audit |
+| `8c8f72a` | 2026-10-14 | adbautistar | Merge pull request #31 from adbautistar/feature/solid-audit |
+| `7df52f8` | 2026-10-14 | Dev2 Simulated | docs(audit): add developer2 SOLID audit scope and person module findings |
+| `9c53135` | 2026-10-14 | Dev2 Simulated | docs(audit): add accessory repository and service findings to developer2 SOLID audit |
+| `6344267` | 2026-10-14 | Dev2 Simulated | docs(audit): add promotion repository and service findings to developer2 SOLID audit |
+| `6c803ae` | 2026-10-14 | Dev2 Simulated | docs(audit): add return repository and service findings to developer2 SOLID audit |
+| `9352037` | 2026-10-14 | Dev2 Simulated | docs(audit): add warranty repository and service findings to developer2 SOLID audit |
+| `21919e5` | 2026-10-14 | Dev2 Simulated | docs(audit): complete developer2 SOLID audit with GRASP additions and summary |
+| `b8d5030` | 2026-10-14 | Dev2 Simulated | docs(audit): answer SOLID analysis question 4 |
+| `844f7f7` | 2026-10-14 | Dev2 Simulated | docs(audit): log AI usage for developer2 SOLID audit |
+| `6b8daa1` | 2026-10-14 | adbautistar | Merge pull request #32 from adbautistar/feature/solid-audit |
+| `c938133` | 2026-10-14 | alfredo Bautista | docs(audit): add leader SOLID audit scope and Sale findings |
+| `711438c` | 2026-10-14 | alfredo Bautista | docs(audit): add SaleRepository and SaleRecord findings to leader SOLID audit |
+| `54ba853` | 2026-10-14 | alfredo Bautista | docs(audit): add sale service findings to leader SOLID audit |
+| `8c51fef` | 2026-10-14 | alfredo Bautista | docs(audit): add console menu findings to leader SOLID audit |
+| `085937f` | 2026-10-14 | alfredo Bautista | docs(audit): complete leader SOLID audit with Main, restoreStock and summary |
+| `e563874` | 2026-10-14 | alfredo Bautista | docs(audit): verify SOLID audit coverage and record team verdicts per principle |
+| `1e87c27` | 2026-10-14 | alfredo Bautista | docs(audit): consolidate SOLID violations with definitive ids and owners |
+| `7ee14e0` | 2026-10-14 | alfredo Bautista | docs(audit): document SOLID boundary findings, accepted fragments and out-of-scope status |
+| `366e11f` | 2026-10-14 | alfredo Bautista | docs(audit): answer SOLID analysis questions 2 and 5 |
+| `0150660` | 2026-10-14 | alfredo Bautista | docs(audit): log AI usage for leader SOLID audit and consolidation |
+| `123ba66` | 2026-10-14 | adbautistar | Merge pull request #33 from adbautistar/feature/solid-audit |
+| `3ead9c9` | 2026-10-14 | alfredo Bautista | docs(refactor): define SOLID non-regression strategy and record baseline results |
+| `3c46aac` | 2026-10-14 | alfredo Bautista | docs(refactor): add before class diagram for SOLID correction |
+| `2c35c84` | 2026-10-14 | Dev1 Simulated | refactor(product): depend on a ProductStore abstraction in ProductService (V-10) |
+| `88b44c4` | 2026-10-14 | Dev1 Simulated | refactor(model): move return receipt layout into ReturnReceipt (V-01) |
+| `81b6435` | 2026-10-14 | Dev1 Simulated | refactor(model): delegate generateReturnReceipt to ReturnReceipt (V-01) |
+| `069eefa` | 2026-10-14 | Dev1 Simulated | refactor(model): move warranty certificate layout into WarrantyCertificate (V-01) |
+| `7a37100` | 2026-10-14 | Dev1 Simulated | refactor(model): let each warranty expose its kind and how to build it (V-05) |
+| `8c467b1` | 2026-10-14 | Dev1 Simulated | docs(refactor): log developer1 SOLID corrections |
+| `abcd5c4` | 2026-10-14 | Dev1 Simulated | docs(refactor): log AI usage for developer1 SOLID corrections |
+| `7518791` | 2026-10-14 | adbautistar | Merge pull request #34 from adbautistar/feature/solid-refactor |
+| `371058f` | 2026-10-14 | Dev2 Simulated | refactor(person): depend on a PersonStore abstraction in PersonService (V-11) |
+| `2bbdbcc` | 2026-10-14 | Dev2 Simulated | refactor(accessory): depend on a AccessoryStore abstraction in AccessoryService (V-11) |
+| `e041a00` | 2026-10-14 | Dev2 Simulated | refactor(promotion): depend on a PromotionStore abstraction in PromotionService (V-11) |
+| `ee56dba` | 2026-10-14 | Dev2 Simulated | refactor(return): depend on a ReturnStore abstraction in ReturnService (V-11) |
+| `753f70d` | 2026-10-14 | Dev2 Simulated | refactor(warranty): depend on a WarrantyStore abstraction in WarrantyService (V-11) |
+| `846dd90` | 2026-10-14 | Dev2 Simulated | refactor(service): introduce ItemLookup for read-only item lookups (V-09) |
+| `6122f0d` | 2026-10-14 | Dev2 Simulated | refactor(service): add ItemSource abstraction and implement it in AccessoryService (V-04) |
+| `16a9fdf` | 2026-10-14 | Dev1 Simulated | refactor(product): implement ItemSource in ProductService (V-04) |
+| `1e26194` | 2026-10-14 | Dev2 Simulated | refactor(service): let ItemCatalog delegate to item sources instead of checking types (V-04) |
+| `bc10283` | 2026-10-14 | Dev2 Simulated | refactor(service): introduce SaleLookup read-only view of sales (V-07) |
+| `80b200a` | 2026-10-14 | alfredo Bautista | refactor(service): implement SaleLookup in SaleService (V-07) |
+| `6a474d8` | 2026-10-14 | Dev2 Simulated | refactor(service): depend on SaleLookup in return and warranty services (V-07) |
+| `7978e6f` | 2026-10-14 | Dev2 Simulated | refactor(persistence): keep warranty kinds in WarrantyKind only (V-05) |
+| `9336a26` | 2026-10-14 | Dev2 Simulated | refactor(service): extract monthly balance into MonthlyBalanceService (V-03) |
+| `c836dda` | 2026-10-14 | alfredo Bautista | refactor(ui): ask MonthlyBalanceService for the monthly balance (V-03) |
+| `9937ff4` | 2026-10-14 | Dev2 Simulated | refactor(service): remove monthly balance from ReturnService (V-03) |
+| `fd12437` | 2026-10-14 | Dev2 Simulated | docs(refactor): log developer2 SOLID corrections |
+| `f301cbd` | 2026-10-14 | Dev2 Simulated | docs(refactor): log AI usage for developer2 SOLID corrections |
+| `598ef4f` | 2026-10-14 | adbautistar | Merge pull request #35 from adbautistar/feature/solid-refactor |
+| `15326b2` | 2026-10-14 | alfredo Bautista | refactor(model): move sale receipt layout into SaleReceipt (V-02) |
+| `d40fc1c` | 2026-10-14 | alfredo Bautista | refactor(sale): depend on a SaleStore abstraction in SaleService (V-12) |
+| `cfe279a` | 2026-10-14 | alfredo Bautista | refactor(service): introduce PersonLookup for people lookups in sales (V-08) |
+| `b286423` | 2026-10-14 | Dev2 Simulated | refactor(person): implement PersonLookup in PersonService (V-08) |
+| `58f1b91` | 2026-10-14 | alfredo Bautista | refactor(service): depend on PersonLookup in the sales services (V-08) |
+| `ed8c23c` | 2026-10-14 | alfredo Bautista | refactor(service): depend on ItemLookup in SaleService (V-09) |
+| `8aa330d` | 2026-10-14 | alfredo Bautista | refactor(service): define PromotionSelector and WarrantyAssigner for sale registration (V-13) |
+| `a041ac7` | 2026-10-14 | Dev2 Simulated | refactor(service): implement PromotionSelector and WarrantyAssigner in the promotion and warranty services (V-13) |
+| `86d217b` | 2026-10-14 | alfredo Bautista | refactor(service): depend on PromotionSelector and WarrantyAssigner in SaleRegistrationService (V-13) |
+| `cf4c18e` | 2026-10-14 | alfredo Bautista | refactor(ui): add MenuOption and implement it in every submenu (V-06) |
+| `46fdb3a` | 2026-10-14 | alfredo Bautista | refactor(ui): move the monthly balance option into MonthlyBalanceMenu (V-06) |
+| `7d7d33f` | 2026-10-14 | alfredo Bautista | refactor(ui): let ConsoleMenu number and run the options composed in Main (V-06) |
+| `b5631d6` | 2026-10-14 | alfredo Bautista | docs(refactor): log leader SOLID corrections and final non-regression results |
+| `00b1420` | 2026-10-14 | alfredo Bautista | docs(refactor): correct the number of coordination commits in the SOLID log |
+| `4693865` | 2026-10-14 | alfredo Bautista | docs(refactor): add after class diagram for SOLID correction |
+| `45d9650` | 2026-10-14 | alfredo Bautista | docs: update class and layer diagrams after SOLID correction |
+| `b694e0c` | 2026-10-14 | alfredo Bautista | docs: describe SOLID audit and correction in README |
+| `eb9bb95` | 2026-10-14 | alfredo Bautista | docs: update CLAUDE.md and version control log for Phase 16 |
 
 ## Tags / Releases
 
@@ -394,18 +485,19 @@ Annotated tags mark each increment released to `main`:
 | `v1.3.0` | 2026-09-11 | `344ee71` | Return module release |
 | `v1.4.0` | 2026-09-11 | `99e772d` | Warranty module release |
 | `v1.4.1` | 2026-09-12 | `05cd326` | Test suite patch release |
-| `v1.5.0` | — | — | Planned at the end of Phase 15: GRASP audit and correction |
+| `v1.5.0` | 2026-10-13 | `e6e4d67` | GRASP audit and correction |
+| `v1.6.0` | — | — | Planned at the end of Phase 16: SOLID audit and correction |
 
 ## Quantitative Summary
 
 | Metric | Required | Actual (this snapshot) |
 |---|---|---|
-| Total commits | ≥ 36 (Taller 1) | 244 |
-| Commits — Developer 1 | ≥ 12 (Taller 1) | 59 |
-| Commits — Developer 2 | ≥ 12 (Taller 1) | 63 |
-| Commits — Technical Lead (incl. merges) | ≥ 12 (Taller 1) | 122 |
-| Merged Pull Requests | ≥ 6 (Taller 1) | 28 |
-| Feature branches remaining | 0 at the end of each phase | 1 (`feature/grasp-refactor`, deleted when its last PR merges) |
-| Release tags | — | `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.3.0`, `v1.4.0`, `v1.4.1` |
+| Total commits | ≥ 36 (Taller 1) | 325 |
+| Commits — Developer 1 | ≥ 12 (Taller 1) | 76 |
+| Commits — Developer 2 | ≥ 12 (Taller 1) | 88 |
+| Commits — Technical Lead (incl. merges) | ≥ 12 (Taller 1) | 161 |
+| Merged Pull Requests | ≥ 6 (Taller 1) | 35 |
+| Feature branches remaining | 0 at the end of each phase | 1 (`feature/solid-refactor`, deleted when its last PR merges) |
+| Release tags | — | `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.1.0`, `v1.2.0`, `v1.3.0`, `v1.4.0`, `v1.4.1`, `v1.5.0` |
 
 *Regenerate this document whenever new commits, branches, PRs or tags are added, so it stays a source of truth rather than a stale snapshot.*

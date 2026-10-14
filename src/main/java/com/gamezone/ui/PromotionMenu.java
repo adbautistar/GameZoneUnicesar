@@ -12,7 +12,7 @@ import java.util.Scanner;
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
-public class PromotionMenu {
+public class PromotionMenu implements MenuOption {
 
     private final Scanner scanner;
     private final PromotionService promotionService;
@@ -156,5 +156,23 @@ public class PromotionMenu {
             System.out.println(promotion.getId() + " - " + promotion.getName()
                 + " (" + promotion.getStartDate() + " a " + promotion.getEndDate() + ")");
         }
+    }
+
+    /**
+     * Returns the label of this submenu in the main menu.
+     *
+     * @return "Gestion de promociones"
+     */
+    @Override
+    public String getLabel() {
+        return "Gestion de promociones";
+    }
+
+    /**
+     * Shows this submenu until the user goes back to the main menu.
+     */
+    @Override
+    public void run() {
+        show();
     }
 }

@@ -22,27 +22,27 @@ import java.util.Map;
 public class SaleRegistrationService {
 
     private final SaleService saleService;
-    private final PersonService personService;
+    private final PersonLookup personLookup;
     private final ItemCatalog itemCatalog;
-    private final PromotionService promotionService;
-    private final WarrantyService warrantyService;
+    private final PromotionSelector promotionSelector;
+    private final WarrantyAssigner warrantyAssigner;
 
     /**
      * Creates a new sale registration use case.
      *
      * @param saleService      the service that records and stores sales
-     * @param personService    the service used to resolve customers and sellers
+     * @param personLookup    the lookup used to resolve customers and sellers
      * @param itemCatalog      the catalog used to resolve sold items and update their stock
-     * @param promotionService the service used to find the best active promotion
-     * @param warrantyService  the service used to assign warranties
+     * @param promotionSelector the policy used to choose the best active promotion
+     * @param warrantyAssigner  the policy used to assign warranties
      */
-    public SaleRegistrationService(SaleService saleService, PersonService personService, ItemCatalog itemCatalog,
-                                    PromotionService promotionService, WarrantyService warrantyService) {
+    public SaleRegistrationService(SaleService saleService, PersonLookup personLookup, ItemCatalog itemCatalog,
+                                    PromotionSelector promotionSelector, WarrantyAssigner warrantyAssigner) {
         this.saleService = saleService;
-        this.personService = personService;
+        this.personLookup = personLookup;
         this.itemCatalog = itemCatalog;
-        this.promotionService = promotionService;
-        this.warrantyService = warrantyService;
+        this.promotionSelector = promotionSelector;
+        this.warrantyAssigner = warrantyAssigner;
     }
 
     /**
@@ -69,11 +69,11 @@ public class SaleRegistrationService {
             throw new IllegalArgumentException("La venta debe contener al menos un producto.");
         }
 
-        Customer customer = personService.findCustomerById(customerId);
+        Customer customer = personLookup.findCustomerById(customerId);
         if (customer == null) {
             throw new IllegalArgumentException("Cliente no encontrado: " + customerId);
         }
-        Seller seller = personService.findSellerById(sellerId);
+        Seller seller = personLookup.findSellerById(sellerId);
         if (seller == null) {
             throw new IllegalArgumentException("Vendedor no encontrado: " + sellerId);
         }
@@ -91,18 +91,18 @@ public class SaleRegistrationService {
         Sale sale = new Sale(IdGenerator.next("SALE"), LocalDate.now(), customer, seller, products);
         sale.calculateTotal();
 
-        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+        Promotion bestPromotion = promotionSelector.findBestPromotionFor(sale);
         if (bestPromotion != null) {
             sale.applyPromotion(bestPromotion.getName(), bestPromotion.calculateDiscount(sale));
         }
 
         for (Product product : products) {
             if (product.isWarrantyEligible()) {
-                warrantyService.assignBasicWarranty(product, sale, sale.getDate());
+                warrantyAssigner.assignBasicWarranty(product, sale, sale.getDate());
             }
             if (productIdsWithExtendedWarranty != null
                     && productIdsWithExtendedWarranty.contains(product.getId())) {
-                ExtendedWarranty extended = warrantyService.assignExtendedWarranty(product, sale, sale.getDate());
+                ExtendedWarranty extended = warrantyAssigner.assignExtendedWarranty(product, sale, sale.getDate());
                 sale.addCharge(extended.getAdditionalCost());
             }
         }
