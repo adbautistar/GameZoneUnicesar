@@ -15,6 +15,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Module (requirement) | Classes and methods audited |
 |---|---|
 | Persons (Taller 1) | `Person`, `Customer`, `Seller`, `PersonRepository`, `PersonService` |
+| Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -22,11 +23,15 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Persons — Correct.** `PersonRepository` only handles the two CSV files; `PersonService` only registers and looks up people; `Customer` and `Seller` only hold their data.
 
+- **Accessories — Correct.** `AccessoryRepository` handles the CSV file; `AccessoryService` handles accessory rules.
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** Pending — audit in progress.
 
 - **Persons — Correct.** `PersonService` has no type switch; customers and sellers are handled through their own methods.
+
+- **Accessories — Accepted, not counted.** `AccessoryRepository` branches on the accessory type to write and read the file, and `AccessoryService` has one register method per type. A new accessory type necessarily brings new CSV columns and new input fields, so both change anyway; the knowledge is localized in one class each. `listAccessoriesByType` became type-agnostic in the GRASP correction (V-02 of Requerimiento 7).
 
 ## Liskov Substitution Principle (LSP)
 
