@@ -20,7 +20,7 @@ public class SaleService implements SaleLookup {
 
     private final SaleStore repository;
     private final PersonLookup personLookup;
-    private final ItemCatalog itemCatalog;
+    private final ItemLookup itemLookup;
     private final List<Sale> sales;
 
     /**
@@ -30,14 +30,14 @@ public class SaleService implements SaleLookup {
      *
      * @param repository    the store used to persist and load sales
      * @param personLookup the lookup used to resolve customers and sellers
-     * @param itemCatalog   the catalog used to resolve sold items
+     * @param itemLookup   the lookup used to resolve sold items
      * @throws RuntimeException if a stored sale references a customer, seller
      *                          or item that no longer exists
      */
-    public SaleService(SaleStore repository, PersonLookup personLookup, ItemCatalog itemCatalog) {
+    public SaleService(SaleStore repository, PersonLookup personLookup, ItemLookup itemLookup) {
         this.repository = repository;
         this.personLookup = personLookup;
-        this.itemCatalog = itemCatalog;
+        this.itemLookup = itemLookup;
         this.sales = new ArrayList<>();
         for (SaleRecord record : repository.loadAll()) {
             sales.add(resolve(record));
@@ -52,7 +52,7 @@ public class SaleService implements SaleLookup {
         }
         List<Product> products = new ArrayList<>();
         for (String productId : record.getProductIds()) {
-            Product product = itemCatalog.findItem(productId);
+            Product product = itemLookup.findItem(productId);
             if (product == null) {
                 throw new RuntimeException("Failed to resolve product or accessory " + productId
                     + " for sale " + record.getId());
