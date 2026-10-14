@@ -136,4 +136,12 @@ public abstract class Warranty {
     public boolean covers(String productId, String saleId) {
         return product.getId().equals(productId) && sale.getId().equals(saleId);
     }
+
+    /**
+     * Returns the kind of this warranty, which identifies it when it is stored
+     * and knows how to rebuild it.
+     *
+     * @return the warranty kind
+     */
+    public abstract WarrantyKind getKind();
 }
