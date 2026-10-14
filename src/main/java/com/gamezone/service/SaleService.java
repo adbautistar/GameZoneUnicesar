@@ -5,7 +5,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SaleRecord;
-import com.gamezone.persistence.SaleRepository;
+import com.gamezone.persistence.SaleStore;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,14 +13,14 @@ import java.util.List;
 
 /**
  * Keeps the sales history: loads it, records new sales and answers queries
- * about it, backed by a {@link SaleRepository}. Registering a new sale is
+ * about it, backed by a {@link SaleStore}. Registering a new sale is
  * coordinated by {@link SaleRegistrationService}.
  */
 public class SaleService implements SaleLookup {
 
-    private final SaleRepository repository;
-    private final PersonService personService;
-    private final ItemCatalog itemCatalog;
+    private final SaleStore repository;
+    private final PersonLookup personLookup;
+    private final ItemLookup itemLookup;
     private final List<Sale> sales;
 
     /**
@@ -28,16 +28,16 @@ public class SaleService implements SaleLookup {
      * current sales history into memory. Stored references are resolved
      * here, and every loaded sale is added to its customer's purchase history.
      *
-     * @param repository    the repository used to persist and load sales
-     * @param personService the service used to resolve customers and sellers
-     * @param itemCatalog   the catalog used to resolve sold items
+     * @param repository    the store used to persist and load sales
+     * @param personLookup the lookup used to resolve customers and sellers
+     * @param itemLookup   the lookup used to resolve sold items
      * @throws RuntimeException if a stored sale references a customer, seller
      *                          or item that no longer exists
      */
-    public SaleService(SaleRepository repository, PersonService personService, ItemCatalog itemCatalog) {
+    public SaleService(SaleStore repository, PersonLookup personLookup, ItemLookup itemLookup) {
         this.repository = repository;
-        this.personService = personService;
-        this.itemCatalog = itemCatalog;
+        this.personLookup = personLookup;
+        this.itemLookup = itemLookup;
         this.sales = new ArrayList<>();
         for (SaleRecord record : repository.loadAll()) {
             sales.add(resolve(record));
@@ -45,14 +45,14 @@ public class SaleService implements SaleLookup {
     }
 
     private Sale resolve(SaleRecord record) {
-        Customer customer = personService.findCustomerById(record.getCustomerId());
-        Seller seller = personService.findSellerById(record.getSellerId());
+        Customer customer = personLookup.findCustomerById(record.getCustomerId());
+        Seller seller = personLookup.findSellerById(record.getSellerId());
         if (customer == null || seller == null) {
             throw new RuntimeException("Failed to resolve customer or seller for sale " + record.getId());
         }
         List<Product> products = new ArrayList<>();
         for (String productId : record.getProductIds()) {
-            Product product = itemCatalog.findItem(productId);
+            Product product = itemLookup.findItem(productId);
             if (product == null) {
                 throw new RuntimeException("Failed to resolve product or accessory " + productId
                     + " for sale " + record.getId());

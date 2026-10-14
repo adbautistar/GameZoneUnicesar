@@ -53,7 +53,7 @@ com.gamezone
 - `service` depends on `model` and `persistence`.
 - `ui` depends only on `service`.
 
-## Class inventory (48 classes total: 15 baseline + 20 from extended modules + 13 from the GRASP correction)
+## Class inventory (68 types total: 15 baseline + 20 from extended modules + 13 from the GRASP correction + 20 from the SOLID correction — 14 interfaces and 6 classes)
 
 ### Baseline (Taller 1, v1.0.x — 15 classes)
 
@@ -120,6 +120,17 @@ Phase 15 audits the code against the nine GRASP patterns (each role audits only 
 - Additive model methods: `Product.belongsToCategory` (abstract) and `isWarrantyEligible` (overridden by `Console`), `Accessory.getAccessoryType` (abstract), `Sale.applyPromotion/addCharge/findProduct/wasMadeIn/wasMadeBy/wasHandledBy`, `Return.belongsToCustomer/belongsToSale/wasRegisteredIn`, `Warranty.covers`.
 - Constructors after Phase 15: `SaleService(SaleRepository, PersonService, ItemCatalog)`, `ReturnService(ReturnRepository, SaleService, ItemCatalog)`, `WarrantyService(WarrantyRepository, SaleService, ItemCatalog)`, `SaleRegistrationService(SaleService, PersonService, ItemCatalog, PromotionService, WarrantyService)`; repositories take only an optional file path.
 - Out-of-scope defects (recorded, deliberately not fixed): OOS-01 extended-warranty surcharge lost when sales are reloaded; OOS-02 receipt subtotal includes that surcharge; OOS-03 basic and extended warranty ids can collide within the same millisecond.
+
+### SOLID correction (Phase 16 — Requerimiento 8, v1.6.0 — 14 interfaces, 6 classes)
+
+Phase 16 audits the post-GRASP code against the five SOLID principles (same rules as Phase 15: each role audits its own code, the Technical Lead consolidates) and corrects the 13 consolidated violations without changing external behavior. LSP was correct everywhere. Audit and change log: `docs/solid-audit/`, `docs/solid-analysis.md`, `docs/solid-refactor-log.md`, `docs/solid-class-diagram.md`.
+
+- Persistence interfaces (7): `ProductStore`, `PersonStore`, `AccessoryStore`, `PromotionStore`, `SaleStore`, `ReturnStore`, `WarrantyStore`, implemented by the repositories. They live in the persistence package so that the layer rule (`service → persistence`) still holds.
+- Service interfaces (6): `ItemSource` (implemented by `ProductService` and `AccessoryService`), `ItemLookup` (by `ItemCatalog`), `SaleLookup` (by `SaleService`), `PersonLookup` (by `PersonService`), `PromotionSelector` (by `PromotionService`) and `WarrantyAssigner` (by `WarrantyService`); the last two are owned by `SaleRegistrationService`.
+- UI interface (1): `MenuOption` (`getLabel`, `run`), implemented by the seven submenus and `MonthlyBalanceMenu`.
+- New classes (6): `SaleReceipt`, `ReturnReceipt`, `WarrantyCertificate` (receipt/certificate layouts; the domain methods `generateReceipt`, `generateReturnReceipt`, `generateWarrantyCertificate` delegate to them), `WarrantyKind` (enum of warranty kinds with `create(...)`; `Warranty.getKind()`), `MonthlyBalanceService` (the balance left `ReturnService`), `MonthlyBalanceMenu`.
+- Constructors after Phase 16: `ProductService(ProductStore)`, `PersonService(PersonStore)`, `AccessoryService(AccessoryStore)`, `PromotionService(PromotionStore)`, `SaleService(SaleStore, PersonLookup, ItemLookup)`, `ReturnService(ReturnStore, SaleLookup, ItemCatalog)`, `WarrantyService(WarrantyStore, SaleLookup, ItemLookup)`, `SaleRegistrationService(SaleService, PersonLookup, ItemCatalog, PromotionSelector, WarrantyAssigner)`, `MonthlyBalanceService(SaleLookup, ReturnService)`, `ItemCatalog(ItemSource...)`, `ConsoleMenu(Scanner, List<MenuOption>)` — `Main` creates the `Scanner` and composes the menu options in display order.
+- Accepted on purpose (documented in the consolidated audit): type switches inside `ProductRepository`, `AccessoryRepository` and `PromotionRepository`; register-per-type service APIs; the static `IdGenerator`.
 
 ## Encapsulation rules
 
@@ -210,6 +221,7 @@ Phase 15 audits the code against the nine GRASP patterns (each role audits only 
 - **Baseline (Taller 1, v1.0.x):** minimum 12 atomic commits per simulated developer, minimum 36 total, minimum 6 Pull Requests.
 - **Per extended-module phase (10-13):** minimum 6 atomic commits per task group (18 per phase), plus 1 PR into `develop` and 1 release PR into `main`.
 - **Phase 15 (Requerimiento 7):** two parts (audit on `feature/grasp-audit`, correction on `feature/grasp-refactor`); in each part minimum 6 atomic commits per role and 3 PRs into `develop` (Developer 1, Developer 2, then Technical Lead, all from the same branch), plus 1 release PR into `main`.
+- **Phase 16 (Requerimiento 8):** same structure as Phase 15 on `feature/solid-audit` and `feature/solid-refactor`.
 - These are floors, not targets — actual counts may exceed them (see `docs/version-control.md` for the running total as of the last phase executed).
 
 ## Commit attribution strategy
@@ -241,6 +253,7 @@ Located under `docs/`:
 - `ai-usage/developer2-ai-log.md` — Developer 2 AI usage log.
 - `version-control.md` — branching strategy, every branch created, full commit log, commits per simulated team member, and every Pull Request (added in Phase 9+; keep it current after each new phase/release).
 - `grasp-analysis.md`, `grasp-audit/{leader,developer1,developer2,consolidated}-audit.md`, `grasp-refactor-log.md`, `grasp-class-diagram.md` — Requerimiento 7 (Phase 15).
+- `solid-analysis.md`, `solid-audit/{leader,developer1,developer2,consolidated}-audit.md`, `solid-refactor-log.md`, `solid-class-diagram.md` — Requerimiento 8 (Phase 16).
 
 ## AI log entry template
 

@@ -12,7 +12,7 @@ import java.util.List;
  * Provides the business operations available for managing customers and
  * sellers, backed by a {@link PersonStore}.
  */
-public class PersonService {
+public class PersonService implements PersonLookup {
 
     private final PersonStore repository;
     private final List<Customer> customers;
@@ -51,6 +51,7 @@ public class PersonService {
      * @param id the id to search for
      * @return the matching customer, or {@code null} if none is found
      */
+    @Override
     public Customer findCustomerById(String id) {
         for (Customer customer : customers) {
             if (customer.getId().equals(id)) {
@@ -66,6 +67,7 @@ public class PersonService {
      * @param id the id to search for
      * @return the matching seller, or {@code null} if none is found
      */
+    @Override
     public Seller findSellerById(String id) {
         for (Seller seller : sellers) {
             if (seller.getId().equals(id)) {

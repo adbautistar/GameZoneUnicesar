@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PromotionService {
+public class PromotionService implements PromotionSelector {
 
     private final PromotionStore repository;
     private final List<Promotion> promotions;
@@ -73,6 +73,7 @@ public class PromotionService {
         return active;
     }
 
+    @Override
     public Promotion findBestPromotionFor(Sale sale) {
         Promotion best = null;
         double bestDiscount = 0.0;

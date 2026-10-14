@@ -11,7 +11,7 @@ import java.util.Scanner;
  * {@link ConsoleMenu}. Prompts and messages are shown in Spanish and every
  * operation is delegated to the service layer.
  */
-public class WarrantyMenu {
+public class WarrantyMenu implements MenuOption {
 
     private final Scanner scanner;
     private final WarrantyService warrantyService;
@@ -110,5 +110,23 @@ public class WarrantyMenu {
         for (Warranty warranty : warranties) {
             System.out.println(warranty.generateWarrantyCertificate());
         }
+    }
+
+    /**
+     * Returns the label of this submenu in the main menu.
+     *
+     * @return "Gestion de garantias"
+     */
+    @Override
+    public String getLabel() {
+        return "Gestion de garantias";
+    }
+
+    /**
+     * Shows this submenu until the user goes back to the main menu.
+     */
+    @Override
+    public void run() {
+        show();
     }
 }

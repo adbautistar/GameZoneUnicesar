@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Provides the business operations for assigning and querying warranties.
  */
-public class WarrantyService {
+public class WarrantyService implements WarrantyAssigner {
 
     private final WarrantyStore repository;
     private final List<Warranty> warranties;
@@ -68,6 +68,7 @@ public class WarrantyService {
         throw new IllegalArgumentException("Unknown warranty type in CSV: " + tag);
     }
 
+    @Override
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {
         String id = IdGenerator.next("WAR");
         BasicWarranty warranty = new BasicWarranty(id, product, sale, startDate);
@@ -76,6 +77,7 @@ public class WarrantyService {
         return warranty;
     }
 
+    @Override
     public ExtendedWarranty assignExtendedWarranty(Product product, Sale sale, LocalDate startDate) {
         String id = IdGenerator.next("WAR");
         ExtendedWarranty warranty = new ExtendedWarranty(id, product, sale, startDate);
