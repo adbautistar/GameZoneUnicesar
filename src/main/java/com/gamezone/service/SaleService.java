@@ -16,7 +16,7 @@ import java.util.List;
  * about it, backed by a {@link SaleRepository}. Registering a new sale is
  * coordinated by {@link SaleRegistrationService}.
  */
-public class SaleService {
+public class SaleService implements SaleLookup {
 
     private final SaleRepository repository;
     private final PersonService personService;
@@ -85,6 +85,7 @@ public class SaleService {
      *
      * @return the list of all sales
      */
+    @Override
     public List<Sale> viewAllSales() {
         return Collections.unmodifiableList(sales);
     }
@@ -127,6 +128,7 @@ public class SaleService {
      * @param id the id to search for
      * @return the matching sale, or {@code null} if none is found
      */
+    @Override
     public Sale findById(String id) {
         for (Sale sale : sales) {
             if (sale.getId().equals(id)) {
