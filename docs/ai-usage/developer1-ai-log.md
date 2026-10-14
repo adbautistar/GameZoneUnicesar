@@ -226,3 +226,22 @@ si
 
 **Solution obtained and decision taken:**
 Used `belongsToCategory(String)` instead of `getCategory()`: each subclass answers only for its own category and accessories always answer `false`, so the set of discounted products is identical for any target string. The other additive methods (`isWarrantyEligible`, `getAccessoryType`, `Sale.findProduct`/`wasMadeIn`, the `Return` queries and `Warranty.covers`) were added before their callers exist, so every commit compiles and the Developer 2 and Technical Lead corrections can build on them. `mvn clean verify` kept all 88 tests green and the scripted menu run matched the baseline line by line.
+
+## Requirement 8 — Phase 1: Audit
+
+### Entry 14
+
+**Date:** 2026-10-14
+**Tool used:** Claude Code
+
+**Reason for use:**
+Clarify the difference between a type switch that breaks the Open/Closed Principle and one that can be accepted, before writing the verdicts for the product repository and the hierarchies.
+
+**Problem faced:**
+`ProductRepository` still branches on the product type to write and read the CSV, which looks like the classic OCP warning sign, while the hierarchies themselves are extended only by adding subclasses. The Requerimiento 8 AI policy does not allow asking the AI to find the violations, so the question was limited to the concept.
+
+**Prompt used:**
+aprobado
+
+**Solution obtained and decision taken:**
+Used the AI only to discuss when a single, localized type switch is an acceptable cost. Developer 1 decided to accept the repository switch with an explicit justification (a new type changes the persisted format anyway, and the knowledge sits in one class) and to record two real violations: the receipt and certificate layouts inside `Return` and `Warranty` (SRP) and `ProductService` depending on the concrete repository (DIP). LSP was confirmed correct for every hierarchy after checking each override against its base contract.
