@@ -5,6 +5,7 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.model.WarrantyKind;
 import com.gamezone.persistence.WarrantyRecord;
 import com.gamezone.persistence.WarrantyStore;
 
@@ -17,9 +18,6 @@ import java.util.List;
  * Provides the business operations for assigning and querying warranties.
  */
 public class WarrantyService {
-
-    private static final String BASIC_TYPE = "BASIC";
-    private static final String EXTENDED_TYPE = "EXTENDED";
 
     private final WarrantyStore repository;
     private final List<Warranty> warranties;
@@ -58,13 +56,16 @@ public class WarrantyService {
                 + "; skipping.");
             return null;
         }
-        if (BASIC_TYPE.equals(record.getType())) {
-            return new BasicWarranty(record.getId(), product, sale, record.getStartDate());
+        return kindOf(record.getType()).create(record.getId(), product, sale, record.getStartDate());
+    }
+
+    private static WarrantyKind kindOf(String tag) {
+        for (WarrantyKind kind : WarrantyKind.values()) {
+            if (kind.name().equals(tag)) {
+                return kind;
+            }
         }
-        if (EXTENDED_TYPE.equals(record.getType())) {
-            return new ExtendedWarranty(record.getId(), product, sale, record.getStartDate());
-        }
-        throw new IllegalArgumentException("Unknown warranty type in CSV: " + record.getType());
+        throw new IllegalArgumentException("Unknown warranty type in CSV: " + tag);
     }
 
     public BasicWarranty assignBasicWarranty(Product product, Sale sale, LocalDate startDate) {

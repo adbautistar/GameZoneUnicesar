@@ -1,6 +1,5 @@
 package com.gamezone.persistence;
 
-import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Warranty;
 
 import java.io.BufferedReader;
@@ -24,8 +23,6 @@ import java.util.List;
 public class WarrantyRepository implements WarrantyStore {
 
     private static final String DEFAULT_FILE_PATH = "data/warranties.csv";
-    private static final String BASIC_TYPE = "BASIC";
-    private static final String EXTENDED_TYPE = "EXTENDED";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private final String filePath;
@@ -65,9 +62,8 @@ public class WarrantyRepository implements WarrantyStore {
     }
 
     private String toCsvLine(Warranty warranty) {
-        String type = warranty instanceof ExtendedWarranty ? EXTENDED_TYPE : BASIC_TYPE;
         return String.join(",",
-            type,
+            warranty.getKind().name(),
             warranty.getId(),
             warranty.getProduct().getId(),
             warranty.getSale().getId(),
