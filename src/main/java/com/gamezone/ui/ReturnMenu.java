@@ -137,7 +137,6 @@ public class ReturnMenu implements MenuOption {
         }
     }
 
-
     /**
      * Returns the label of this submenu in the main menu.
      *
