@@ -5,7 +5,7 @@ import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.PercentageDiscount;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
-import com.gamezone.persistence.PromotionRepository;
+import com.gamezone.persistence.PromotionStore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,10 +14,10 @@ import java.util.List;
 
 public class PromotionService {
 
-    private final PromotionRepository repository;
+    private final PromotionStore repository;
     private final List<Promotion> promotions;
 
-    public PromotionService(PromotionRepository repository) {
+    public PromotionService(PromotionStore repository) {
         this.repository = repository;
         this.promotions = new ArrayList<>(repository.loadAll());
     }
