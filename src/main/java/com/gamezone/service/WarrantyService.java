@@ -30,29 +30,29 @@ public class WarrantyService {
      * a warranty whose product or sale no longer exists is skipped.
      *
      * @param repository  the store used to persist and load warranties
-     * @param saleService the service used to resolve the sale of each warranty
+     * @param saleLookup  the read-only view used to resolve the sale of each warranty
      * @param itemLookup  the lookup used to resolve the covered product
      * @throws IllegalArgumentException if a stored warranty has an unknown type
      */
-    public WarrantyService(WarrantyStore repository, SaleService saleService, ItemLookup itemLookup) {
+    public WarrantyService(WarrantyStore repository, SaleLookup saleLookup, ItemLookup itemLookup) {
         this.repository = repository;
         this.warranties = new ArrayList<>();
         for (WarrantyRecord record : repository.loadAll()) {
-            Warranty warranty = resolve(record, saleService, itemLookup);
+            Warranty warranty = resolve(record, saleLookup, itemLookup);
             if (warranty != null) {
                 warranties.add(warranty);
             }
         }
     }
 
-    private static Warranty resolve(WarrantyRecord record, SaleService saleService, ItemLookup itemLookup) {
+    private static Warranty resolve(WarrantyRecord record, SaleLookup saleLookup, ItemLookup itemLookup) {
         Product product = itemLookup.findItem(record.getProductId());
         if (product == null) {
             System.err.println("Failed to resolve product or accessory " + record.getProductId()
                 + " for warranty " + record.getId() + "; skipping.");
             return null;
         }
-        Sale sale = saleService.findById(record.getSaleId());
+        Sale sale = saleLookup.findById(record.getSaleId());
         if (sale == null) {
             System.err.println("Failed to resolve sale " + record.getSaleId() + " for warranty " + record.getId()
                 + "; skipping.");

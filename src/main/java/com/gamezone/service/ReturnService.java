@@ -18,7 +18,7 @@ import java.util.List;
 public class ReturnService {
 
     private final ReturnStore repository;
-    private final SaleService saleService;
+    private final SaleLookup saleLookup;
     private final ItemCatalog itemCatalog;
     private final List<Return> returns;
 
@@ -29,12 +29,12 @@ public class ReturnService {
      * longer exists is left out of its return.
      *
      * @param repository  the store used to persist and load returns
-     * @param saleService the service used to find the original sales
+     * @param saleLookup  the read-only view used to find the original sales
      * @param itemCatalog the catalog used to resolve returned items and restore their stock
      */
-    public ReturnService(ReturnStore repository, SaleService saleService, ItemCatalog itemCatalog) {
+    public ReturnService(ReturnStore repository, SaleLookup saleLookup, ItemCatalog itemCatalog) {
         this.repository = repository;
-        this.saleService = saleService;
+        this.saleLookup = saleLookup;
         this.itemCatalog = itemCatalog;
         this.returns = new ArrayList<>();
         for (ReturnRecord record : repository.loadAll()) {
@@ -59,7 +59,7 @@ public class ReturnService {
      *                                  than 30 days, or does not include a product
      */
     public Return registerReturn(String saleId, List<String> productIds, String reason) {
-        Sale sale = saleService.findById(saleId);
+        Sale sale = saleLookup.findById(saleId);
         if (sale == null) {
             throw new IllegalArgumentException("Venta no encontrada.");
         }
@@ -90,7 +90,7 @@ public class ReturnService {
     }
 
     private Return resolve(ReturnRecord record) {
-        Sale sale = saleService.findById(record.getSaleId());
+        Sale sale = saleLookup.findById(record.getSaleId());
         if (sale == null) {
             System.err.println("Failed to resolve sale " + record.getSaleId() + " for return " + record.getId()
                 + "; skipping.");
@@ -155,7 +155,7 @@ public class ReturnService {
      */
     public double generateMonthlyBalance(int month, int year) {
         double totalSales = 0.0;
-        for (Sale sale : saleService.viewAllSales()) {
+        for (Sale sale : saleLookup.viewAllSales()) {
             if (sale.wasMadeIn(month, year)) {
                 totalSales += sale.getTotalAmount();
             }
