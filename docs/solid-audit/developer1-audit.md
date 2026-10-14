@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 |---|---|
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (except `restoreStock`, Technical Lead) |
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
+| Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -25,6 +26,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Accessories — Correct.** Each subclass adds only its attributes, its description and its type.
 
+- **Promotions — Correct.** Each promotion holds its parameters and its discount calculation; `Promotion.isActive` only uses its dates.
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** Pending — audit in progress.
@@ -33,6 +36,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Accessories — Correct.** A new accessory is a new subclass implementing `getDescription` and `getAccessoryType`.
 
+- **Promotions — Correct.** New promotion strategies are added as subclasses of `Promotion`; `CategoryDiscount` no longer needs to change for a new product category since the GRASP correction (V-01 of Requerimiento 7).
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** Pending — audit in progress.
@@ -40,6 +45,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Products — Correct.** `VideoGame` and `Console` implement `getDescription` and `belongsToCategory` without narrowing preconditions or throwing; `Console.isWarrantyEligible` only changes a value the base declares as overridable.
 
 - **Accessories — Correct.** `Accessory.belongsToCategory` always answers `false`, which is a valid answer under the base contract ("does this product belong to the category?"); `isCompatibleWith` keeps the base behavior of every `Product` method.
+
+- **Promotions — Correct.** All three subclasses return a non-negative discount for any sale and never throw, as `PromotionService.findBestPromotionFor` expects from any `Promotion`.
 
 ## Interface Segregation Principle (ISP)
 
