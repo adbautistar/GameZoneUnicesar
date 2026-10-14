@@ -18,7 +18,7 @@ import java.util.List;
  * instances, using two separate CSV files: {@code data/customers.csv} and
  * {@code data/sellers.csv}.
  */
-public class PersonRepository {
+public class PersonRepository implements PersonStore {
 
     private static final String DEFAULT_CUSTOMERS_FILE_PATH = "data/customers.csv";
     private static final String DEFAULT_SELLERS_FILE_PATH = "data/sellers.csv";
@@ -51,6 +51,7 @@ public class PersonRepository {
      *
      * @param customers the complete list of customers to persist
      */
+    @Override
     public void saveAllCustomers(List<Customer> customers) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(customersFilePath))) {
             for (Customer customer : customers) {
@@ -73,6 +74,7 @@ public class PersonRepository {
      * @return the list of customers found in the file, or an empty list if
      *         the file does not exist
      */
+    @Override
     public List<Customer> loadAllCustomers() {
         List<Customer> customers = new ArrayList<>();
         Path path = Path.of(customersFilePath);
@@ -99,6 +101,7 @@ public class PersonRepository {
      *
      * @param sellers the complete list of sellers to persist
      */
+    @Override
     public void saveAllSellers(List<Seller> sellers) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(sellersFilePath))) {
             for (Seller seller : sellers) {
@@ -122,6 +125,7 @@ public class PersonRepository {
      * @return the list of sellers found in the file, or an empty list if
      *         the file does not exist
      */
+    @Override
     public List<Seller> loadAllSellers() {
         List<Seller> sellers = new ArrayList<>();
         Path path = Path.of(sellersFilePath);
